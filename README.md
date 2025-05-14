@@ -1,4 +1,4 @@
-Full Stack AI Finance Platform with Next JS, Supabase, Clerk, Tailwind, Prisma, Inngest, ArcJet, & Shadcn UI
+Full Stack AI Finance Platform with Next JS, Supabase, Clerk, Tailwind, Prisma, Inngest, ArcJet, & Shadcn UI [" PaiseGuru "]
 
 
 
