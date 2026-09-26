@@ -108,6 +108,7 @@ export const hisaab = pgTable(
     cycleDay: integer('cycle_day').notNull().default(1),
     startMonth: day('start_month').notNull(),
     joinApproval: boolean('join_approval').notNull().default(true),
+    inviteNonce: uuid('invite_nonce'), // invite token = HMAC(secret, nonce); regenerating replaces the nonce
     inviteTokenHash: text('invite_token_hash').unique(),
     createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     createdAt: createdAt(),

@@ -1,0 +1,1 @@
+ALTER TABLE "hisaab" ADD COLUMN "invite_nonce" uuid;

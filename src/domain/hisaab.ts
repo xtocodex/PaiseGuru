@@ -183,7 +183,7 @@ export const shortDate = (d: ISODate) => dayName.format(utc(d))
 export interface SheetRef {
   id: string
   startDate: ISODate
-  endDate: ISODate
+  endDate: ISODate | null // null: one-time Hisaab (phase 2)
   state: SheetState
 }
 
@@ -196,7 +196,7 @@ export function placeEntry(input: { date: ISODate; today: ISODate; sheets: reado
   | { ok: false; reason: 'future' | 'before_start' } {
   const { date, today, sheets } = input
   if (date > today) return { ok: false, reason: 'future' }
-  const own = sheets.find((s) => s.startDate <= date && date <= s.endDate)
+  const own = sheets.find((s) => s.startDate <= date && (s.endDate === null || date <= s.endDate))
   if (!own) return { ok: false, reason: 'before_start' }
   if (own.state === 'open') return { ok: true, sheetId: own.id, late: false }
   const latestOpen = sheets.filter((s) => s.state === 'open').sort((a, b) => b.startDate.localeCompare(a.startDate))[0]
@@ -214,7 +214,7 @@ export const CLOSE_ORDER_TEXT: Record<CloseOrderError, string> = {
 export function checkCanClose(sheetId: string, sheets: readonly SheetRef[], today: ISODate): CloseOrderError | null {
   const sheet = sheets.find((s) => s.id === sheetId)!
   if (sheet.state !== 'open') return 'not_open'
-  if (today < sheet.endDate) return 'too_early'
+  if (sheet.endDate !== null && today < sheet.endDate) return 'too_early'
   if (sheets.some((s) => s.startDate < sheet.startDate && s.state === 'open')) return 'earlier_open'
   return null
 }
