@@ -1,49 +1,27 @@
-# 💸 Paise Guru - AI-Based Personal Finance Platform
+# PaiseGuru
 
-**Paise Guru** is a full-stack AI-powered personal finance management platform designed to help users track, analyze, and optimize their spending habits. Using advanced features like receipt scanning, AI insights, and budget alerts, it offers a complete financial planning experience.
+A split-first money app for Indian families and friend groups. Its main feature is **Hisaab**: bills pile up all month, then get divided at month-end with per-member exceptions and settled in the fewest UPI payments.
 
----
+The design and every money rule are in [docs/designs/paiseguru-mvp.md](docs/designs/paiseguru-mvp.md). The old Next.js app is kept at tag `v1-legacy` for reference only.
 
-## ⚙️ Tech Stack
+## Setup
 
-- **Frontend**: Next.js, React, Tailwind CSS, Shadcn UI
-- **Backend**: Node.js, Prisma ORM
-- **AI Integration**: Gemini API
-- **Auth**: Clerk
-- **Background Tasks**: Inngest
-- **Email Service**: Resend
-- **Security**: Arcjet
-- **Deployment**: Vercel
+Needs Node 24+ and pnpm.
 
-
-## 🚀 Features
-
-- 📸 **Receipt Scanning**: Upload receipts and let AI auto-categorize expenses.
-- 📊 **Category-Wise Transaction Management**: View spending by Food, Travel, Bills, etc.
-- 📈 **Monthly AI Insights**: Gemini API provides summaries and recommendations.
-- ⏰ **Budget Alerts**: Get notified when crossing budget limits in a category.
-- 🔒 **Authentication & Security**: Clerk integration with Arcjet for bot protection.
-- 📬 **Email Notifications**: Triggered using Resend API.
-- ⏱ **Background Jobs**: Scheduled via Inngest for insights and budget reports.
-- ☁️ **Fully Deployed on Vercel**: Scalable and performant.
-
-
-### Make sure to create a `.env` file with following variables -
-
+```sh
+pnpm install
+cp .env.example .env    # fill in the values
+pnpm db:migrate
+pnpm dev                # app on http://localhost:5173, API on :3000
 ```
-DATABASE_URL=
-DIRECT_URL=
 
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/onboarding
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/onboarding
+## Commands
 
-GEMINI_API_KEY=
-
-RESEND_API_KEY=
-
-ARCJET_KEY=
-```
+| Command | What it does |
+|---|---|
+| `pnpm dev` | API server (auto-restart) + Vite dev server |
+| `pnpm test` | unit and integration tests (uses `TEST_DATABASE_URL`) |
+| `pnpm test:e2e` | Playwright end-to-end tests |
+| `pnpm db:generate` | make a migration after changing the schema |
+| `pnpm db:migrate` | apply migrations |
+| `pnpm build` / `pnpm start` | production build / run |
