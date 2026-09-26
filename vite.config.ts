@@ -5,7 +5,9 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
 const api = 'http://localhost:3000'
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  return {
   plugins: [
     tanstackRouter({
       target: 'react',
@@ -20,9 +22,12 @@ export default defineConfig(({ mode }) => ({
   server: { proxy: { '/api': api, '/s/': api, '/health': api } },
   test: {
     include: ['src/**/*.test.ts'],
-    env: loadEnv(mode, process.cwd(), ''),
+    // Tests run against the disposable test database only (tests/setup.ts truncates it).
+    env: { ...env, DATABASE_URL: env.TEST_DATABASE_URL ?? '', NODE_ENV: 'test', DEV_LOGIN: '1', BETTER_AUTH_URL: 'http://localhost:3000' },
+    globalSetup: ['./tests/global-setup.ts'],
     fileParallelism: false, // integration tests share one test database
     testTimeout: 30_000,
     hookTimeout: 60_000,
   },
-}))
+  }
+})
