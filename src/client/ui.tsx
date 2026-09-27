@@ -94,6 +94,20 @@ export function Loading() {
   )
 }
 
+export const FOUNDER_URL = 'https://gopalmohapatra.in'
+
+/** Product credit: PaiseGuru is built by xtocodex. */
+export function MadeBy({ className }: { className?: string }) {
+  return (
+    <p className={cx('text-center text-xs text-slate-500', className)}>
+      A product of <span className="font-semibold text-slate-700">xtocodex</span> · Founder{' '}
+      <a href={FOUNDER_URL} target="_blank" rel="noreferrer" className="text-brand underline-offset-2 hover:underline">
+        Gopal Mohapatra
+      </a>
+    </p>
+  )
+}
+
 export const STATE_LABEL = { open: 'Open', closed: 'Payments pending', cleared: 'Settled', carried: 'Carried' } as const
 export function StateTag({ state }: { state: keyof typeof STATE_LABEL }) {
   return <Tag tone={state === 'open' ? 'brand' : state === 'closed' ? 'amber' : 'slate'}>{STATE_LABEL[state]}</Tag>

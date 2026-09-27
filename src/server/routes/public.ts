@@ -84,7 +84,10 @@ export const publicRoutes = new Hono().get('/s/:token', async (c) => {
               </tr>`,
           )}
         </table>
-        <p class="muted">Made with PaiseGuru</p>`,
+        <p class="muted" style="margin-top:2rem;text-align:center">
+          PaiseGuru · a product of <b>xtocodex</b> ·
+          <a href="https://gopalmohapatra.in" rel="noreferrer" style="color:#0f766e">gopalmohapatra.in</a>
+        </p>`,
     ),
   )
 })

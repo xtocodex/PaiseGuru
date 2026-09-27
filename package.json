@@ -1,5 +1,7 @@
 {
   "name": "paiseguru",
+  "description": "Split-first family finance: monthly Hisaab, settled in the fewest UPI payments.",
+  "author": "xtocodex \u00b7 Gopal Mohapatra (https://gopalmohapatra.in)",
   "private": true,
   "type": "module",
   "engines": {

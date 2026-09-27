@@ -2,6 +2,8 @@
 
 A split-first money app for Indian families and friend groups. Its main feature is **Hisaab**: bills pile up all month, then get divided at month-end with per-member exceptions and settled in the fewest UPI payments.
 
+PaiseGuru is a product of **xtocodex**, founded by [Gopal Mohapatra](https://gopalmohapatra.in).
+
 The design and every money rule are in [docs/designs/paiseguru-mvp.md](docs/designs/paiseguru-mvp.md). The old Next.js app is kept at tag `v1-legacy` for reference only.
 
 ## Setup

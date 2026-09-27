@@ -5,7 +5,7 @@ import { UPI_ID } from '../../../shared/schemas.ts'
 import { api, call } from '../../api.ts'
 import { authClient } from '../../auth.ts'
 import { meQuery } from '../../queries.ts'
-import { Button, Card, ErrorBox, Field, Input, Loading, Page } from '../../ui.tsx'
+import { Button, Card, ErrorBox, FOUNDER_URL, Field, Input, Loading, Page } from '../../ui.tsx'
 
 export const Route = createFileRoute('/_app/me')({ component: Me })
 
@@ -65,6 +65,16 @@ function Me() {
       <Button variant="secondary" className="w-full" onClick={signOut}>
         Sign out
       </Button>
+
+      <Card>
+        <h2 className="font-semibold">About PaiseGuru</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          PaiseGuru is a product of <b>xtocodex</b>, built by founder Gopal Mohapatra.
+        </p>
+        <a href={FOUNDER_URL} target="_blank" rel="noreferrer" className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-brand">
+          gopalmohapatra.in ↗
+        </a>
+      </Card>
 
       <Card>
         <h2 className="font-semibold text-red-800">Delete my account</h2>

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { authClient } from '../auth.ts'
 import { configQuery } from '../queries.ts'
-import { Button, Card, ErrorBox, Field, Input } from '../ui.tsx'
+import { Button, Card, ErrorBox, Field, Input, MadeBy } from '../ui.tsx'
 
 export const Route = createFileRoute('/login')({
   validateSearch: z.object({ redirect: z.string().optional() }),
@@ -69,6 +69,7 @@ function Login() {
           </form>
         </Card>
       )}
+      <MadeBy className="mt-4" />
     </div>
   )
 }
