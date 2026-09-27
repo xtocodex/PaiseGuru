@@ -74,8 +74,8 @@ Every feature in `docs/designs/paiseguru-mvp.md` is in scope. A build phase star
 **What:** "Save QR image" next to "Copy UPI ID + amount" on each payment. Skipped in phase 1; add if the UPI link check shows apps block P2P links.
 **Effort:** S · **Priority:** P2
 
-### Design review of the phase 1 screens
-**What:** Run /design-review on the running app (390 px). Screens use plain Tailwind; shadcn/ui components were not needed yet.
+### Design review on real phones
+**What:** Install the app on one Android and one iPhone; check safe areas, the + button, sheets, dark mode and the Pay button. Then /design-review for polish.
 **Effort:** S · **Priority:** P2
 
 ### Faster local tests
@@ -101,6 +101,8 @@ Every feature in `docs/designs/paiseguru-mvp.md` is in scope. A build phase star
 **Depends on:** None
 
 ## Completed
+
+- App redesign v2 live (2026-09-27): installable PWA (manifest, icons, service worker, offline shell), design system from docs/designs/v2, all screens rebuilt, Activity tab, change password, appearance.
 
 - Live on Vercel at https://paiseguru.gopalmohapatra.in (DNS A record at BigRock, 2026-09-27).
 
