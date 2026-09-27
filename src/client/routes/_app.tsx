@@ -1,11 +1,16 @@
 import { Link, Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { authClient } from '../auth.ts'
 
+type SessionUser = NonNullable<Awaited<ReturnType<typeof authClient.getSession>>['data']>['user']
+
 export const Route = createFileRoute('/_app')({
-  beforeLoad: async ({ location }) => {
-    const { data } = await authClient.getSession()
-    if (!data) throw redirect({ to: '/login', search: { redirect: location.href } })
-    return { user: data.user }
+  // Only a signed-in session is cached; a 401 from the API clears it (see main.tsx).
+  beforeLoad: async ({ context, location }) => {
+    const cached = context.queryClient.getQueryData<SessionUser>(['session'])
+    const user = cached ?? (await authClient.getSession()).data?.user
+    if (!user) throw redirect({ to: '/login', search: { redirect: location.href } })
+    context.queryClient.setQueryData(['session'], user)
+    return { user }
   },
   component: AppLayout,
 })

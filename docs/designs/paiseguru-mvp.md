@@ -1160,27 +1160,27 @@ Lanes: A: 2 (domain, pure) · B: 3 (schema/auth). Launch A + B after 1, merge, t
 ## Implementation Tasks
 Synthesized from this review's findings. Each task derives from a specific finding above. Run with Claude Code or Codex; checkbox as you ship.
 
-- [ ] **T1 (P1, human: ~1h / CC: ~5min)** — repo — Tag main as v1-legacy, branch rebuild, remove old Next.js files, scaffold pnpm + Vite + Hono + Tailwind v4 + TanStack Router
+- [x] **T1 (P1, human: ~1h / CC: ~5min)** — repo — Tag main as v1-legacy, branch rebuild, remove old Next.js files, scaffold pnpm + Vite + Hono + Tailwind v4 + TanStack Router
   - Surfaced by: D4, D5
   - Files: package.json, vite.config.ts, tsconfig.json, src/**
   - Verify: `pnpm dev` serves the SPA and `/health`
-- [ ] **T2 (P1, human: ~3d / CC: ~45min)** — domain — money.ts (allocate BigInt, bounds, format/parse) and hisaab.ts (sheet dates, placement, dividable total, obligations, block reasons, nets, settle plan, share text) with all fixtures and a property test
+- [x] **T2 (P1, human: ~3d / CC: ~45min)** — domain — money.ts (allocate BigInt, bounds, format/parse) and hisaab.ts (sheet dates, placement, dividable total, obligations, block reasons, nets, settle plan, share text) with all fixtures and a property test
   - Surfaced by: CEO T2; Section 3 test map
   - Files: src/domain/money.ts, src/domain/hisaab.ts, src/domain/*.test.ts
   - Verify: `pnpm test` green
-- [ ] **T3 (P1, human: ~1d / CC: ~20min)** — server — Drizzle schema (member.seq, composite FKs, partial unique admin), migrations, better-auth Google + dev-only email login with production refusal
+- [x] **T3 (P1, human: ~1d / CC: ~20min)** — server — Drizzle schema (member.seq, composite FKs, partial unique admin), migrations, better-auth Google + dev-only email login with production refusal
   - Surfaced by: Section 1 data model; outside voice 3, 6, 9; Section 3 login mechanism
   - Files: src/server/db.ts, src/server/auth.ts, drizzle/
   - Verify: migration applies to a fresh DB; prod-flag unit test
-- [ ] **T4 (P1, human: ~3d / CC: ~1h)** — server — Routes with authz helper, version bumps (entries, exceptions, close, reopen, transfers, membership), open-on-demand sheets, snapshot, statement page, share text
+- [x] **T4 (P1, human: ~3d / CC: ~1h)** — server — Routes with authz helper, version bumps (entries, exceptions, close, reopen, transfers, membership), open-on-demand sheets, snapshot, statement page, share text
   - Surfaced by: Section 1 findings 1, 2, 4, 7, 8; outside voice 2, 4, 5, 8, 10; D3; D5 (CEO)
   - Files: src/server/app.ts, src/server/routes/*.ts, src/shared/schemas.ts
   - Verify: integration tests (authz, races both orders, lifecycle guards, former member, admin invariant)
-- [ ] **T5 (P1, human: ~3d / CC: ~1h)** — client — Pages: Login, Home, New Hisaab, Hisaab, Sheet, Close, Join, Me; mobile-first
+- [x] **T5 (P1, human: ~3d / CC: ~1h)** — client — Pages: Login, Home, New Hisaab, Hisaab, Sheet, Close, Join, Me; mobile-first
   - Surfaced by: wireframe screens 5–6; Section 3 user flows
   - Files: src/client/**
   - Verify: manual run on a phone-size viewport; e2e
-- [ ] **T6 (P2, human: ~1d / CC: ~20min)** — tests/CI — Playwright e2e for the 4 flows; GitHub Actions with a Postgres service
+- [x] **T6 (P2, human: ~1d / CC: ~20min)** — tests/CI — Playwright e2e for the 4 flows; GitHub Actions with a Postgres service
   - Surfaced by: Section 3; Section 1 finding 6
   - Files: tests/e2e/*, .github/workflows/ci.yml
   - Verify: CI green on push

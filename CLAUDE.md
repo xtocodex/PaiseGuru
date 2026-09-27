@@ -12,7 +12,7 @@ Rebuild of an old Next.js expense app into a split-first personal finance PWA fo
 TypeScript, pnpm · React 19 + Vite + Tailwind v4 + shadcn/ui + TanStack Router (file-based) + TanStack Query · Hono on Node (typed client `hc<AppType>`) · better-auth (Google; email+password only when NODE_ENV is test/development, server refuses to boot in production with it on) · Drizzle ORM + Postgres (local Postgres 18 on this machine) · Vitest + Playwright · structured JSON logs only (no Sentry, decision ef00621d).
 
 ## Current work: build phase 1 (Hisaab core)
-Branch `rebuild`. The build steps are "Implementation Tasks" T1–T7 at the end of the design doc (eng review), in this order:
+Branch `rebuild`. **Status (2026-09-27): T1–T6 done and committed; T7 and the release steps are in `TODOS.md`** (Google sign-in keys, deploy, UPI link check on phones, first CI run on GitHub). Merge to `main` when phase 1 ships. The build steps are "Implementation Tasks" T1–T7 at the end of the design doc (eng review), in this order:
 1. **T1** Tag `main` as `v1-legacy`, create branch `rebuild`, remove the old Next.js files (keep `docs/`, `TODOS.md`, `CLAUDE.md`; rewrite `README.md`), scaffold the new app at the repo root.
 2. **T2** `src/domain/money.ts` + `src/domain/hisaab.ts`: pure functions, tests first, all phase-1 fixtures plus a property test for the S7 invariants.
 3. **T3** Drizzle schema (eng review Section 1 data model) + better-auth.
@@ -45,5 +45,12 @@ Split a file when it passes ~400 lines.
 - UI copy in plain, easy English. No "equal" labels: show only exceptions.
 - Put `gstack-shortcut(dec-ef00621d): browser errors not reported, upgrade before non-family users` at the Hono error handler.
 
-## Commands (to be created in T1)
-`pnpm dev` · `pnpm test` · `pnpm test:e2e` · `pnpm db:migrate` · `pnpm build`
+## Commands
+`pnpm dev` · `pnpm test` · `pnpm test:e2e` · `pnpm db:migrate` · `pnpm db:generate` · `pnpm build` · `pnpm typecheck`
+
+## Local setup notes
+- Database: Neon (`DATABASE_URL`, pooled). Migrations use the direct host automatically. Tests use `TEST_DATABASE_URL` (Neon database `neondb_test`) and truncate it; `tests/helpers.ts` refuses any other database.
+- Dev ports: API `PORT=3100`, Vite `DEV_PORT=5180` (3000 and 5173 are used by another project on this machine). e2e serves the built app on 3200.
+- Dev login: `DEV_LOGIN=1` with `NODE_ENV=development` shows a test email login. Google appears once `GOOGLE_CLIENT_ID`/`SECRET` are set.
+- Server code runs on Node's type stripping (no build step): relative imports need the `.ts` extension; no enums or parameter properties.
+- Shared server helpers live in `src/server/core.ts` (errors, clock, authz, sheet locks and versions, opening sheets, tokens); `src/server/routes/me.ts` holds profile, account deletion and Home.

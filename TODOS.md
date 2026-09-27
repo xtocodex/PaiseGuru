@@ -44,6 +44,44 @@ Every feature in `docs/designs/paiseguru-mvp.md` is in scope. A build phase star
 **Depends on:** Gate 2
 - [ ] Met on: ____
 
+## Before the family uses phase 1
+
+### T7: Notebook replay fixture (founder)
+**What:** Add the 2 anonymized notebook months as a test in `src/domain/hisaab.test.ts`, written like the "no-pool fixture" test there (participants with their exceptions, one bill per payment, expected shares and payments). Then `pnpm test`.
+**Why:** Gate 1. Proves the S7 formula matches what the family really did.
+**Effort:** S · **Priority:** P1
+
+### Set up Google sign-in (better-auth)
+**What:** Google Cloud console → OAuth client (Web). Authorized redirect URI: `<BETTER_AUTH_URL>/api/auth/callback/google` (dev: `http://localhost:5180/api/auth/callback/google`). Put `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`. The sign-in page shows the Google button once both are set.
+**Production:** `NODE_ENV=production`, no `DEV_LOGIN`, a new `BETTER_AUTH_SECRET` (`openssl rand -base64 32`), `BETTER_AUTH_URL` = the public https URL. Changing the secret turns off every invite and statement link.
+**Effort:** S · **Priority:** P1
+
+### Deploy phase 1
+**What:** Pick the Node host (Railway, Render or Fly). Release step `pnpm db:migrate`, then `pnpm build && pnpm start`. Uptime ping on `/health`.
+**Effort:** S · **Priority:** P1 · **Depends on:** Google sign-in
+
+### Check UPI links on real phones (CEO T1)
+**What:** On a deployed https URL, tap "Pay with UPI" on a month's payment from GPay, PhonePe and Paytm (Android and iPhone). Record whether the amount is filled, blocked or warned. "Copy UPI ID + amount" is the fallback that already ships.
+**Effort:** S · **Priority:** P1
+
+### Confirm CI is green
+**What:** Push branch `rebuild` and check the GitHub Actions run (Postgres 18 service, typecheck, unit + integration, e2e). Not yet run on GitHub.
+**Effort:** S · **Priority:** P1
+
+## Phase 1 follow-ups
+
+### Save QR image for payments (S8)
+**What:** "Save QR image" next to "Copy UPI ID + amount" on each payment. Skipped in phase 1; add if the UPI link check shows apps block P2P links.
+**Effort:** S · **Priority:** P2
+
+### Design review of the phase 1 screens
+**What:** Run /design-review on the running app (390 px). Screens use plain Tailwind; shadcn/ui components were not needed yet.
+**Effort:** S · **Priority:** P2
+
+### Faster local tests
+**What:** Integration tests take ~4 minutes against Neon (network latency per query). A Neon branch closer to India or a local Postgres for `TEST_DATABASE_URL` makes them take seconds. CI already uses a local Postgres service.
+**Effort:** S · **Priority:** P3
+
 ## Before inviting people outside the family
 
 ### Privacy page
@@ -63,3 +101,5 @@ Every feature in `docs/designs/paiseguru-mvp.md` is in scope. A build phase star
 **Depends on:** None
 
 ## Completed
+
+- Build phase 1, T1–T6 (2026-09-27, branch `rebuild`): scaffold; money and Hisaab domain with S2/S7 fixtures and invariant property test; Drizzle schema and better-auth wiring; Hono API with authz, sheet versions, close snapshot, reopen, payments, statement page; client pages; Playwright e2e (4 flows) and CI workflow.

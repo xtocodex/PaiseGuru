@@ -238,3 +238,17 @@ describe('home (S7 ledger lines, S15 news)', () => {
     expect(home.payments).toMatchObject([{ fromName: 'Suresh', toName: 'Ramesh', amountPaise: R(100), iPay: true }])
   })
 })
+
+describe('news under concurrent Home loads (S15)', () => {
+  it('two tabs loading Home at once show each new item exactly once', async () => {
+    const { admin, hisaabId, id } = await setup()
+    const link = (await admin.req('POST', `/api/hisaabs/${hisaabId}/invite`)).body.link
+    const suresh = await signUp('Suresh')
+    await join(suresh, link, id('Suresh'))
+    await admin.req('POST', `/api/hisaabs/${hisaabId}/members/${id('Suresh')}/approve`)
+    await suresh.req('GET', '/api/home')
+    await admin.req('POST', `/api/hisaabs/${hisaabId}/entries`, bill(id('Ramesh')))
+    const [a, b] = await Promise.all([suresh.req('GET', '/api/home'), suresh.req('GET', '/api/home')])
+    expect(a.body.news.length + b.body.news.length).toBe(1)
+  })
+})
