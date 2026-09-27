@@ -1,5 +1,5 @@
 // Build a ready-to-upload Vercel deployment (Build Output API v3) into .vercel/output:
-// static/ = the Vite build, functions/index.func = the Hono server bundled into one file.
+// static/ = the Vite build, functions/_server.func = the Hono server bundled into one file.
 // Deploy with: pnpm deploy:vercel
 import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
@@ -10,7 +10,7 @@ rmSync(out, { recursive: true, force: true })
 execSync('pnpm build', { stdio: 'inherit' })
 cpSync('dist', `${out}/static`, { recursive: true })
 
-const fn = `${out}/functions/index.func`
+const fn = `${out}/functions/_server.func`
 mkdirSync(fn, { recursive: true })
 await build({
   entryPoints: ['src/server/vercel.ts'],
@@ -33,7 +33,8 @@ writeFileSync(
   JSON.stringify({
     version: 3,
     routes: [
-      { src: '^/(api/.*|s/.*|health)$', dest: '/index' },
+      { src: '^/$', dest: '/index.html' }, // Vercel would otherwise send the root path to the function
+      { src: '^/(api/.*|s/.*|health)$', dest: '/_server' },
       { handle: 'filesystem' },
       { src: '^/assets/.*$', status: 404 },
       { src: '^/.*$', dest: '/index.html' }, // SPA: every other path is the app
