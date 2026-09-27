@@ -56,10 +56,6 @@ Every feature in `docs/designs/paiseguru-mvp.md` is in scope. A build phase star
 **Production:** `NODE_ENV=production`, no `DEV_LOGIN`, a new `BETTER_AUTH_SECRET` (`openssl rand -base64 32`), `BETTER_AUTH_URL` = the public https URL. Changing the secret turns off every invite and statement link.
 **Effort:** S · **Priority:** P1
 
-### Finish the custom domain
-**What:** At BigRock (DNS for gopalmohapatra.in) add `A` record `paiseguru` → `76.76.21.21`. Vercel then issues HTTPS for https://paiseguru.gopalmohapatra.in. Until then use https://paiseguru.vercel.app. Deployed 2026-09-27 on Vercel.
-**Effort:** S · **Priority:** P1
-
 ### Uptime ping
 **What:** A free uptime monitor on `/health` (checks the database too).
 **Effort:** S · **Priority:** P2
@@ -105,5 +101,7 @@ Every feature in `docs/designs/paiseguru-mvp.md` is in scope. A build phase star
 **Depends on:** None
 
 ## Completed
+
+- Live on Vercel at https://paiseguru.gopalmohapatra.in (DNS A record at BigRock, 2026-09-27).
 
 - Build phase 1, T1–T6 (2026-09-27, branch `rebuild`): scaffold; money and Hisaab domain with S2/S7 fixtures and invariant property test; Drizzle schema and better-auth wiring; Hono API with authz, sheet versions, close snapshot, reopen, payments, statement page; client pages; Playwright e2e (4 flows) and CI workflow.

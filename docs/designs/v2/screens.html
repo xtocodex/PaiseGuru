@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PaiseGuru v2 · all screens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --ink: #23306e; --ink-2: #3a4a96; --ink-soft: #e6e9f5;
+    --paper: #f4f5f7; --card: #ffffff; --line: #e3e6ec;
+    --text: #1a1f2e; --muted: #5d6477; --faint: #6b7285;
+    --gets: #0e7a5c; --gets-soft: #e3f3ec; --pays: #b42d45; --pays-soft: #fbe9ec;
+    --marigold: #f0a30a; --marigold-soft: #fff3d6;
+    --r-sm: 10px; --r-md: 14px; --r-lg: 20px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #d9dce3; color: var(--text); padding: 40px; }
+  .board-title { font-size: 28px; font-weight: 700; color: var(--ink); }
+  .board-sub { color: var(--muted); margin: 6px 0 32px; max-width: 70ch; line-height: 1.5; }
+  .grid { display: grid; grid-template-columns: repeat(4, 390px); gap: 48px 36px; }
+  figure { display: flex; flex-direction: column; gap: 12px; }
+  figcaption { font-weight: 600; color: var(--text); }
+  figcaption span { display: block; font-weight: 400; color: var(--muted); font-size: 14px; margin-top: 2px; }
+
+  /* phone */
+  .phone { width: 390px; height: 844px; background: var(--paper); border-radius: 44px; overflow: hidden; position: relative;
+           box-shadow: 0 0 0 10px #10131c, 0 30px 60px -20px rgba(16, 19, 28, .45); display: flex; flex-direction: column; }
+  .status { height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 0 28px; font-size: 14px; font-weight: 600; flex: none; }
+  .status i { display: inline-flex; gap: 5px; }
+  .status svg { width: 16px; height: 16px; }
+  .scroll { flex: 1; overflow: hidden; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+  .topbar { display: flex; align-items: center; gap: 10px; padding: 6px 16px 10px; flex: none; }
+  .topbar h1 { font-size: 22px; font-weight: 700; flex: 1; letter-spacing: -.01em; }
+  .topbar .sub { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .icon-btn { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--text); background: transparent; }
+  .icon-btn.soft { background: var(--card); border: 1px solid var(--line); }
+  .icon-btn svg { width: 22px; height: 22px; }
+
+  .tabbar { flex: none; height: 84px; background: var(--card); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5, 1fr);
+            padding: 8px 6px 22px; align-items: start; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--faint); }
+  .tab svg { width: 24px; height: 24px; }
+  .tab.on { color: var(--ink); font-weight: 600; }
+  .tab.add { margin-top: -26px; }
+  .tab.add b { width: 58px; height: 58px; border-radius: 20px; background: var(--marigold); color: #2b1d00; display: grid; place-items: center;
+               box-shadow: 0 6px 14px -6px rgba(16, 19, 28, .35); border: 4px solid var(--paper); }
+  .tab.add svg { width: 28px; height: 28px; }
+
+  .card { background: var(--card); border-radius: var(--r-md); padding: 16px; border: 1px solid var(--line); }
+  .h2 { font-size: 15px; font-weight: 600; color: var(--text); }
+  .muted { color: var(--muted); font-size: 13px; }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+  .amt-xl { font-size: 40px; font-weight: 700; letter-spacing: -.02em; line-height: 1.05; }
+  .amt-lg { font-size: 28px; font-weight: 700; letter-spacing: -.01em; }
+  .gets { color: var(--gets); } .pays { color: var(--pays); }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .between { justify-content: space-between; }
+  .list { display: flex; flex-direction: column; }
+  .li { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .li:last-child { border-bottom: 0; }
+  .li .t { flex: 1; min-width: 0; }
+  .li .t b { display: block; font-weight: 500; font-size: 15px; }
+  .li .t small { color: var(--muted); font-size: 13px; }
+  .li .a { font-weight: 600; font-size: 15px; text-align: right; }
+  .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 14px; flex: none; color: #fff; }
+  .av.b { background: #23306e; } .av.k { background: #0e7a5c; } .av.s { background: #8a3f9e; } .av.u { background: #b56a00; } .av.p { background: #cfd4e0; color: var(--text); }
+  .cat { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--ink-soft); color: var(--ink); flex: none; }
+  .cat svg { width: 18px; height: 18px; }
+  .cat.g { background: var(--gets-soft); color: var(--gets); }
+  .tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--ink-soft); color: var(--ink); }
+  .tag.m { background: var(--marigold-soft); color: #7a4f00; }
+  .tag.g { background: var(--gets-soft); color: var(--gets); }
+  .tag.r { background: var(--pays-soft); color: var(--pays); }
+  .tag.o { background: #eef0f4; color: var(--muted); }
+  .btn { height: 52px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 16px; }
+  .btn svg { width: 20px; height: 20px; }
+  .btn.primary { background: var(--ink); color: #fff; }
+  .btn.ghost { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+  .btn.sm { height: 40px; font-size: 14px; padding: 0 14px; border-radius: 12px; }
+  .btn.upi { background: var(--gets); color: #fff; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
+  .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip svg { width: 16px; height: 16px; }
+  .seg { display: grid; background: #e7e9ef; border-radius: 12px; padding: 4px; gap: 4px; }
+  .seg span { height: 38px; border-radius: 9px; display: grid; place-items: center; font-size: 14px; font-weight: 500; color: var(--muted); }
+  .seg span.on { background: var(--card); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(16, 19, 28, .12); }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .input { height: 52px; border-radius: 12px; border: 1px solid #cfd4de; background: var(--card); padding: 0 14px; display: flex; align-items: center; font-size: 16px; }
+  .input.focus { border-color: var(--ink); box-shadow: 0 0 0 3px var(--ink-soft); }
+  .input .ph { color: var(--faint); }
+
+  /* the signature element: payment slip */
+  .slip { background: var(--card); border-radius: 16px; border: 1px solid var(--line); position: relative; overflow: hidden; }
+  .slip .top { padding: 14px 16px 12px; display: flex; align-items: center; gap: 10px; }
+  .slip .who { display: flex; align-items: center; gap: 6px; }
+  .slip .who svg { width: 18px; height: 18px; color: var(--faint); }
+  .slip .top .num { margin-left: auto; font-size: 22px; font-weight: 700; }
+  .slip .perf { height: 0; border-top: 2px dashed var(--line); margin: 0 14px; position: relative; }
+  .slip .perf::before, .slip .perf::after { content: ''; position: absolute; top: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); border: 1px solid var(--line); }
+  .slip .perf::before { left: -23px; } .slip .perf::after { right: -23px; }
+  .slip .bot { padding: 10px 16px 14px; display: flex; gap: 8px; align-items: center; }
+  .slip .bot .muted { flex: 1; }
+  .slip.paid { opacity: .75; }
+  .slip.paid .top .num { text-decoration: line-through; text-decoration-thickness: 2px; color: var(--muted); }
+
+  .sheet-scrim { position: absolute; inset: 0; background: rgba(16, 19, 28, .45); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--card); border-radius: 24px 24px 0 0; padding: 10px 16px 28px; display: flex; flex-direction: column; gap: 14px; }
+  .grabber { width: 40px; height: 5px; border-radius: 3px; background: #d3d7e0; margin: 0 auto 4px; }
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .keypad span { height: 50px; border-radius: 12px; background: var(--paper); display: grid; place-items: center; font-size: 22px; font-weight: 500; }
+  .banner { background: var(--ink); color: #fff; border-radius: var(--r-md); padding: 14px; display: flex; gap: 12px; align-items: center; }
+  .banner svg { width: 22px; height: 22px; flex: none; }
+  .banner b { display: block; font-size: 15px; } .banner small { color: #c9cfea; font-size: 13px; }
+  .bar { height: 8px; border-radius: 4px; background: var(--ink-soft); overflow: hidden; display: flex; }
+  .bar i { display: block; height: 100%; }
+  .steps { display: flex; gap: 6px; } .steps i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); } .steps i.on { background: var(--ink); }
+  .note { font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .brand { font-size: 30px; font-weight: 700; color: var(--ink); letter-spacing: -.02em; }
+  .credit { text-align: center; font-size: 12px; color: var(--faint); }
+  .credit b { color: var(--muted); }
+  .danger { color: var(--pays); }
+  .date-h { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<p class="board-title">PaiseGuru v2 · all screens</p>
+<p class="board-sub">Mockups for review, 390 × 844 (iPhone 14 size). Real flow, sample family data. Installed from the browser, it opens full-screen like an app. Colours: register-ink blue for the brand, green for money coming back, red for money to pay, marigold only for the add button and "pays more".</p>
+
+<div class="grid">
+
+<!-- 1 SIGN IN -->
+<figure><figcaption>1. Sign in<span>User ID + password now, Google button appears later</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="scroll" style="padding:24px 24px 24px; justify-content:space-between">
+    <div style="margin-top:56px">
+      <div style="width:64px;height:64px;border-radius:20px;background:var(--ink);display:grid;place-items:center;color:#fff;margin-bottom:22px"><i data-lucide="notebook-pen" style="width:32px;height:32px"></i></div>
+      <p class="brand">PaiseGuru</p>
+      <p style="font-size:17px;color:var(--muted);margin-top:8px;line-height:1.45">Your family's hisaab, settled every month in the fewest UPI payments.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="field"><label>User ID</label><div class="input focus">bhabesh</div></div>
+      <div class="field"><label>Password</label><div class="input"><span style="letter-spacing:3px">••••••••••</span><i data-lucide="eye" style="width:20px;margin-left:auto;color:var(--faint)"></i></div></div>
+      <div class="btn primary">Sign in</div>
+      <p class="note" style="text-align:center">No user ID yet? Ask your Hisaab admin.</p>
+    </div>
+    <p class="credit">A product of <b>xtocodex</b> · Founder <b>Gopal Mohapatra</b></p>
+  </div>
+</div></figure>
+
+<!-- 2 HOME -->
+<figure><figcaption>2. Home<span>What you need to do first, then your month</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><div style="flex:1"><p class="sub">Good evening</p><h1>Bhabesh</h1></div><div class="icon-btn soft"><i data-lucide="bell"></i></div></div>
+  <div class="scroll">
+    <div class="banner"><i data-lucide="smartphone"></i><div style="flex:1"><b>Add PaiseGuru to your home screen</b><small>Opens full-screen, like an app</small></div><div class="btn sm" style="background:#fff;color:var(--ink)">Install</div></div>
+    <p class="h2" style="margin-top:4px">To settle</p>
+    <div class="slip">
+      <div class="top"><div class="who"><div class="av b">B</div><i data-lucide="arrow-right"></i><div class="av k">K</div></div><div><b style="font-size:15px">You pay Khitish</b><div class="muted">Dadi's care · August</div></div><span class="num pays">₹1,500</span></div>
+      <div class="perf"></div>
+      <div class="bot"><span class="muted">khitish@okaxis</span><div class="btn sm ghost">Mark paid</div><div class="btn sm upi"><i data-lucide="zap"></i>Pay</div></div>
+    </div>
+    <div class="card">
+      <div class="row between"><p class="h2">September so far</p><span class="tag">Open</span></div>
+      <p class="muted" style="margin-top:4px">Dadi's care · 18 bills</p>
+      <div class="row between" style="margin-top:12px;align-items:flex-end">
+        <div><p class="muted">Your share if closed today</p><p class="amt-lg num">₹4,250</p></div>
+        <div style="text-align:right"><p class="muted">You paid</p><p class="num gets" style="font-size:20px;font-weight:700">₹6,100</p></div>
+      </div>
+      <div class="bar" style="margin-top:12px"><i style="width:59%;background:var(--ink)"></i></div>
+      <p class="muted" style="margin-top:6px">₹24,600 spent in total · closes whenever you're ready</p>
+    </div>
+    <p class="h2">New since your last visit</p>
+    <div class="card" style="padding:4px 16px">
+      <div class="list">
+        <div class="li"><div class="av s">S</div><div class="t"><b>Sanjita added Medicines</b><small>Dadi's care · 2h ago</small></div><span class="a num">₹1,240</span></div>
+        <div class="li"><div class="av u">S</div><div class="t"><b>Suresh marked ₹2,000 paid</b><small>August · yesterday</small></div><span class="tag g">Paid</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar"><span class="tab on"><i data-lucide="house"></i>Home</span><span class="tab"><i data-lucide="notebook-tabs"></i>Hisaabs</span><span class="tab add"><b><i data-lucide="plus"></i></b></span><span class="tab"><i data-lucide="activity"></i>Activity</span><span class="tab"><i data-lucide="circle-user-round"></i>Me</span></div>
+</div></figure>
+
+<!-- 3 HISAABS LIST -->
+<figure><figcaption>3. Hisaabs<span>All your shared notebooks</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><h1>Hisaabs</h1><div class="icon-btn soft"><i data-lucide="plus"></i></div></div>
+  <div class="scroll">
+    <div class="card">
+      <div class="row"><div class="cat" style="width:48px;height:48px;border-radius:14px"><i data-lucide="heart-handshake"></i></div><div style="flex:1"><p style="font-weight:600;font-size:17px">Dadi's care</p><p class="muted">For Dadi · 4 members · you're the admin</p></div><i data-lucide="chevron-right" style="color:var(--faint)"></i></div>
+      <div class="row between" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><div><p class="muted">September</p><p class="num" style="font-weight:600">₹24,600 <span class="tag" style="margin-left:4px">Open</span></p></div><div style="text-align:right"><p class="muted">August</p><p class="num" style="font-weight:600">₹21,300 <span class="tag m" style="margin-left:4px">1 to pay</span></p></div></div>
+    </div>
+    <div class="card">
+      <div class="row"><div class="cat" style="width:48px;height:48px;border-radius:14px;background:var(--marigold-soft);color:#7a4f00"><i data-lucide="house"></i></div><div style="flex:1"><p style="font-weight:600;font-size:17px">Flat 402</p><p class="muted">3 members</p></div><i data-lucide="chevron-right" style="color:var(--faint)"></i></div>
+      <div class="row between" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><div><p class="muted">September</p><p class="num" style="font-weight:600">₹8,900 <span class="tag" style="margin-left:4px">Open</span></p></div><div style="text-align:right"><p class="muted">August</p><p class="num" style="font-weight:600">₹9,450 <span class="tag g" style="margin-left:4px">Settled</span></p></div></div>
+    </div>
+    <div class="card" style="border-style:dashed;text-align:center;padding:22px">
+      <p class="h2">Start a new Hisaab</p><p class="muted" style="margin:4px 0 12px">For a parent, a flat, a trip or a mess.</p>
+      <div class="btn primary" style="height:44px">Create Hisaab</div>
+    </div>
+  </div>
+  <div class="tabbar"><span class="tab"><i data-lucide="house"></i>Home</span><span class="tab on"><i data-lucide="notebook-tabs"></i>Hisaabs</span><span class="tab add"><b><i data-lucide="plus"></i></b></span><span class="tab"><i data-lucide="activity"></i>Activity</span><span class="tab"><i data-lucide="circle-user-round"></i>Me</span></div>
+</div></figure>
+
+<!-- 4 HISAAB DETAIL -->
+<figure><figcaption>4. Hisaab<span>Months, Dadi's money, members, invite</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><div class="icon-btn"><i data-lucide="chevron-left"></i></div><div style="flex:1"><h1>Dadi's care</h1><p class="sub">For Dadi · you're the admin</p></div><div class="icon-btn soft"><i data-lucide="user-plus"></i></div></div>
+  <div class="scroll">
+    <div class="chips"><span class="chip on">September</span><span class="chip">August <span class="tag m" style="padding:1px 6px">1</span></span><span class="chip">July</span><span class="chip">June</span></div>
+    <div class="card" style="background:var(--ink);color:#fff;border:0">
+      <p style="color:#c9cfea;font-size:13px">September · open</p>
+      <p class="amt-xl num" style="margin-top:4px">₹24,600</p>
+      <p style="color:#c9cfea;font-size:13px;margin-top:4px">₹20,400 divided between 4 · ₹4,200 from Dadi's money</p>
+      <div style="display:flex;gap:8px;margin-top:14px"><div class="btn sm" style="background:var(--marigold);color:#2b1d00;flex:1"><i data-lucide="plus"></i>Add bill</div><div class="btn sm" style="background:rgba(255,255,255,.14);color:#fff;flex:1"><i data-lucide="check-check"></i>Close month</div></div>
+    </div>
+    <div class="card">
+      <div class="row between"><p class="h2">Dadi's money</p><i data-lucide="wallet" style="width:20px;color:var(--faint)"></i></div>
+      <div class="row between" style="margin-top:10px">
+        <div><p class="muted">Pension in</p><p class="num" style="font-weight:600">₹10,000</p></div>
+        <div><p class="muted">Used for bills</p><p class="num" style="font-weight:600">₹4,200</p></div>
+        <div style="text-align:right"><p class="muted">Left</p><p class="num gets" style="font-weight:700">₹5,800</p></div>
+      </div>
+    </div>
+    <div class="card" style="padding:4px 16px">
+      <div class="list">
+        <div class="li"><div class="av b">B</div><div class="t"><b>Bhabesh (you)</b><small>Admin</small></div><span class="tag m">Pays ₹2,000 extra</span></div>
+        <div class="li"><div class="av k">K</div><div class="t"><b>Khitish</b><small>Joined</small></div></div>
+        <div class="li"><div class="av s">S</div><div class="t"><b>Sanjita</b><small>Waiting for your approval</small></div><div class="btn sm primary" style="height:34px">Approve</div></div>
+        <div class="li"><div class="av p">S</div><div class="t"><b>Suresh</b><small>Not joined yet</small></div><i data-lucide="send" style="width:20px;color:var(--ink)"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar"><span class="tab"><i data-lucide="house"></i>Home</span><span class="tab on"><i data-lucide="notebook-tabs"></i>Hisaabs</span><span class="tab add"><b><i data-lucide="plus"></i></b></span><span class="tab"><i data-lucide="activity"></i>Activity</span><span class="tab"><i data-lucide="circle-user-round"></i>Me</span></div>
+</div></figure>
+
+<!-- 5 MONTH (OPEN) -->
+<figure><figcaption>5. Month: bills<span>Every entry, grouped by day, with who paid</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><div class="icon-btn"><i data-lucide="chevron-left"></i></div><div style="flex:1"><h1>September</h1><p class="sub">Dadi's care · 18 entries</p></div><div class="icon-btn soft"><i data-lucide="share-2"></i></div></div>
+  <div class="scroll">
+    <div class="seg" style="grid-template-columns:1fr 1fr"><span class="on">Bills</span><span>Shares</span></div>
+    <div class="card" style="padding:12px 16px">
+      <p class="muted">By category</p>
+      <div class="bar" style="margin:8px 0 8px;height:10px"><i style="width:48%;background:var(--ink)"></i><i style="width:24%;background:#6f7fc6"></i><i style="width:16%;background:var(--marigold)"></i><i style="width:12%;background:#c6cbe0"></i></div>
+      <div class="chips" style="gap:12px;font-size:13px;color:var(--muted)"><span>● Healthcare ₹11,800</span><span>● Food ₹5,900</span><span>● Help ₹3,900</span><span>● Other ₹3,000</span></div>
+    </div>
+    <p class="date-h">Today, 27 Sep</p>
+    <div class="card" style="padding:0 16px">
+      <div class="list">
+        <div class="li"><div class="cat"><i data-lucide="pill"></i></div><div class="t"><b>Medicines</b><small>Paid by Sanjita · Healthcare</small></div><span class="a num">₹1,240</span></div>
+        <div class="li"><div class="cat g"><i data-lucide="landmark"></i></div><div class="t"><b>Pension</b><small>Money in for Dadi · not divided</small></div><span class="a num gets">+₹10,000</span></div>
+      </div>
+    </div>
+    <p class="date-h">25 Sep</p>
+    <div class="card" style="padding:0 16px">
+      <div class="list">
+        <div class="li"><div class="cat"><i data-lucide="stethoscope"></i></div><div class="t"><b>Doctor visit</b><small>From Dadi's money · Healthcare</small></div><span class="a num">₹1,500</span></div>
+        <div class="li"><div class="cat"><i data-lucide="shopping-basket"></i></div><div class="t"><b>Groceries</b><small>Paid by you · Food</small></div><span class="a num">₹2,350</span></div>
+        <div class="li"><div class="cat"><i data-lucide="hand-coins"></i></div><div class="t"><b>Khitish gave you</b><small>Money given</small></div><span class="a num">₹3,000</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar"><span class="tab"><i data-lucide="house"></i>Home</span><span class="tab on"><i data-lucide="notebook-tabs"></i>Hisaabs</span><span class="tab add"><b><i data-lucide="plus"></i></b></span><span class="tab"><i data-lucide="activity"></i>Activity</span><span class="tab"><i data-lucide="circle-user-round"></i>Me</span></div>
+</div></figure>
+
+<!-- 6 ADD ENTRY -->
+<figure><figcaption>6. Add a bill<span>Bottom sheet from the + button; amount first</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><h1 style="opacity:.4">September</h1></div>
+  <div class="sheet-scrim"></div>
+  <div class="sheet">
+    <div class="grabber"></div>
+    <div class="row between"><p class="h2" style="font-size:17px">Add to Dadi's care</p><i data-lucide="x" style="color:var(--muted)"></i></div>
+    <div class="seg" style="grid-template-columns:repeat(4,1fr)"><span class="on">Bill</span><span>Refund</span><span>Given</span><span>Money in</span></div>
+    <div style="text-align:center;padding:4px 0"><p class="num" style="font-size:44px;font-weight:700;letter-spacing:-.02em">₹1,240<span style="display:inline-block;width:2px;height:40px;background:var(--ink);vertical-align:-6px;margin-left:2px"></span></p><p class="muted">Medicines</p></div>
+    <div class="field"><label>Paid by</label>
+      <div class="chips"><span class="chip"><span class="av b" style="width:22px;height:22px;font-size:11px">B</span>You</span><span class="chip">Khitish</span><span class="chip on">Sanjita</span><span class="chip">Suresh</span><span class="chip">Dadi's money</span></div></div>
+    <div class="field"><label>Category</label>
+      <div class="chips"><span class="chip on"><i data-lucide="pill"></i>Healthcare</span><span class="chip"><i data-lucide="shopping-basket"></i>Food</span><span class="chip"><i data-lucide="hand-helping"></i>Help</span><span class="chip">More</span></div></div>
+    <div class="row" style="gap:8px"><span class="chip"><i data-lucide="calendar"></i>Today</span><span class="chip" style="flex:1"><i data-lucide="pencil"></i>Medicines</span></div>
+    <p class="note" style="text-align:center">The phone's number keyboard opens for the amount.</p>
+    <div class="btn primary">Save bill</div>
+  </div>
+</div></figure>
+
+<!-- 7 CLOSE STEP 1 -->
+<figure><figcaption>7. Close month, step 1<span>Check the total, choose who pays more</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><div class="icon-btn"><i data-lucide="x"></i></div><div style="flex:1"><h1>Close September</h1><p class="sub">Step 1 of 2 · who pays what</p></div></div>
+  <div class="scroll">
+    <div class="steps"><i class="on"></i><i></i></div>
+    <div class="card">
+      <p class="muted">To divide between 4 members</p>
+      <p class="amt-xl num">₹20,400</p>
+      <p class="muted" style="margin-top:4px">Plus ₹4,200 from Dadi's money, not divided</p>
+    </div>
+    <div class="card" style="border:2px solid var(--marigold)">
+      <p class="h2">Does someone pay more this month?</p>
+      <div class="chips" style="margin-top:12px"><span class="chip on">Bhabesh</span><span class="chip">Khitish</span><span class="chip">Sanjita</span><span class="chip">Suresh</span><span class="chip">No one</span></div>
+      <div class="seg" style="grid-template-columns:1fr 1fr;margin-top:12px"><span>Fixed amount</span><span class="on">Extra on top</span></div>
+      <div class="input" style="margin-top:12px"><span class="num" style="font-weight:600">₹2,000</span><span class="muted" style="margin-left:auto">extra</span></div>
+      <p class="note" style="margin-top:8px">Everyone shares ₹18,400 equally; Bhabesh adds ₹2,000. Same as last month.</p>
+    </div>
+    <div class="card" style="padding:4px 16px">
+      <div class="list">
+        <div class="li"><div class="av b">B</div><div class="t"><b>Bhabesh</b><small><span class="tag m">+₹2,000 extra</span></small></div><span class="a num">₹6,600</span></div>
+        <div class="li"><div class="av k">K</div><div class="t"><b>Khitish</b></div><span class="a num">₹4,600</span></div>
+        <div class="li"><div class="av s">S</div><div class="t"><b>Sanjita</b></div><span class="a num">₹4,600</span></div>
+        <div class="li"><div class="av u">S</div><div class="t"><b>Suresh</b></div><span class="a num">₹4,600</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:10px 16px 26px;background:var(--paper);flex:none"><div class="btn primary">See who pays whom</div></div>
+</div></figure>
+
+<!-- 8 CLOSE STEP 2 -->
+<figure><figcaption>8. Close month, step 2<span>Paid vs share, the payments, confirm</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><div class="icon-btn"><i data-lucide="chevron-left"></i></div><div style="flex:1"><h1>Close September</h1><p class="sub">Step 2 of 2 · settle up</p></div></div>
+  <div class="scroll">
+    <div class="steps"><i class="on"></i><i class="on"></i></div>
+    <div class="card" style="padding:4px 16px">
+      <div class="list">
+        <div class="li"><div class="av b">B</div><div class="t"><b>Bhabesh</b><small>Paid ₹9,100 · share ₹6,600</small></div><span class="a num gets">gets ₹2,500</span></div>
+        <div class="li"><div class="av k">K</div><div class="t"><b>Khitish</b><small>Paid ₹6,300 · share ₹4,600</small></div><span class="a num gets">gets ₹1,700</span></div>
+        <div class="li"><div class="av s">S</div><div class="t"><b>Sanjita</b><small>Paid ₹3,400 · share ₹4,600</small></div><span class="a num pays">pays ₹1,200</span></div>
+        <div class="li"><div class="av u">S</div><div class="t"><b>Suresh</b><small>Paid ₹1,600 · share ₹4,600</small></div><span class="a num pays">pays ₹3,000</span></div>
+      </div>
+    </div>
+    <p class="h2">3 payments settle everyone</p>
+    <div class="slip"><div class="top"><div class="who"><div class="av u">S</div><i data-lucide="arrow-right"></i><div class="av b">B</div></div><b style="font-size:15px">Suresh pays Bhabesh</b><span class="num">₹2,500</span></div></div>
+    <div class="slip"><div class="top"><div class="who"><div class="av s">S</div><i data-lucide="arrow-right"></i><div class="av k">K</div></div><b style="font-size:15px">Sanjita pays Khitish</b><span class="num">₹1,200</span></div></div>
+    <div class="slip"><div class="top"><div class="who"><div class="av u">S</div><i data-lucide="arrow-right"></i><div class="av k">K</div></div><b style="font-size:15px">Suresh pays Khitish</b><span class="num">₹500</span></div></div>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+      <div class="btn primary"><i data-lucide="lock"></i>Close month and share</div>
+      <p class="note" style="text-align:center">Bills after closing go into October.</p>
+    </div>
+  </div>
+</div></figure>
+
+<!-- 9 CLOSED MONTH -->
+<figure><figcaption>9. Closed month<span>Pay with UPI, mark paid, share on WhatsApp</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><div class="icon-btn"><i data-lucide="chevron-left"></i></div><div style="flex:1"><h1>August</h1><p class="sub">Dadi's care · closed 1 Sep</p></div><span class="tag m">1 of 3 left</span></div>
+  <div class="scroll">
+    <div class="card"><div class="row between"><div><p class="muted">Total</p><p class="amt-lg num">₹21,300</p></div><div class="btn sm upi" style="background:#1fa855"><i data-lucide="message-circle"></i>WhatsApp</div></div></div>
+    <p class="h2">Payments</p>
+    <div class="slip">
+      <div class="top"><div class="who"><div class="av b">B</div><i data-lucide="arrow-right"></i><div class="av k">K</div></div><div><b style="font-size:15px">You pay Khitish</b><div class="muted">khitish@okaxis</div></div><span class="num pays">₹1,500</span></div>
+      <div class="perf"></div>
+      <div class="bot"><div class="btn sm ghost"><i data-lucide="copy"></i>Copy</div><div class="btn sm ghost" style="flex:1">Mark paid</div><div class="btn sm upi" style="flex:1"><i data-lucide="zap"></i>Pay</div></div>
+    </div>
+    <div class="slip paid"><div class="top"><div class="who"><div class="av u">S</div><i data-lucide="arrow-right"></i><div class="av b">B</div></div><div><b style="font-size:15px">Suresh paid you</b><div class="muted">via UPI · 3 Sep</div></div><span class="num">₹2,000</span></div></div>
+    <div class="slip paid"><div class="top"><div class="who"><div class="av s">S</div><i data-lucide="arrow-right"></i><div class="av k">K</div></div><div><b style="font-size:15px">Sanjita paid Khitish</b><div class="muted">marked by Khitish · 2 Sep</div></div><span class="num">₹800</span></div></div>
+    <div class="card" style="padding:12px 16px"><div class="row"><i data-lucide="link" style="width:20px;color:var(--ink)"></i><div style="flex:1"><b style="font-size:14px">Statement link</b><p class="muted">Anyone with it can view this month</p></div><span style="color:var(--ink);font-weight:600;font-size:14px">Copy</span></div></div>
+    <p class="note" style="text-align:center">Only Bhabesh (admin) can reopen this month.</p>
+  </div>
+  <div class="tabbar"><span class="tab"><i data-lucide="house"></i>Home</span><span class="tab on"><i data-lucide="notebook-tabs"></i>Hisaabs</span><span class="tab add"><b><i data-lucide="plus"></i></b></span><span class="tab"><i data-lucide="activity"></i>Activity</span><span class="tab"><i data-lucide="circle-user-round"></i>Me</span></div>
+</div></figure>
+
+<!-- 10 ACTIVITY -->
+<figure><figcaption>10. Activity<span>Everything the family changed, newest first</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><h1>Activity</h1></div>
+  <div class="scroll">
+    <div class="chips"><span class="chip on">All</span><span class="chip">Bills</span><span class="chip">Payments</span><span class="chip">Members</span></div>
+    <p class="date-h">Today</p>
+    <div class="card" style="padding:0 16px"><div class="list">
+      <div class="li"><div class="av s">S</div><div class="t"><b>Sanjita added Medicines</b><small>Dadi's care · September · 2h ago</small></div><span class="a num">₹1,240</span></div>
+      <div class="li"><div class="av b">B</div><div class="t"><b>You added Pension</b><small>Money in for Dadi · 9:10 am</small></div><span class="a num gets">+₹10,000</span></div>
+    </div></div>
+    <p class="date-h">Yesterday</p>
+    <div class="card" style="padding:0 16px"><div class="list">
+      <div class="li"><div class="av u">S</div><div class="t"><b>Suresh marked a payment paid</b><small>August · to you</small></div><span class="a num">₹2,000</span></div>
+      <div class="li"><div class="av k">K</div><div class="t"><b>Khitish joined</b><small>Dadi's care</small></div></div>
+      <div class="li"><div class="av b">B</div><div class="t"><b>You closed August</b><small>3 payments to settle</small></div></div>
+    </div></div>
+  </div>
+  <div class="tabbar"><span class="tab"><i data-lucide="house"></i>Home</span><span class="tab"><i data-lucide="notebook-tabs"></i>Hisaabs</span><span class="tab add"><b><i data-lucide="plus"></i></b></span><span class="tab on"><i data-lucide="activity"></i>Activity</span><span class="tab"><i data-lucide="circle-user-round"></i>Me</span></div>
+</div></figure>
+
+<!-- 11 ME -->
+<figure><figcaption>11. Me<span>Profile, UPI ID, password, install, sign out</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><h1>Me</h1></div>
+  <div class="scroll">
+    <div class="card row"><div class="av b" style="width:56px;height:56px;font-size:22px">B</div><div style="flex:1"><p style="font-weight:600;font-size:18px">Bhabesh Mohapatra</p><p class="muted">User ID: bhabesh</p></div><i data-lucide="pencil" style="width:20px;color:var(--faint)"></i></div>
+    <div class="card" style="padding:4px 16px"><div class="list">
+      <div class="li"><div class="cat"><i data-lucide="indian-rupee"></i></div><div class="t"><b>UPI ID</b><small>bhabesh@oksbi · so family can pay you</small></div><i data-lucide="chevron-right" style="color:var(--faint)"></i></div>
+      <div class="li"><div class="cat"><i data-lucide="key-round"></i></div><div class="t"><b>Change password</b></div><i data-lucide="chevron-right" style="color:var(--faint)"></i></div>
+      <div class="li"><div class="cat"><i data-lucide="smartphone"></i></div><div class="t"><b>Install app</b><small>Add to home screen</small></div><i data-lucide="chevron-right" style="color:var(--faint)"></i></div>
+      <div class="li"><div class="cat"><i data-lucide="moon"></i></div><div class="t"><b>Appearance</b><small>Follows your phone</small></div><i data-lucide="chevron-right" style="color:var(--faint)"></i></div>
+    </div></div>
+    <div class="btn ghost" style="color:var(--pays)"><i data-lucide="log-out"></i>Sign out</div>
+    <div class="card" style="text-align:center">
+      <p class="brand" style="font-size:20px">PaiseGuru</p>
+      <p class="muted" style="margin-top:2px">A product of xtocodex</p>
+      <p style="margin-top:8px;font-size:14px">Founder <b style="color:var(--ink)">Gopal Mohapatra</b> · gopalmohapatra.in</p>
+    </div>
+    <p class="credit">Delete account</p>
+  </div>
+  <div class="tabbar"><span class="tab"><i data-lucide="house"></i>Home</span><span class="tab"><i data-lucide="notebook-tabs"></i>Hisaabs</span><span class="tab add"><b><i data-lucide="plus"></i></b></span><span class="tab"><i data-lucide="activity"></i>Activity</span><span class="tab on"><i data-lucide="circle-user-round"></i>Me</span></div>
+</div></figure>
+
+<!-- 12 NEW HISAAB + JOIN -->
+<figure><figcaption>12. New Hisaab<span>Name, who it's for, members, first month</span></figcaption>
+<div class="phone">
+  <div class="status"><span>9:41</span><i><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></i></div>
+  <div class="topbar"><div class="icon-btn"><i data-lucide="x"></i></div><h1>New Hisaab</h1></div>
+  <div class="scroll">
+    <div class="field"><label>Name</label><div class="input focus">Dadi's care</div></div>
+    <div class="field"><label>Who is it for? (optional)</label><div class="input">Dadi</div><p class="note">Their pension and bills paid from their money are tracked, never divided.</p></div>
+    <div class="field"><label>Members who share the cost</label>
+      <div class="card" style="padding:4px 16px"><div class="list">
+        <div class="li"><div class="av b">B</div><div class="t"><b>Bhabesh (you)</b><small>Admin</small></div></div>
+        <div class="li"><div class="av p">K</div><div class="t"><b>Khitish</b><small>Joins with a link later</small></div><i data-lucide="x" style="width:18px;color:var(--faint)"></i></div>
+        <div class="li"><div class="av p">S</div><div class="t"><b>Sanjita</b></div><i data-lucide="x" style="width:18px;color:var(--faint)"></i></div>
+        <div class="li"><div class="av p">S</div><div class="t"><b>Suresh</b></div><i data-lucide="x" style="width:18px;color:var(--faint)"></i></div>
+        <div class="li" style="color:var(--ink);font-weight:600"><i data-lucide="plus" style="width:20px"></i>Add a member</div>
+      </div></div></div>
+    <div class="field"><label>First month</label><div class="chips"><span class="chip on">September</span><span class="chip">August</span><span class="chip">July</span><span class="chip">Earlier…</span></div></div>
+    <div class="btn primary" style="margin-top:auto">Create Hisaab</div>
+  </div>
+</div></figure>
+
+</div>
+<script>lucide.createIcons({ attrs: { 'stroke-width': 2 } })</script>
+</body>
+</html>
