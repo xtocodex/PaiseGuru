@@ -4,7 +4,7 @@ import { requestId } from 'hono/request-id'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { sql } from 'drizzle-orm'
 import { auth, authConfig } from './auth.ts'
-import { AppError, appUrl, db, notFound, type Env } from './core.ts'
+import { AppError, allowedOrigins, db, notFound, type Env } from './core.ts'
 import { hisaabRoutes } from './routes/hisaab.ts'
 import { meRoutes } from './routes/me.ts'
 import { publicRoutes } from './routes/public.ts'
@@ -44,7 +44,7 @@ export const app = new Hono<Env>()
   })
   .on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
   .get('/api/config', (c) => c.json(authConfig))
-  .use('/api/*', csrf({ origin: new URL(appUrl()).origin }))
+  .use('/api/*', csrf({ origin: allowedOrigins() }))
   .route('/api', api)
   .all('/api/*', () => {
     throw notFound()

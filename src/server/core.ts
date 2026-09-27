@@ -191,4 +191,7 @@ export const hashToken = (token: string) => createHash('sha256').update(token).d
 
 export const appUrl = () => (process.env.BETTER_AUTH_URL ?? 'http://localhost:5173').replace(/\/$/, '')
 
+/** The app's own origin plus any extra ones (TRUSTED_ORIGINS, comma-separated), e.g. the vercel.app address. */
+export const allowedOrigins = () => [new URL(appUrl()).origin, ...(process.env.TRUSTED_ORIGINS ?? '').split(',').map((o) => o.trim()).filter(Boolean)]
+
 export { db }

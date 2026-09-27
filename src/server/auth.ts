@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { username } from 'better-auth/plugins/username'
 import { db, schema } from './db.ts'
+import { allowedOrigins } from './core.ts'
 
 /**
  * Open sign-up (test accounts) exists only for local testing and e2e (Google OAuth cannot run in CI).
@@ -36,6 +37,7 @@ export const auth = betterAuth({
   // Stricter than the default (3 per 10 s): 5 sign-in tries per minute per IP.
   rateLimit: { customRules: { '/sign-in/*': { window: 60, max: 5 } } },
   socialProviders: google,
+  trustedOrigins: allowedOrigins(),
   user: { additionalFields: { upiId: { type: 'string', required: false, input: false } } },
   advanced: {
     database: { generateId: 'uuid' },
