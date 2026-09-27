@@ -186,16 +186,18 @@ describe('entries (S6)', () => {
 })
 
 describe('close order and reopen', () => {
-  it('close needs the last day and earlier months closed', async () => {
-    const { ramesh, oct, sep } = await family()
+  it('a month closes any time, but earlier months first; bills after an early close go to next month', async () => {
+    const { ramesh, hisaabId, id, oct, sep } = await family() // today is 3 Oct
     let o = await getSheet(ramesh, oct)
-    expect((await ramesh.req('POST', `/api/sheets/${oct}/close`, { version: o.sheet.version })).body.error).toBe('too_early')
-    setToday('2026-10-31')
     expect((await ramesh.req('POST', `/api/sheets/${oct}/close`, { version: o.sheet.version })).body.error).toBe('earlier_open')
     const s = await getSheet(ramesh, sep)
     await ramesh.req('POST', `/api/sheets/${sep}/close`, { version: s.sheet.version })
     o = await getSheet(ramesh, oct)
-    expect((await ramesh.req('POST', `/api/sheets/${oct}/close`, { version: o.sheet.version })).status).toBe(200)
+    expect((await ramesh.req('POST', `/api/sheets/${oct}/close`, { version: o.sheet.version })).status).toBe(200) // before 31 Oct
+    const late = await addBill(ramesh, hisaabId, id('Suresh'), R(150), '2026-10-03')
+    const nov = await getSheet(ramesh, late.sheetId)
+    expect(nov.sheet.name).toBe('November 2026')
+    expect(nov.entries[0].late).toBe(true)
     // Reopening September now needs October reopened first.
     const s2 = await getSheet(ramesh, sep)
     expect((await ramesh.req('POST', `/api/sheets/${sep}/reopen`, { version: s2.sheet.version })).body.error).toBe('later_closed')
@@ -219,6 +221,30 @@ describe('close order and reopen', () => {
     await ramesh.req('POST', `/api/sheets/${sep}/close`, { version: s.sheet.version })
     s = await getSheet(ramesh, sep)
     expect(s.transfers).toHaveLength(1) // only the unpaid one is left to pay
+  })
+})
+
+describe("the For person's money (pension)", () => {
+  it('money in and bills from their money are tracked, never divided, with a running balance', async () => {
+    const { ramesh, hisaabId, id, sep, oct } = await family()
+    const post = (b: object) => ramesh.req('POST', `/api/hisaabs/${hisaabId}/entries`, { id: uuid(), note: '', category: null, paidByMemberId: null, toMemberId: null, ...b })
+    expect((await post({ type: 'money_in', amountPaise: R(10_000), date: '2026-09-01', note: 'Pension' })).status).toBe(201)
+    expect((await post({ type: 'money_in', amountPaise: R(100), date: '2026-09-01', paidByMemberId: id('Ramesh') })).status).toBe(400)
+    expect((await post({ type: 'money_in', amountPaise: R(100), date: '2026-09-01', category: 'Food' })).status).toBe(400)
+    await addBill(ramesh, hisaabId, null, R(2000)) // from Dadi's money
+    await addBill(ramesh, hisaabId, id('Ramesh'), R(400))
+    await post({ type: 'money_in', amountPaise: R(10_000), date: '2026-10-01' })
+    await addBill(ramesh, hisaabId, null, R(3000), '2026-10-02')
+
+    const s = await getSheet(ramesh, sep)
+    expect([s.result.forInPaise, s.result.forUsedPaise, s.forBalancePaise]).toEqual([R(10_000), R(2000), R(8000)])
+    expect(s.result.dividablePaise).toBe(R(400))
+    expect(s.result.members.map((m: any) => m.obligationPaise)).toEqual([R(100), R(100), R(100), R(100)])
+    expect((await getSheet(ramesh, oct)).forBalancePaise).toBe(R(15_000)) // 8,000 + 10,000 − 3,000
+
+    await ramesh.req('POST', `/api/sheets/${sep}/close`, { version: s.sheet.version })
+    const share = (await ramesh.req('POST', `/api/sheets/${sep}/statement`)).body.share.shareText
+    expect(share).toContain("Dadi's money: received ₹10,000, used ₹2,000")
   })
 })
 

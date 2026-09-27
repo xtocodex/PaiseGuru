@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { istDate, shortDate } from '../../../../../domain/hisaab.ts'
+import { shortDate } from '../../../../../domain/hisaab.ts'
 import { formatRupees, parseRupees, upiAmount } from '../../../../../domain/money.ts'
 import { api, call, type SheetView } from '../../../../api.ts'
 import { sheetQuery } from '../../../../queries.ts'
@@ -24,9 +24,8 @@ function Sheet({ s }: { s: SheetView }) {
   const open = s.sheet.state === 'open'
   const active = s.me.status === 'active'
   const r = s.result
-  const today = istDate(new Date())
-  const canCloseToday = s.sheet.endDate === null || today >= s.sheet.endDate
-  const name = (id: string | null) => (id ? (s.names[id] ?? '') : 'Outside the split')
+  const forLabel = s.hisaab.forLabel
+  const name = (id: string | null) => (id ? (s.names[id] ?? '') : forLabel ? `${forLabel}'s money` : 'Outside the split')
 
   const statement = useMutation({ mutationFn: () => call(api.sheets[':id'].statement.$post({ param: { id: s.sheet.id } })), onSuccess: refresh })
   const revoke = useMutation({ mutationFn: (sid: string) => call(api.statements[':id'].$delete({ param: { id: sid } })), onSuccess: refresh })
@@ -59,14 +58,31 @@ function Sheet({ s }: { s: SheetView }) {
           <ButtonLink to="/hisaabs/$id/add" params={{ id: s.hisaab.id }}>
             + Add
           </ButtonLink>
-          {canCloseToday ? (
-            <ButtonLink to="/sheets/$id/close" params={{ id: s.sheet.id }} variant="secondary">
-              Close month
-            </ButtonLink>
-          ) : (
-            <p className="self-center text-center text-xs text-slate-500">You can close this month on {shortDate(s.sheet.endDate!)}.</p>
-          )}
+          <ButtonLink to="/sheets/$id/close" params={{ id: s.sheet.id }} variant="secondary">
+            Close month
+          </ButtonLink>
         </div>
+      )}
+
+      {forLabel && r.ok && (r.forInPaise > 0 || r.forUsedPaise > 0 || s.forBalancePaise !== 0) && (
+        <Card>
+          <h2 className="mb-1 font-semibold">{forLabel}'s money</h2>
+          <dl className="grid grid-cols-3 gap-2 text-sm">
+            <div>
+              <dt className="text-slate-500">Received</dt>
+              <dd><Money paise={r.forInPaise} className="font-semibold" /></dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Used for bills</dt>
+              <dd><Money paise={r.forUsedPaise} className="font-semibold" /></dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Left now</dt>
+              <dd><Money paise={s.forBalancePaise} className={s.forBalancePaise < 0 ? 'font-semibold text-red-700' : 'font-semibold'} /></dd>
+            </div>
+          </dl>
+          <p className="mt-2 text-xs text-slate-500">Not divided between members. "Left now" counts this and earlier months.</p>
+        </Card>
       )}
 
       {r.ok && (
@@ -147,10 +163,22 @@ function Sheet({ s }: { s: SheetView }) {
               <Link to="/sheets/$id/entries/$entryId" params={{ id: s.sheet.id, entryId: e.id }} className="flex min-h-14 items-center justify-between gap-3 py-2">
                 <span className="min-w-0">
                   <span className="block truncate">
-                    {e.type === 'bill' ? e.note || e.category : e.type === 'refund' ? `Refund · ${e.note || e.category}` : `${name(e.paidByMemberId)} gave ${name(e.toMemberId)}`}
+                    {e.type === 'bill'
+                      ? e.note || e.category
+                      : e.type === 'refund'
+                        ? `Refund · ${e.note || e.category}`
+                        : e.type === 'money_in'
+                          ? `Money in for ${forLabel ?? 'the Hisaab'}${e.note ? ` · ${e.note}` : ''}`
+                          : `${name(e.paidByMemberId)} gave ${name(e.toMemberId)}`}
                   </span>
                   <span className="block text-xs text-slate-500">
-                    {shortDate(e.date)} · {e.type === 'bill' ? `paid by ${name(e.paidByMemberId)}` : e.type === 'refund' ? `to ${name(e.toMemberId)}` : e.note || 'Money given'}
+                    {shortDate(e.date)} · {e.type === 'bill'
+                      ? e.paidByMemberId ? `paid by ${name(e.paidByMemberId)}` : `from ${name(null)}`
+                      : e.type === 'refund'
+                        ? `to ${name(e.toMemberId)}`
+                        : e.type === 'money_in'
+                          ? 'not divided'
+                          : e.note || 'Money given'}
                     {e.late && <> · <Tag tone="amber">Late: dated {shortDate(e.date)}</Tag></>}
                   </span>
                 </span>

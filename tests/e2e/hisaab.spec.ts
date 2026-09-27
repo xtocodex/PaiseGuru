@@ -6,6 +6,8 @@ const now = new Date(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata'
 const last = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15))
 const lastMonthName = last.toLocaleString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 const lastMonthDate = last.toISOString().slice(0, 10)
+const thisMonthName = now.toLocaleString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+const todayDate = now.toISOString().slice(0, 10)
 
 const shots = process.env.SHOTS
 const shot = (page: Page, name: string) => (shots ? page.screenshot({ path: `${shots}/${name}.png`, fullPage: true }) : null)
@@ -20,11 +22,11 @@ async function signUp(page: Page, name: string) {
   await expect(page.getByRole('heading', { name: 'PaiseGuru' })).toBeVisible()
 }
 
-async function createFamily(page: Page) {
+async function createFamily(page: Page, firstMonth = lastMonthName) {
   await page.getByRole('link', { name: '+ New Hisaab' }).click()
   await page.getByLabel('Name', { exact: true }).fill('Family')
   await page.getByLabel('For (optional)').fill('Dadi')
-  await page.getByLabel('First month').selectOption({ label: lastMonthName })
+  await page.getByLabel('First month').selectOption({ label: firstMonth })
   for (const name of ['Suresh', 'Mahesh', 'Dinesh']) {
     await page.getByLabel('New member name').fill(name)
     await page.getByRole('button', { name: 'Add', exact: true }).click()
@@ -34,11 +36,11 @@ async function createFamily(page: Page) {
   await expect(page.getByRole('heading', { name: 'Family' })).toBeVisible()
 }
 
-async function addBill(page: Page, amount: string, paidBy: string, note: string) {
+async function addBill(page: Page, amount: string, paidBy: string, note: string, date = lastMonthDate) {
   await page.getByRole('link', { name: /Add/ }).first().click()
   await page.getByLabel('Amount (₹)').fill(amount)
   await page.getByLabel('Paid by').selectOption({ label: paidBy })
-  await page.getByLabel('Date').fill(lastMonthDate)
+  await page.getByLabel('Date').fill(date)
   await page.getByLabel('Note (optional)').fill(note)
   await page.getByRole('button', { name: 'Save', exact: true }).click()
   await expect(page.getByText(note)).toBeVisible()
@@ -111,10 +113,11 @@ test('close a month with a Fixed exception, share, mark payments paid, then reop
   await addBill(page, '1000', 'Dinesh', 'Medicines')
 
   await page.getByRole('link', { name: 'Close month' }).click()
-  await page.getByRole('button', { name: /^Ramesh/ }).click()
-  await page.getByLabel("Ramesh's share").selectOption('fixed')
-  await page.getByLabel('Amount').fill('8000')
+  await page.getByLabel('Who').selectOption({ label: 'Ramesh' })
+  await page.getByRole('radio', { name: 'Fixed amount' }).click()
+  await page.getByLabel('Amount (₹)').fill('8000')
   await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('pays a fixed ₹8,000')).toBeVisible()
   await expect(page.getByText('2 payments clear the month: Dinesh → Suresh ₹3,000 · Mahesh → Ramesh ₹1,500')).toBeVisible()
   await shot(page, '5-close')
 
@@ -144,4 +147,38 @@ test('close a month with a Fixed exception, share, mark payments paid, then reop
   await page.getByRole('button', { name: 'Reopen this month' }).click()
   await expect(page.getByText('Open', { exact: true })).toBeVisible()
   await expect(page.getByText('Payment after close')).toHaveCount(3)
+})
+
+test("Dadi's pension: money in, bills from her money, extra-on-top share, close before month-end", async ({ page }) => {
+  await signUp(page, 'Ramesh')
+  await createFamily(page, thisMonthName)
+  await page.getByRole('link', { name: '+ Add a bill' }).click()
+  await page.getByRole('radio', { name: 'Money in for Dadi' }).click()
+  await page.getByLabel('Amount (₹)').fill('10000')
+  await page.getByLabel('Date').fill(todayDate)
+  await page.getByLabel('Note (optional)').fill('Pension')
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.getByText('Money in for Dadi · Pension')).toBeVisible()
+
+  await addBill(page, '2000', "From Dadi's money", 'Doctor', todayDate)
+  await addBill(page, '900', 'Ramesh (you)', 'Medicines', todayDate)
+  await addBill(page, '300', 'Suresh', 'Fruit', todayDate)
+  const card = page.locator('dl') // the Dadi's money card figures
+  await expect(card.getByText('₹10,000')).toBeVisible()
+  await expect(card.getByText('₹2,000')).toBeVisible()
+  await expect(card.getByText('₹8,000')).toBeVisible()
+
+  // ₹1,200 to divide; Ramesh pays ₹200 extra → ₹1,000 ÷ 4 = ₹250 each, Ramesh ₹450.
+  await page.getByRole('link', { name: 'Close month' }).click()
+  await page.getByLabel('Who').selectOption({ label: 'Ramesh' })
+  await page.getByRole('radio', { name: 'Extra on top' }).click()
+  await page.getByLabel('Amount (₹)').fill('200')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('extra on top of an equal share')).toBeVisible()
+  const shares = page.locator('section', { hasText: "Each member's share" })
+  await expect(shares.locator('li', { hasText: 'Ramesh' }).getByText('₹450')).toBeVisible()
+  await expect(shares.locator('li', { hasText: 'Mahesh' }).getByText('₹250')).toBeVisible()
+  await shot(page, '7-close-extra')
+  await page.getByRole('button', { name: 'Close month and share' }).click()
+  await expect(page.getByText(`${thisMonthName} is closed.`)).toBeVisible()
 })

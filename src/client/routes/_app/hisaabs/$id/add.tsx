@@ -31,6 +31,7 @@ function AddEntry() {
       <EntryForm
         key={formKey}
         members={members}
+        forLabel={h.data.forLabel}
         meId={h.data.me.memberId}
         submitLabel="Save"
         pending={save.isPending}

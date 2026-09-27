@@ -35,7 +35,7 @@ export const updateMeSchema = z.object({
 })
 
 const entryFields = {
-  type: z.enum(['bill', 'refund', 'money_given']),
+  type: z.enum(['bill', 'refund', 'money_given', 'money_in']),
   amountPaise,
   category: categorySchema.nullable(),
   date: isoDate,

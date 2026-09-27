@@ -21,7 +21,7 @@ Branch `rebuild`. **Status (2026-09-27): T1–T6 done and committed; T7 and the 
 6. **T6** Playwright e2e (4 flows) + GitHub Actions CI with a Postgres service.
 7. **T7** (founder) Notebook replay fixture must pass before the family uses the app.
 
-Phase 1 excludes: pool, carry, weights other than 1 share, percent mode, cycle day ≠ 1, one-time Hisaab, recurring entries, the daily job, split-as-we-go groups, budget screen, SMS/AI/photos, Year view/CSV, PWA manifest. Their columns exist with defaults so later phases need no destructive migration.
+Phase 1 also has (founder, 2026-09-27): close any time, a "Does someone pay more?" step (Fixed or Extra) on the close screen, and "Money in for <For>" entries with a running balance of the For person's money (instead of the common pool). Phase 1 excludes: pool, carry, weights other than 1 share, percent mode, cycle day ≠ 1, one-time Hisaab, recurring entries, the daily job, split-as-we-go groups, budget screen, SMS/AI/photos, Year view/CSV, PWA manifest. Their columns exist with defaults so later phases need no destructive migration.
 
 ## Code layout (decided, "smaller arrangement")
 ```

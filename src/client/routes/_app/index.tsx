@@ -14,7 +14,8 @@ function newsText(n: News) {
   const who = n.actor ?? 'Someone'
   const p = (n.payload ?? {}) as { type?: string; amountPaise?: number; name?: string; into?: string }
   const amount = p.amountPaise ? formatRupees(p.amountPaise) : ''
-  const what = { bill: 'a bill', refund: 'a refund', money_given: 'money given' }[p.type ?? ''] ?? 'an entry'
+  const what = { bill: 'a bill', refund: 'a refund', money_given: 'money given', money_in: 'money in' }[p.type ?? ''] ?? 'an entry'
+  if (p.type === 'money_in' && n.kind === 'entry_create') return `${who} added ${amount} money in`
   switch (n.kind) {
     case 'entry_create': return `${who} added ${what} of ${amount}`
     case 'entry_edit': return `${who} changed ${what} to ${amount}`

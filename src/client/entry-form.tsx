@@ -3,7 +3,7 @@ import { CATEGORIES, istDate } from '../domain/hisaab.ts'
 import { formatRupees, parseRupees } from '../domain/money.ts'
 import { Button, ErrorBox, Field, Input, Select, cx } from './ui.tsx'
 
-export type EntryType = 'bill' | 'refund' | 'money_given'
+export type EntryType = 'bill' | 'refund' | 'money_given' | 'money_in'
 export type EntryValues = {
   type: EntryType
   amountPaise: number
@@ -14,16 +14,12 @@ export type EntryValues = {
   toMemberId: string | null
 }
 
-const TYPES: { value: EntryType; label: string }[] = [
-  { value: 'bill', label: 'Bill' },
-  { value: 'refund', label: 'Refund' },
-  { value: 'money_given', label: 'Money given' },
-]
 const OUTSIDE = 'outside'
 
 /** Add or edit a Hisaab entry (S6). Amount is typed in rupees and parsed to paise without floats. */
 export function EntryForm(props: {
   members: { id: string; name: string }[]
+  forLabel: string | null // the person the Hisaab is for (e.g. Dadi); enables "money in" and "from their money"
   meId: string
   initial?: EntryValues
   submitLabel: string
@@ -35,6 +31,14 @@ export function EntryForm(props: {
   const [type, setType] = useState<EntryType>(init?.type ?? 'bill')
   const [amountError, setAmountError] = useState<string | null>(null)
   const today = istDate(new Date())
+  const forLabel = props.forLabel
+  const types: { value: EntryType; label: string }[] = [
+    { value: 'bill', label: 'Bill' },
+    { value: 'refund', label: 'Refund' },
+    { value: 'money_given', label: 'Money given' },
+    ...(forLabel ? [{ value: 'money_in' as const, label: `Money in for ${forLabel}` }] : []),
+  ]
+  const outsideLabel = forLabel ? `From ${forLabel}'s money` : 'Outside the split'
 
   function submit(form: FormData, again: boolean) {
     const amountPaise = parseRupees(String(form.get('amount')))
@@ -46,11 +50,11 @@ export function EntryForm(props: {
       {
         type,
         amountPaise,
-        category: type === 'money_given' ? null : (String(form.get('category')) as EntryValues['category']),
+        category: type === 'money_given' || type === 'money_in' ? null : (String(form.get('category')) as EntryValues['category']),
         date: String(form.get('date')),
         note: String(form.get('note') ?? ''),
-        paidByMemberId: type === 'refund' || from === OUTSIDE ? null : from,
-        toMemberId: type === 'bill' ? null : to,
+        paidByMemberId: type === 'refund' || type === 'money_in' || from === OUTSIDE ? null : from,
+        toMemberId: type === 'bill' || type === 'money_in' ? null : to,
       },
       again,
     )
@@ -71,8 +75,8 @@ export function EntryForm(props: {
         submit(new FormData(e.currentTarget), again)
       }}
     >
-      <div role="radiogroup" aria-label="Type" className="grid grid-cols-3 gap-1 rounded-xl bg-slate-200/70 p-1">
-        {TYPES.map((t) => (
+      <div role="radiogroup" aria-label="Type" className={cx('grid gap-1 rounded-xl bg-slate-200/70 p-1', types.length === 4 ? 'grid-cols-2' : 'grid-cols-3')}>
+        {types.map((t) => (
           <button
             key={t.value}
             type="button"
@@ -99,10 +103,10 @@ export function EntryForm(props: {
       </Field>
 
       {type === 'bill' && (
-        <Field label="Paid by" hint="“Outside the split” shows in the total but is not divided (for example, paid from Dadi's own money).">
+        <Field label="Paid by" hint={`“${outsideLabel}” shows in the total but is not divided between members.`}>
           <Select name="from" defaultValue={init ? (init.paidByMemberId ?? OUTSIDE) : props.meId}>
             {people}
-            <option value={OUTSIDE}>Outside the split</option>
+            <option value={OUTSIDE}>{outsideLabel}</option>
           </Select>
         </Field>
       )}
@@ -128,7 +132,13 @@ export function EntryForm(props: {
         </div>
       )}
 
-      {type !== 'money_given' && (
+      {type === 'money_in' && (
+        <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+          Money {forLabel} receives, like a pension. It is not divided and does not change anyone's share. Bills paid from it are shown as “{outsideLabel}”.
+        </p>
+      )}
+
+      {(type === 'bill' || type === 'refund') && (
         <Field label="Category">
           <Select name="category" defaultValue={init?.category ?? 'Healthcare'}>
             {CATEGORIES.map((c) => (
@@ -142,7 +152,7 @@ export function EntryForm(props: {
         <Input name="date" type="date" required max={today} defaultValue={init?.date ?? today} />
       </Field>
       <Field label="Note (optional)">
-        <Input name="note" maxLength={500} defaultValue={init?.note} placeholder="For example: medicines" />
+        <Input name="note" maxLength={500} defaultValue={init?.note} placeholder={type === 'money_in' ? 'For example: pension' : 'For example: medicines'} />
       </Field>
 
       <ErrorBox error={props.error} />

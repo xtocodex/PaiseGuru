@@ -29,7 +29,7 @@ const page = (title: string, body: unknown) => html`<!doctype html>
   </html>`
 
 const STATE_TEXT = { open: 'Not closed yet', closed: 'Closed, payments pending', cleared: 'Settled', carried: 'Carried to next month' }
-const TYPE_TEXT = { bill: 'Bill', refund: 'Refund', money_given: 'Money given' }
+const TYPE_TEXT = { bill: 'Bill', refund: 'Refund', money_given: 'Money given', money_in: 'Money in' }
 
 export const publicRoutes = new Hono().get('/s/:token', async (c) => {
   const [row] = await db
@@ -40,7 +40,8 @@ export const publicRoutes = new Hono().get('/s/:token', async (c) => {
 
   const [s] = await db.select().from(sheet).where(eq(sheet.id, row.sheetId))
   const data = await sheetData(db, s!)
-  const name = (id: string | null) => (id ? (data.names[id] ?? '') : 'Outside the split')
+  const forLabel = data.hisaab.forLabel
+  const name = (id: string | null) => (id ? (data.names[id] ?? '') : forLabel ? `From ${forLabel}'s money` : 'Outside the split')
   const r = data.result
 
   return c.html(
@@ -51,6 +52,9 @@ export const publicRoutes = new Hono().get('/s/:token', async (c) => {
         ${r.ok
           ? html`<h2>Total ${formatRupees(r.totalPaise)}</h2>
               ${r.dividablePaise !== r.totalPaise ? html`<p class="muted">Divided between members: ${formatRupees(r.dividablePaise)}</p>` : ''}
+              ${forLabel && (r.forInPaise || r.forUsedPaise)
+                ? html`<p class="muted">${forLabel}'s money: received ${formatRupees(r.forInPaise)}, used ${formatRupees(r.forUsedPaise)}, left ${formatRupees(data.forBalancePaise)}</p>`
+                : ''}
               <table>
                 <tr><th>Name</th><th class="n">Paid</th><th class="n">Share</th><th class="n">Balance</th></tr>
                 ${r.members.map(
@@ -75,7 +79,7 @@ export const publicRoutes = new Hono().get('/s/:token', async (c) => {
               html`<tr>
                 <td>${shortDate(e.date)}${e.late ? html`<div class="muted">Late</div>` : ''}</td>
                 <td>${TYPE_TEXT[e.type]}${e.category ? html` · ${e.category}` : ''}${e.note ? html`<div class="muted">${e.note}</div>` : ''}</td>
-                <td>${e.type === 'refund' ? `To ${name(e.toMemberId)}` : e.type === 'money_given' ? `${name(e.paidByMemberId)} → ${name(e.toMemberId)}` : name(e.paidByMemberId)}</td>
+                <td>${e.type === 'money_in' ? `For ${forLabel ?? 'the Hisaab'}` : e.type === 'refund' ? `To ${name(e.toMemberId)}` : e.type === 'money_given' ? `${name(e.paidByMemberId)} → ${name(e.toMemberId)}` : name(e.paidByMemberId)}</td>
                 <td class="n">${formatRupees(e.amountPaise)}</td>
               </tr>`,
           )}

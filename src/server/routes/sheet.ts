@@ -107,8 +107,18 @@ export async function sheetData(q: Q, s: SheetRow) {
     }
     transfers = await q.select().from(transfer).where(eq(transfer.sheetId, s.id)).orderBy(desc(transfer.status), desc(transfer.amountPaise))
   }
+  // The For person's money left after this sheet: money in − bills paid from it, over this and earlier sheets.
+  const [balance] = await q
+    .select({
+      paise: sql<number>`coalesce(sum(case when ${entry.type} = 'money_in' then ${entry.amountPaise}
+        when ${entry.type} = 'bill' and ${entry.paidByMemberId} is null then -${entry.amountPaise} else 0 end), 0)`.mapWith(Number),
+    })
+    .from(entry)
+    .innerJoin(sheet, eq(sheet.id, entry.sheetId))
+    .where(and(eq(entry.hisaabId, s.hisaabId), isNull(entry.deletedAt), sql`${sheet.startDate} <= ${s.startDate}`))
   return {
     hisaab: { id: h!.id, name: h!.name, forLabel: h!.forLabel },
+    forBalancePaise: balance!.paise,
     sheet: { id: s.id, name: sheetName(s.month), month: s.month, startDate: s.startDate, endDate: s.endDate, state: s.state, version: s.version },
     names,
     participants: participants.map(({ memberId, name, exception, exceptionPaise, status, hasUser }) => ({ memberId, name, exception, exceptionPaise, status, hasUser })),
@@ -149,7 +159,7 @@ async function activeStatement(q: Q, sheetId: string) {
 
 function share(data: Awaited<ReturnType<typeof sheetData>>, link: string) {
   if (!data.result.ok || data.sheet.state === 'open') return null
-  const text = shareText({ hisaabName: data.hisaab.name, sheetName: data.sheet.name, result: data.result, names: data.names, link })
+  const text = shareText({ hisaabName: data.hisaab.name, sheetName: data.sheet.name, forLabel: data.hisaab.forLabel, result: data.result, names: data.names, link })
   return { shareText: text, waLink: `https://wa.me/?text=${encodeURIComponent(text)}` }
 }
 
@@ -161,6 +171,7 @@ async function checkEntryMembers(tx: Tx, sheetId: string, e: { type: Entry['type
   if (type === 'money_given' && (from === null || to === null || from === to || category !== null)) {
     throw badRequest('Money given needs two different people.')
   }
+  if (type === 'money_in' && (from !== null || to !== null || category !== null)) throw badRequest('Money in needs only an amount and a date.')
   const ids = new Set((await participantsOf(tx, sheetId)).map((p) => p.memberId))
   for (const id of [from, to]) if (id !== null && !ids.has(id)) throw badRequest('That person is not part of this month.')
 }
@@ -300,7 +311,7 @@ export const sheetRoutes = new Hono<Env>()
       await requireMember(tx, s.hisaabId, user.id)
       const sheets = await lockSheets(tx, s.hisaabId)
       await bumpVersion(tx, s.id, version) // entries are read after this, under the lock
-      const orderError = checkCanClose(s.id, sheets, clock.today())
+      const orderError = checkCanClose(s.id, sheets)
       if (orderError) throw new AppError(422, orderError, CLOSE_ORDER_TEXT[orderError])
       const participants = await participantsOf(tx, s.id)
       const result = closeSheet(participants as Participant[], (await liveEntries(tx, s.id)).map(toDomain))

@@ -34,6 +34,7 @@ function EditEntry() {
       <fieldset disabled={!editable} className="space-y-4">
         <EntryForm
           members={members}
+          forLabel={s.data.hisaab.forLabel}
           meId={s.data.me.memberId}
           initial={{ ...e, category: e.category as EntryValues['category'] }}
           submitLabel="Save changes"

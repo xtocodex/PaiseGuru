@@ -149,6 +149,7 @@ Entry types (all amounts stored positive):
 - **Deposit**: member to pool (pool on).
 - **Withdrawal**: pool to member (pool on).
 - **Brought forward**: opening balance lines created by a carry (S7); never counts as spend; not editable.
+- **Money in for <For>** (added 2026-09-27, founder): money the For person receives, e.g. Dadi's pension. Never split, never spend. Bills paid from it are "Outside the split" bills, labelled "From <For>'s money". Each sheet shows money in, used for bills, and the running balance (money in − bills from their money over this and earlier sheets). A member putting their own money into the For person's account is not modelled yet.
 
 Placement: several sheets can be Open at once (e.g. September stays Open on 3 Oct until the family closes it). An entry belongs to the sheet whose date range contains its date if that sheet is Open. If that sheet is Closed, Cleared or Carried, the entry goes into the latest Open sheet (opening it on demand), unless the admin reopens the older sheet. Its accounting month is then that Open sheet's month (it is split and posted with that sheet); its original date is kept only as a label, shown as "Late: dated 28 Sep". Entry dates after today are rejected. A sheet can only be closed when every earlier sheet is Closed, Cleared or Carried.
 
@@ -162,7 +163,7 @@ Common pool (optional Hisaab setting "Use a common pool"). Turning it on require
 - A pool can only be funded by member deposits. Money from outside (e.g. the beneficiary's own savings) is recorded as "Outside the split" bills, not as pool money.
 
 ### S7. Hisaab close, settle plan, carry
-Close can be started by any member on or after the sheet's last day (Monthly) or any time (One-time). The person who started confirms.
+Close can be started by any member at any time (founder change 2026-09-27: no waiting for the sheet's last day). Entries dated in a closed sheet go into the next Open sheet (S6 placement). The person who started confirms.
 
 Sheet participants: each sheet has its own participant list, taken from the members when the sheet opens. A member who joins while a sheet is Open is added to it with the Skip exception pre-set (visible, and any member can change it before close). A placeholder claim keeps the placeholder's place. Reopening a sheet whose participants include a former member is blocked ("<name> has left this Hisaab").
 

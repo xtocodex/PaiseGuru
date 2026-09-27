@@ -19,9 +19,12 @@ export interface Participant {
   weight: number // hundredths of a share
 }
 
-/** bill: paidBy null = outside the split. refund: `to` received it. money_given: paidBy → to. */
+/**
+ * bill: paidBy null = outside the split (e.g. paid from the For person's own money). refund: `to` received it.
+ * money_given: paidBy → to. money_in: money received for the For person (e.g. a pension); never split.
+ */
 export interface Entry {
-  type: 'bill' | 'refund' | 'money_given'
+  type: 'bill' | 'refund' | 'money_given' | 'money_in'
   amountPaise: number
   category: string | null
   paidBy: string | null
@@ -46,6 +49,8 @@ export interface CloseResult {
   ok: true
   totalPaise: number // all bills − refunds, including outside-the-split bills
   dividablePaise: number
+  forInPaise: number // money in for the For person this sheet
+  forUsedPaise: number // bills paid from the For person's money this sheet
   categories: Record<string, number>
   members: MemberResult[]
   transfers: Transfer[]
@@ -93,7 +98,23 @@ export function closeSheet(participants: readonly Participant[], entries: readon
     total += sign * e.amountPaise
   }
 
-  return { ok: true, totalPaise: total, dividablePaise: dividable, categories, members, transfers: settlePlan(members) }
+  let forIn = 0
+  let forUsed = 0
+  for (const e of entries) {
+    if (e.type === 'money_in') forIn += e.amountPaise
+    if (e.type === 'bill' && e.paidBy === null) forUsed += e.amountPaise
+  }
+
+  return {
+    ok: true,
+    totalPaise: total,
+    dividablePaise: dividable,
+    forInPaise: forIn,
+    forUsedPaise: forUsed,
+    categories,
+    members,
+    transfers: settlePlan(members),
+  }
 }
 
 /** Bills paid by members − refunds. Outside-the-split bills are excluded. */
@@ -203,24 +224,30 @@ export function placeEntry(input: { date: ISODate; today: ISODate; sheets: reado
   return { ok: true, sheetId: latestOpen?.id ?? null, late: true }
 }
 
-export type CloseOrderError = 'not_open' | 'too_early' | 'earlier_open'
+export type CloseOrderError = 'not_open' | 'earlier_open'
 
 export const CLOSE_ORDER_TEXT: Record<CloseOrderError, string> = {
   not_open: 'This month is already closed.',
-  too_early: 'You can close this month on its last day or later.',
   earlier_open: 'Close the earlier month first.',
 }
 
-export function checkCanClose(sheetId: string, sheets: readonly SheetRef[], today: ISODate): CloseOrderError | null {
+/** A month can close at any time (founder, 2026-09-27); older months close first. */
+export function checkCanClose(sheetId: string, sheets: readonly SheetRef[]): CloseOrderError | null {
   const sheet = sheets.find((s) => s.id === sheetId)!
   if (sheet.state !== 'open') return 'not_open'
-  if (sheet.endDate !== null && today < sheet.endDate) return 'too_early'
   if (sheets.some((s) => s.startDate < sheet.startDate && s.state === 'open')) return 'earlier_open'
   return null
 }
 
 /** S10 WhatsApp message after a close. Short; the full list is at the link. */
-export function shareText(input: { hisaabName: string; sheetName: string; result: CloseResult; names: Record<string, string>; link: string }) {
+export function shareText(input: {
+  hisaabName: string
+  sheetName: string
+  forLabel?: string | null
+  result: CloseResult
+  names: Record<string, string>
+  link: string
+}) {
   const { result, names } = input
   const categories = Object.entries(result.categories)
     .filter(([, v]) => v !== 0)
@@ -229,6 +256,9 @@ export function shareText(input: { hisaabName: string; sheetName: string; result
     .join(' · ')
   const lines = [`${input.hisaabName} – ${input.sheetName}`, `Total: ${formatRupees(result.totalPaise)}`]
   if (categories) lines.push(categories)
+  if (input.forLabel && (result.forInPaise || result.forUsedPaise)) {
+    lines.push(`${input.forLabel}'s money: received ${formatRupees(result.forInPaise)}, used ${formatRupees(result.forUsedPaise)}`)
+  }
   lines.push('', ...result.members.map((m) => `${names[m.memberId]} paid ${formatRupees(m.paidPaise)}, share ${formatRupees(m.obligationPaise)}`))
   lines.push('')
   if (result.transfers.length) {

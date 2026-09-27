@@ -185,7 +185,7 @@ export const entry = pgTable(
     id: uuid('id').primaryKey(), // client-generated: a double-tapped save inserts once
     hisaabId: uuid('hisaab_id').notNull(),
     sheetId: uuid('sheet_id').notNull(),
-    type: text('type', { enum: ['bill', 'refund', 'money_given'] }).notNull(),
+    type: text('type', { enum: ['bill', 'refund', 'money_given', 'money_in'] }).notNull(),
     amountPaise: paise('amount_paise').notNull(),
     category: text('category'),
     date: day('date').notNull(),

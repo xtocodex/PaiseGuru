@@ -102,6 +102,23 @@ describe('closeSheet: S7 worked examples', () => {
     expect(result.transfers).toEqual([{ from: 'b', to: 'a', amountPaise: R(100) }])
   })
 
+  it("money in for the For person and bills from their money never change the members' split", () => {
+    const base = [bill('a', R(900)), bill('b', R(300))]
+    const withFor: Entry[] = [
+      ...base,
+      { type: 'money_in', amountPaise: R(10_000), category: null, paidBy: null, to: null },
+      bill(null, R(2000), 'Healthcare'),
+    ]
+    const plain = closeSheet([p('a', 1), p('b', 2)], base)
+    const result = closeSheet([p('a', 1), p('b', 2)], withFor)
+    if (!plain.ok || !result.ok) throw new Error('blocked')
+    expect(result.members).toEqual(plain.members)
+    expect(result.transfers).toEqual(plain.transfers)
+    expect(result.dividablePaise).toBe(R(1200))
+    expect(result.totalPaise).toBe(R(3200)) // bills from their money show in the total
+    expect([result.forInPaise, result.forUsedPaise]).toEqual([R(10_000), R(2000)])
+  })
+
   it('zero-activity sheet closes with no transfers', () => {
     const result = closeSheet(four, [])
     expect(result.ok && result.transfers).toEqual([])
@@ -171,7 +188,7 @@ describe('S7 invariants (property test)', () => {
         ),
         entries: fc.array(
           fc.record({
-            type: fc.constantFrom('bill', 'bill', 'bill', 'refund', 'money_given') as fc.Arbitrary<Entry['type']>,
+            type: fc.constantFrom('bill', 'bill', 'bill', 'refund', 'money_given', 'money_in') as fc.Arbitrary<Entry['type']>,
             amountPaise: fc.integer({ min: 1, max: 100_000_00 }),
             payer: fc.integer({ min: -1, max: n - 1 }),
             to: fc.integer({ min: 0, max: n - 1 }),
@@ -186,6 +203,7 @@ describe('S7 invariants (property test)', () => {
         const payer = e.payer < 0 ? null : `m${e.payer}`
         if (e.type === 'bill') return { type: 'bill', amountPaise: e.amountPaise, category: 'Other', paidBy: payer, to: null }
         if (e.type === 'refund') return { type: 'refund', amountPaise: e.amountPaise, category: 'Other', paidBy: null, to: `m${e.to}` }
+        if (e.type === 'money_in') return { type: 'money_in', amountPaise: e.amountPaise, category: null, paidBy: null, to: null }
         return { type: 'money_given', amountPaise: e.amountPaise, category: null, paidBy: payer ?? 'm0', to: `m${e.to}` }
       }),
     }))
@@ -273,12 +291,11 @@ describe('checkCanClose (S6, S7)', () => {
     { id: 'aug', startDate: '2026-08-01', endDate: '2026-08-31', state: 'open' },
     { id: 'sep', startDate: '2026-09-01', endDate: '2026-09-30', state: 'open' },
   ]
-  it('needs the last day reached and every earlier sheet closed', () => {
-    expect(checkCanClose('sep', sheets, '2026-09-29')).toBe('too_early')
-    expect(checkCanClose('sep', sheets, '2026-09-30')).toBe('earlier_open')
-    expect(checkCanClose('aug', sheets, '2026-09-30')).toBeNull()
-    expect(checkCanClose('sep', [{ ...sheets[0]!, state: 'closed' }, sheets[1]!], '2026-10-01')).toBeNull()
-    expect(checkCanClose('sep', [sheets[0]!, { ...sheets[1]!, state: 'closed' }], '2026-10-01')).toBe('not_open')
+  it('closes any time, but earlier months first', () => {
+    expect(checkCanClose('sep', sheets)).toBe('earlier_open')
+    expect(checkCanClose('aug', sheets)).toBeNull()
+    expect(checkCanClose('sep', [{ ...sheets[0]!, state: 'closed' }, sheets[1]!])).toBeNull()
+    expect(checkCanClose('sep', [sheets[0]!, { ...sheets[1]!, state: 'closed' }])).toBe('not_open')
   })
 })
 
