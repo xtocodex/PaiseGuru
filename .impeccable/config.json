@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "nested-cards",
+        "value": "*",
+        "files": [
+          "docs/designs/v2/screens.html"
+        ],
+        "createdAt": "2026-09-27T09:33:27.772Z",
+        "reason": "Claude: the outer container is the phone-frame device mockup around each screen, not a UI card"
+      }
+    ]
+  }
+}

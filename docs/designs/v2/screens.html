@@ -12,7 +12,7 @@
   :root {
     --ink: #23306e; --ink-2: #3a4a96; --ink-soft: #e6e9f5;
     --paper: #f4f5f7; --card: #ffffff; --line: #e3e6ec;
-    --text: #1a1f2e; --muted: #5d6477; --faint: #6b7285;
+    --text: #1a1f2e; --muted: #5d6477; --faint: #636a7c;
     --gets: #0e7a5c; --gets-soft: #e3f3ec; --pays: #b42d45; --pays-soft: #fbe9ec;
     --marigold: #f0a30a; --marigold-soft: #fff3d6;
     --r-sm: 10px; --r-md: 14px; --r-lg: 20px;
@@ -71,7 +71,7 @@
   .cat { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--ink-soft); color: var(--ink); flex: none; }
   .cat svg { width: 18px; height: 18px; }
   .cat.g { background: var(--gets-soft); color: var(--gets); }
-  .tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--ink-soft); color: var(--ink); }
+  .tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--ink-soft); color: var(--ink); }
   .tag.m { background: var(--marigold-soft); color: #7a4f00; }
   .tag.g { background: var(--gets-soft); color: var(--gets); }
   .tag.r { background: var(--pays-soft); color: var(--pays); }
@@ -178,7 +178,7 @@
       <p class="muted" style="margin-top:6px">₹24,600 spent in total · closes whenever you're ready</p>
     </div>
     <p class="h2">New since your last visit</p>
-    <div class="card" style="padding:4px 16px">
+    <div class="card" style="padding:6px 16px">
       <div class="list">
         <div class="li"><div class="av s">S</div><div class="t"><b>Sanjita added Medicines</b><small>Dadi's care · 2h ago</small></div><span class="a num">₹1,240</span></div>
         <div class="li"><div class="av u">S</div><div class="t"><b>Suresh marked ₹2,000 paid</b><small>August · yesterday</small></div><span class="tag g">Paid</span></div>
@@ -231,7 +231,7 @@
         <div style="text-align:right"><p class="muted">Left</p><p class="num gets" style="font-weight:700">₹5,800</p></div>
       </div>
     </div>
-    <div class="card" style="padding:4px 16px">
+    <div class="card" style="padding:6px 16px">
       <div class="list">
         <div class="li"><div class="av b">B</div><div class="t"><b>Bhabesh (you)</b><small>Admin</small></div><span class="tag m">Pays ₹2,000 extra</span></div>
         <div class="li"><div class="av k">K</div><div class="t"><b>Khitish</b><small>Joined</small></div></div>
@@ -256,14 +256,14 @@
       <div class="chips" style="gap:12px;font-size:13px;color:var(--muted)"><span>● Healthcare ₹11,800</span><span>● Food ₹5,900</span><span>● Help ₹3,900</span><span>● Other ₹3,000</span></div>
     </div>
     <p class="date-h">Today, 27 Sep</p>
-    <div class="card" style="padding:0 16px">
+    <div class="card" style="padding:6px 16px">
       <div class="list">
         <div class="li"><div class="cat"><i data-lucide="pill"></i></div><div class="t"><b>Medicines</b><small>Paid by Sanjita · Healthcare</small></div><span class="a num">₹1,240</span></div>
         <div class="li"><div class="cat g"><i data-lucide="landmark"></i></div><div class="t"><b>Pension</b><small>Money in for Dadi · not divided</small></div><span class="a num gets">+₹10,000</span></div>
       </div>
     </div>
     <p class="date-h">25 Sep</p>
-    <div class="card" style="padding:0 16px">
+    <div class="card" style="padding:6px 16px">
       <div class="list">
         <div class="li"><div class="cat"><i data-lucide="stethoscope"></i></div><div class="t"><b>Doctor visit</b><small>From Dadi's money · Healthcare</small></div><span class="a num">₹1,500</span></div>
         <div class="li"><div class="cat"><i data-lucide="shopping-basket"></i></div><div class="t"><b>Groceries</b><small>Paid by you · Food</small></div><span class="a num">₹2,350</span></div>
@@ -314,7 +314,7 @@
       <div class="input" style="margin-top:12px"><span class="num" style="font-weight:600">₹2,000</span><span class="muted" style="margin-left:auto">extra</span></div>
       <p class="note" style="margin-top:8px">Everyone shares ₹18,400 equally; Bhabesh adds ₹2,000. Same as last month.</p>
     </div>
-    <div class="card" style="padding:4px 16px">
+    <div class="card" style="padding:6px 16px">
       <div class="list">
         <div class="li"><div class="av b">B</div><div class="t"><b>Bhabesh</b><small><span class="tag m">+₹2,000 extra</span></small></div><span class="a num">₹6,600</span></div>
         <div class="li"><div class="av k">K</div><div class="t"><b>Khitish</b></div><span class="a num">₹4,600</span></div>
@@ -333,7 +333,7 @@
   <div class="topbar"><div class="icon-btn"><i data-lucide="chevron-left"></i></div><div style="flex:1"><h1>Close September</h1><p class="sub">Step 2 of 2 · settle up</p></div></div>
   <div class="scroll">
     <div class="steps"><i class="on"></i><i class="on"></i></div>
-    <div class="card" style="padding:4px 16px">
+    <div class="card" style="padding:6px 16px">
       <div class="list">
         <div class="li"><div class="av b">B</div><div class="t"><b>Bhabesh</b><small>Paid ₹9,100 · share ₹6,600</small></div><span class="a num gets">gets ₹2,500</span></div>
         <div class="li"><div class="av k">K</div><div class="t"><b>Khitish</b><small>Paid ₹6,300 · share ₹4,600</small></div><span class="a num gets">gets ₹1,700</span></div>
@@ -381,12 +381,12 @@
   <div class="scroll">
     <div class="chips"><span class="chip on">All</span><span class="chip">Bills</span><span class="chip">Payments</span><span class="chip">Members</span></div>
     <p class="date-h">Today</p>
-    <div class="card" style="padding:0 16px"><div class="list">
+    <div class="card" style="padding:6px 16px"><div class="list">
       <div class="li"><div class="av s">S</div><div class="t"><b>Sanjita added Medicines</b><small>Dadi's care · September · 2h ago</small></div><span class="a num">₹1,240</span></div>
       <div class="li"><div class="av b">B</div><div class="t"><b>You added Pension</b><small>Money in for Dadi · 9:10 am</small></div><span class="a num gets">+₹10,000</span></div>
     </div></div>
     <p class="date-h">Yesterday</p>
-    <div class="card" style="padding:0 16px"><div class="list">
+    <div class="card" style="padding:6px 16px"><div class="list">
       <div class="li"><div class="av u">S</div><div class="t"><b>Suresh marked a payment paid</b><small>August · to you</small></div><span class="a num">₹2,000</span></div>
       <div class="li"><div class="av k">K</div><div class="t"><b>Khitish joined</b><small>Dadi's care</small></div></div>
       <div class="li"><div class="av b">B</div><div class="t"><b>You closed August</b><small>3 payments to settle</small></div></div>
@@ -402,7 +402,7 @@
   <div class="topbar"><h1>Me</h1></div>
   <div class="scroll">
     <div class="card row"><div class="av b" style="width:56px;height:56px;font-size:22px">B</div><div style="flex:1"><p style="font-weight:600;font-size:18px">Bhabesh Mohapatra</p><p class="muted">User ID: bhabesh</p></div><i data-lucide="pencil" style="width:20px;color:var(--faint)"></i></div>
-    <div class="card" style="padding:4px 16px"><div class="list">
+    <div class="card" style="padding:6px 16px"><div class="list">
       <div class="li"><div class="cat"><i data-lucide="indian-rupee"></i></div><div class="t"><b>UPI ID</b><small>bhabesh@oksbi · so family can pay you</small></div><i data-lucide="chevron-right" style="color:var(--faint)"></i></div>
       <div class="li"><div class="cat"><i data-lucide="key-round"></i></div><div class="t"><b>Change password</b></div><i data-lucide="chevron-right" style="color:var(--faint)"></i></div>
       <div class="li"><div class="cat"><i data-lucide="smartphone"></i></div><div class="t"><b>Install app</b><small>Add to home screen</small></div><i data-lucide="chevron-right" style="color:var(--faint)"></i></div>
@@ -428,7 +428,7 @@
     <div class="field"><label>Name</label><div class="input focus">Dadi's care</div></div>
     <div class="field"><label>Who is it for? (optional)</label><div class="input">Dadi</div><p class="note">Their pension and bills paid from their money are tracked, never divided.</p></div>
     <div class="field"><label>Members who share the cost</label>
-      <div class="card" style="padding:4px 16px"><div class="list">
+      <div class="card" style="padding:6px 16px"><div class="list">
         <div class="li"><div class="av b">B</div><div class="t"><b>Bhabesh (you)</b><small>Admin</small></div></div>
         <div class="li"><div class="av p">K</div><div class="t"><b>Khitish</b><small>Joins with a link later</small></div><i data-lucide="x" style="width:18px;color:var(--faint)"></i></div>
         <div class="li"><div class="av p">S</div><div class="t"><b>Sanjita</b></div><i data-lucide="x" style="width:18px;color:var(--faint)"></i></div>
