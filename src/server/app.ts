@@ -61,7 +61,7 @@ app.onError((err, c) => {
     return c.json({ error: 'db_unavailable', message: 'Something went wrong, try again.' }, 503)
   }
   // gstack-shortcut(dec-ef00621d): browser errors not reported, upgrade before non-family users
-  log({ level: 'error', requestId: c.var.requestId, path: c.req.path, msg: err.message, stack: err.stack })
+  log({ level: 'error', requestId: c.var.requestId, path: c.req.path, msg: err.message, cause: String(err.cause ?? ''), stack: err.stack })
   return c.json({ error: 'internal', message: 'Something went wrong.', requestId: c.var.requestId }, 500)
 })
 
