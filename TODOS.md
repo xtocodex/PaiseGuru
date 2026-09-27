@@ -56,9 +56,13 @@ Every feature in `docs/designs/paiseguru-mvp.md` is in scope. A build phase star
 **Production:** `NODE_ENV=production`, no `DEV_LOGIN`, a new `BETTER_AUTH_SECRET` (`openssl rand -base64 32`), `BETTER_AUTH_URL` = the public https URL. Changing the secret turns off every invite and statement link.
 **Effort:** S · **Priority:** P1
 
-### Deploy phase 1
-**What:** Pick the Node host (Railway, Render or Fly). Release step `pnpm db:migrate`, then `pnpm build && pnpm start`. Uptime ping on `/health`.
-**Effort:** S · **Priority:** P1 · **Depends on:** Google sign-in
+### Finish the custom domain
+**What:** At BigRock (DNS for gopalmohapatra.in) add `A` record `paiseguru` → `76.76.21.21`. Vercel then issues HTTPS for https://paiseguru.gopalmohapatra.in. Until then use https://paiseguru.vercel.app. Deployed 2026-09-27 on Vercel.
+**Effort:** S · **Priority:** P1
+
+### Uptime ping
+**What:** A free uptime monitor on `/health` (checks the database too).
+**Effort:** S · **Priority:** P2
 
 ### Check UPI links on real phones (CEO T1)
 **What:** On a deployed https URL, tap "Pay with UPI" on a month's payment from GPay, PhonePe and Paytm (Android and iPhone). Record whether the amount is filled, blocked or warned. "Copy UPI ID + amount" is the fallback that already ships.

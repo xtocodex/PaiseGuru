@@ -27,3 +27,12 @@ pnpm dev                # app on http://localhost:5173, API on :3000
 | `pnpm db:generate` | make a migration after changing the schema |
 | `pnpm db:migrate` | apply migrations |
 | `pnpm build` / `pnpm start` | production build / run |
+| `pnpm deploy:vercel` | build and deploy to Vercel production (run `pnpm db:migrate` against production first when there are new migrations) |
+| `pnpm user:create <id> "<Full Name>"` | create a sign-in account (prints a password once); point `DATABASE_URL` at the right database |
+
+## Production
+
+- Hosting: Vercel project `paiseguru` (team xtocodexs-projects). The React app is served from Vercel's CDN; the Hono server runs as one Node function in Singapore (`sin1`). `scripts/build-vercel.ts` writes the ready-made deployment.
+- Database: Neon database `paiseguru_prod` (pooled URL in the Vercel `DATABASE_URL` setting).
+- Settings on Vercel: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (https://paiseguru.gopalmohapatra.in), `TRUSTED_ORIGINS` (https://paiseguru.vercel.app), `NODE_ENV=production`.
+- Deploys must come from commits authored by the Vercel account email (this repo uses `xtocodex@gmail.com`).
