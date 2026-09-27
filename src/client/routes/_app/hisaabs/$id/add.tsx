@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Check } from 'lucide-react'
 import { api, call } from '../../../../api.ts'
 import { EntryForm, type EntryValues } from '../../../../entry-form.tsx'
 import { hisaabQuery } from '../../../../queries.ts'
-import { ErrorBox, Loading, Page } from '../../../../ui.tsx'
+import { Button, ErrorBox, Loading, Page } from '../../../../ui.tsx'
 
 export const Route = createFileRoute('/_app/hisaabs/$id/add')({ component: AddEntry })
 
@@ -22,30 +23,44 @@ function AddEntry() {
   })
 
   if (h.isPending) return <Loading />
-  if (!h.data || h.data.pending) return <ErrorBox error={h.error} />
+  if (!h.data || h.data.pending) return <Page title="Add" close back="/"><ErrorBox error={h.error} /></Page>
   const members = h.data.members.filter((m) => m.status === 'active').map((m) => ({ id: m.id, name: m.name }))
 
   return (
-    <Page title={`Add to ${h.data.name}`} back>
-      {saved && <p className="rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{saved}</p>}
+    <Page
+      title={`Add to ${h.data.name}`}
+      close
+      back={`/hisaabs/${id}`}
+      footer={
+        <div className="flex gap-2">
+          <Button type="submit" form="entry-form" value="again" variant="secondary" disabled={save.isPending}>
+            Save + next
+          </Button>
+          <Button type="submit" form="entry-form" className="flex-1" disabled={save.isPending} icon={Check}>
+            Save
+          </Button>
+        </div>
+      }
+    >
+      {saved && (
+        <p role="status" className="rounded-xl bg-gets-soft p-3 text-sm font-medium text-gets">
+          {saved}
+        </p>
+      )}
       <EntryForm
         key={formKey}
         members={members}
-        forLabel={h.data.forLabel}
         meId={h.data.me.memberId}
-        submitLabel="Save"
-        pending={save.isPending}
+        forLabel={h.data.forLabel}
         error={save.error}
         onSubmit={(v, again) =>
           save.mutate(v, {
             onSuccess: (out) => {
-              queryClient.invalidateQueries({ queryKey: ['sheet', out.sheetId] })
-              queryClient.invalidateQueries({ queryKey: ['hisaab', id] })
-              queryClient.invalidateQueries({ queryKey: ['home'] })
+              queryClient.invalidateQueries()
               if (again) {
                 setSaved('Saved. Add the next one.')
                 setFormKey((k) => k + 1)
-              } else navigate({ to: '/sheets/$id', params: { id: out.sheetId } })
+              } else navigate({ to: '/sheets/$id', params: { id: out.sheetId }, replace: true })
             },
           })
         }

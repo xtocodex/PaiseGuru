@@ -33,6 +33,10 @@ writeFileSync(
   JSON.stringify({
     version: 3,
     routes: [
+      // The service worker must always be fresh so app updates reach installed phones.
+      { src: '^/sw\\.js$', headers: { 'cache-control': 'no-cache' }, continue: true },
+      { src: '^/assets/.+$', headers: { 'cache-control': 'public, max-age=31536000, immutable' }, continue: true },
+      { src: '^/manifest\\.webmanifest$', headers: { 'content-type': 'application/manifest+json' }, continue: true },
       { src: '^/$', dest: '/index.html' }, // Vercel would otherwise send the root path to the function
       { src: '^/(api/.*|s/.*|health)$', dest: '/_server' },
       { handle: 'filesystem' },

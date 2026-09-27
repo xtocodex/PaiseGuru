@@ -1,13 +1,17 @@
+// Add or edit a Hisaab entry (S6). Amount first; people and category are chips. The page's footer
+// buttons submit this form through form="entry-form".
 import { useState } from 'react'
-import { CATEGORIES, istDate } from '../domain/hisaab.ts'
+import { Calendar } from 'lucide-react'
+import { CATEGORIES, istDate, type Category } from '../domain/hisaab.ts'
 import { formatRupees, parseRupees } from '../domain/money.ts'
-import { Button, ErrorBox, Field, Input, Select, cx } from './ui.tsx'
+import { CATEGORY_ICON } from './categories.tsx'
+import { Chips, ErrorBox, Field, Input, Segmented, Select, cx } from './ui.tsx'
 
 export type EntryType = 'bill' | 'refund' | 'money_given' | 'money_in'
 export type EntryValues = {
   type: EntryType
   amountPaise: number
-  category: (typeof CATEGORIES)[number] | null
+  category: Category | null
   date: string
   note: string
   paidByMemberId: string | null
@@ -15,155 +19,159 @@ export type EntryValues = {
 }
 
 const OUTSIDE = 'outside'
+const COMMON: Category[] = ['Healthcare', 'Food', 'Groceries', 'Household help', 'Bills']
 
-/** Add or edit a Hisaab entry (S6). Amount is typed in rupees and parsed to paise without floats. */
 export function EntryForm(props: {
   members: { id: string; name: string }[]
-  forLabel: string | null // the person the Hisaab is for (e.g. Dadi); enables "money in" and "from their money"
   meId: string
+  /** The person the Hisaab is for (e.g. Dadi): enables "Money in" and "From their money". */
+  forLabel: string | null
   initial?: EntryValues
-  submitLabel: string
-  pending: boolean
   error: unknown
   onSubmit: (v: EntryValues, again: boolean) => void
 }) {
   const init = props.initial
-  const [type, setType] = useState<EntryType>(init?.type ?? 'bill')
-  const [amountError, setAmountError] = useState<string | null>(null)
   const today = istDate(new Date())
-  const forLabel = props.forLabel
-  const types: { value: EntryType; label: string }[] = [
-    { value: 'bill', label: 'Bill' },
-    { value: 'refund', label: 'Refund' },
-    { value: 'money_given', label: 'Money given' },
-    ...(forLabel ? [{ value: 'money_in' as const, label: `Money in for ${forLabel}` }] : []),
-  ]
-  const outsideLabel = forLabel ? `From ${forLabel}'s money` : 'Outside the split'
+  const others = props.members.filter((m) => m.id !== props.meId)
+  const [type, setType] = useState<EntryType>(init?.type ?? 'bill')
+  const [amount, setAmount] = useState(init ? formatRupees(init.amountPaise).replace('₹', '') : '')
+  const [amountError, setAmountError] = useState<string | null>(null)
+  const [paidBy, setPaidBy] = useState<string>(init ? (init.paidByMemberId ?? OUTSIDE) : props.meId)
+  const [to, setTo] = useState<string>(init?.toMemberId ?? (type === 'money_given' ? (others[0]?.id ?? props.meId) : props.meId))
+  const [category, setCategory] = useState<Category>(init?.category ?? 'Healthcare')
+  const [more, setMore] = useState(init?.category ? !COMMON.includes(init.category) : false)
+  const [date, setDate] = useState(init?.date ?? today)
+  const [note, setNote] = useState(init?.note ?? '')
 
-  function submit(form: FormData, again: boolean) {
-    const amountPaise = parseRupees(String(form.get('amount')))
+  const outsideLabel = props.forLabel ? `${props.forLabel}'s money` : 'Outside the split'
+  const people = props.members.map((m) => ({ value: m.id, label: m.id === props.meId ? 'You' : m.name }))
+  const types = [
+    { value: 'bill' as const, label: 'Bill' },
+    { value: 'refund' as const, label: 'Refund' },
+    { value: 'money_given' as const, label: 'Given' },
+    ...(props.forLabel || type === 'money_in' ? [{ value: 'money_in' as const, label: 'Money in' }] : []),
+  ]
+
+  function changeType(t: EntryType) {
+    setType(t)
+    if (t === 'money_given' && to === paidBy) setTo(others[0]?.id ?? props.meId)
+    if (t === 'money_given' && paidBy === OUTSIDE) setPaidBy(props.meId)
+  }
+
+  function submit(again: boolean) {
+    const amountPaise = parseRupees(amount)
     if (!amountPaise) return setAmountError('Enter an amount like 250 or 250.50')
     setAmountError(null)
-    const from = String(form.get('from') ?? '')
-    const to = String(form.get('to') ?? '')
     props.onSubmit(
       {
         type,
         amountPaise,
-        category: type === 'money_given' || type === 'money_in' ? null : (String(form.get('category')) as EntryValues['category']),
-        date: String(form.get('date')),
-        note: String(form.get('note') ?? ''),
-        paidByMemberId: type === 'refund' || type === 'money_in' || from === OUTSIDE ? null : from,
-        toMemberId: type === 'bill' || type === 'money_in' ? null : to,
+        category: type === 'bill' || type === 'refund' ? category : null,
+        date,
+        note,
+        paidByMemberId: type === 'bill' ? (paidBy === OUTSIDE ? null : paidBy) : type === 'money_given' ? paidBy : null,
+        toMemberId: type === 'refund' || type === 'money_given' ? to : null,
       },
       again,
     )
   }
 
-  const people = props.members.map((m) => (
-    <option key={m.id} value={m.id}>
-      {m.id === props.meId ? `${m.name} (you)` : m.name}
-    </option>
-  ))
-
   return (
     <form
-      className="space-y-4"
+      id="entry-form"
+      className="flex flex-col gap-5"
       onSubmit={(e) => {
         e.preventDefault()
-        const again = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'again'
-        submit(new FormData(e.currentTarget), again)
+        submit((e.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'again')
       }}
     >
-      <div role="radiogroup" aria-label="Type" className={cx('grid gap-1 rounded-xl bg-slate-200/70 p-1', types.length === 4 ? 'grid-cols-2' : 'grid-cols-3')}>
-        {types.map((t) => (
-          <button
-            key={t.value}
-            type="button"
-            role="radio"
-            aria-checked={type === t.value}
-            onClick={() => setType(t.value)}
-            className={cx('min-h-11 rounded-lg text-sm font-semibold', type === t.value ? 'bg-white shadow-sm' : 'text-slate-600')}
-          >
-            {t.label}
-          </button>
-        ))}
+      <Segmented label="Type" options={types} value={type} onChange={changeType} />
+
+      <div className="flex flex-col items-center gap-1">
+        <label className="flex items-baseline justify-center gap-1" aria-label="Amount in rupees">
+          <span className="text-3xl font-semibold text-muted">₹</span>
+          <input
+            name="amount"
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="0"
+            autoFocus={!init}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            style={{ width: `${Math.max(amount.length, 1) + 0.6}ch` }}
+            className="num max-w-65 min-w-[2ch] bg-transparent text-left text-[44px] font-bold tracking-tight outline-none placeholder:text-field"
+          />
+        </label>
+        {amountError && (
+          <p role="alert" className="text-sm text-pays">
+            {amountError}
+          </p>
+        )}
+        <input
+          aria-label="Note"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={500}
+          placeholder={type === 'money_in' ? 'What is it? (for example, pension)' : 'What was it for?'}
+          className="w-full rounded-xl bg-transparent px-3 py-2 text-center text-[15px] text-muted outline-none placeholder:text-faint focus:bg-card"
+        />
       </div>
 
-      <Field label="Amount (₹)" error={amountError}>
-        <Input
-          name="amount"
-          inputMode="decimal"
-          autoComplete="off"
-          required
-          defaultValue={init ? formatRupees(init.amountPaise).replace('₹', '') : ''}
-          placeholder="0"
-          className="text-2xl font-semibold"
-        />
-      </Field>
-
       {type === 'bill' && (
-        <Field label="Paid by" hint={`“${outsideLabel}” shows in the total but is not divided between members.`}>
-          <Select name="from" defaultValue={init ? (init.paidByMemberId ?? OUTSIDE) : props.meId}>
-            {people}
-            <option value={OUTSIDE}>{outsideLabel}</option>
-          </Select>
+        <Field label="Paid by" group>
+          <Chips label="Paid by" value={paidBy} onChange={setPaidBy} options={[...people, { value: OUTSIDE, label: outsideLabel }]} />
         </Field>
       )}
+      {type === 'bill' && paidBy === OUTSIDE && (
+        <p className="-mt-3 text-[13px] text-muted">Shown in the total, not divided between members.</p>
+      )}
       {type === 'refund' && (
-        <Field label="Received by">
-          <Select name="to" defaultValue={init?.toMemberId ?? props.meId}>
-            {people}
-          </Select>
+        <Field label="Received by" group>
+          <Chips label="Received by" value={to} onChange={setTo} options={people} />
         </Field>
       )}
       {type === 'money_given' && (
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="From">
-            <Select name="from" defaultValue={init?.paidByMemberId ?? props.meId}>
-              {people}
-            </Select>
+        <>
+          <Field label="From" group>
+            <Chips label="From" value={paidBy} onChange={setPaidBy} options={people} />
           </Field>
-          <Field label="To">
-            <Select name="to" defaultValue={init?.toMemberId ?? props.members.find((m) => m.id !== props.meId)?.id}>
-              {people}
-            </Select>
+          <Field label="To" group>
+            <Chips label="To" value={to} onChange={setTo} options={people.filter((p) => p.value !== paidBy)} />
           </Field>
-        </div>
+        </>
       )}
-
       {type === 'money_in' && (
-        <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
-          Money {forLabel} receives, like a pension. It is not divided and does not change anyone's share. Bills paid from it are shown as “{outsideLabel}”.
+        <p className="rounded-xl bg-card p-3 text-[13px] text-muted">
+          Money {props.forLabel ?? 'the Hisaab'} receives, like a pension. It is not divided and changes nobody's share. Bills paid from it are marked "{outsideLabel}".
         </p>
       )}
 
       {(type === 'bill' || type === 'refund') && (
-        <Field label="Category">
-          <Select name="category" defaultValue={init?.category ?? 'Healthcare'}>
-            {CATEGORIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </Select>
+        <Field label="Category" group>
+          <Chips
+            label="Category"
+            value={more ? null : category}
+            onChange={(v) => (v === ('more' as Category) ? setMore(true) : (setCategory(v), setMore(false)))}
+            options={[...COMMON.map((c) => ({ value: c, label: c === 'Household help' ? 'Help' : c, icon: CATEGORY_ICON[c] })), { value: 'more' as Category, label: 'More' }]}
+          />
+          {more && (
+            <Select aria-label="All categories" value={category} onChange={(e) => setCategory(e.target.value as Category)}>
+              {CATEGORIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </Select>
+          )}
         </Field>
       )}
 
       <Field label="Date">
-        <Input name="date" type="date" required max={today} defaultValue={init?.date ?? today} />
-      </Field>
-      <Field label="Note (optional)">
-        <Input name="note" maxLength={500} defaultValue={init?.note} placeholder={type === 'money_in' ? 'For example: pension' : 'For example: medicines'} />
+        <span className={cx('relative flex items-center')}>
+          <Calendar className="pointer-events-none absolute left-3.5 size-5 text-muted" aria-hidden />
+          <Input type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)} className="pl-11" required />
+        </span>
       </Field>
 
       <ErrorBox error={props.error} />
-      <Button type="submit" className="w-full" disabled={props.pending}>
-        {props.submitLabel}
-      </Button>
-      {!init && (
-        <Button type="submit" value="again" variant="secondary" className="w-full" disabled={props.pending}>
-          Save and add another
-        </Button>
-      )}
     </form>
   )
 }

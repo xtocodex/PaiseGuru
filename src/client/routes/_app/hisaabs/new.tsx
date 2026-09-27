@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CATEGORIES, addMonths, istDate, monthOf, sheetName } from '../../../../domain/hisaab.ts'
+import { Plus, X } from 'lucide-react'
+import { CATEGORIES, addMonths, istDate, monthOf, sheetName, type Category } from '../../../../domain/hisaab.ts'
 import { api, call } from '../../../api.ts'
-import { Button, Card, ErrorBox, Field, Input, Page, Select } from '../../../ui.tsx'
+import { Avatar, Button, Card, Chips, ErrorBox, Field, IconButton, Input, Page, Row, Rows, Select } from '../../../ui.tsx'
 
 export const Route = createFileRoute('/_app/hisaabs/new')({ component: NewHisaab })
 
@@ -13,104 +14,99 @@ function NewHisaab() {
   const queryClient = useQueryClient()
   const thisMonth = monthOf(istDate(new Date()))
   const months = Array.from({ length: 13 }, (_, i) => addMonths(thisMonth, -i))
+  const [name, setName] = useState('')
+  const [forLabel, setForLabel] = useState('')
   const [members, setMembers] = useState<string[]>([])
   const [newName, setNewName] = useState('')
+  const [startMonth, setStartMonth] = useState(thisMonth)
+  const [earlier, setEarlier] = useState(false)
+  const [category, setCategory] = useState<Category>('Shared')
 
   const create = useMutation({
-    mutationFn: (form: FormData) =>
-      call(
-        api.hisaabs.$post({
-          json: {
-            name: String(form.get('name')),
-            forLabel: String(form.get('forLabel') ?? ''),
-            category: String(form.get('category')) as (typeof CATEGORIES)[number],
-            startMonth: String(form.get('startMonth')),
-            members,
-          },
-        }),
-      ),
+    mutationFn: () => call(api.hisaabs.$post({ json: { name, forLabel, category, startMonth, members } })),
     onSuccess: ({ id }) => {
-      queryClient.invalidateQueries({ queryKey: ['home'] })
-      navigate({ to: '/hisaabs/$id', params: { id } })
+      queryClient.invalidateQueries()
+      navigate({ to: '/hisaabs/$id', params: { id }, replace: true })
     },
   })
 
   function addMember() {
-    const name = newName.trim()
-    if (name && !members.includes(name)) setMembers([...members, name])
+    const n = newName.trim()
+    if (n && !members.includes(n)) setMembers([...members, n])
     setNewName('')
   }
 
   return (
-    <Page title="New Hisaab" back>
-      <p className="text-sm text-slate-600">Add bills all month, then divide them once at month-end.</p>
-      <form action={(f) => create.mutate(f)} className="space-y-4">
-        <Card className="space-y-4">
-          <Field label="Name" hint="For example: Flat 402 monthly, Hostel mess, Office tea fund">
-            <Input name="name" required maxLength={80} />
-          </Field>
-          <Field label="For (optional)" hint="The person the costs are for, if any. They don't pay and don't need the app.">
-            <Input name="forLabel" maxLength={60} />
-          </Field>
-          <Field label="Counts in my spending as">
-            <Select name="category" defaultValue="Shared">
-              {CATEGORIES.map((c) => (
-                <option key={c}>{c}</option>
+    <Page
+      title="New Hisaab"
+      close
+      back="/hisaabs"
+      footer={
+        <Button type="submit" form="new-hisaab" className="w-full" disabled={create.isPending}>
+          Create Hisaab
+        </Button>
+      }
+    >
+      <form id="new-hisaab" className="flex flex-col gap-5" onSubmit={(e) => (e.preventDefault(), create.mutate())}>
+        <Field label="Name" hint="For example: Dadi's care, Flat 402, Hostel mess">
+          <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} autoFocus />
+        </Field>
+        <Field label="Who is it for? (optional)" hint="Their pension and bills paid from their money are tracked, never divided.">
+          <Input value={forLabel} onChange={(e) => setForLabel(e.target.value)} maxLength={60} placeholder="For example: Dadi" />
+        </Field>
+
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[13px] font-semibold text-muted">Members who share the cost</p>
+          <Card flush>
+            <Rows>
+              <Row left={<Avatar name={user.name} id={user.id} />} title={`${user.name} (you)`} subtitle="Admin" />
+              {members.map((m) => (
+                <Row key={m} left={<Avatar name={m} id={m} muted />} title={m} subtitle="Can join later with a link" right={<IconButton icon={X} label={`Remove ${m}`} onClick={() => setMembers(members.filter((x) => x !== m))} />} />
               ))}
-            </Select>
-          </Field>
-          <Field label="First month" hint="Pick an earlier month to enter old months from a notebook.">
-            <Select name="startMonth" defaultValue={thisMonth}>
+              <div className="flex items-center gap-2 py-2">
+                <Input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addMember())}
+                  placeholder="Member's name"
+                  aria-label="New member name"
+                  maxLength={60}
+                />
+                <Button variant="secondary" icon={Plus} onClick={addMember}>
+                  Add
+                </Button>
+              </div>
+            </Rows>
+          </Card>
+          <p className="text-[13px] text-muted">They don't need the app. You can add their bills for them.</p>
+        </div>
+
+        <Field label="First month" group hint="Pick an earlier month to enter old months from a notebook.">
+          <Chips
+            label="First month"
+            value={earlier ? 'earlier' : startMonth}
+            onChange={(v) => (v === 'earlier' ? setEarlier(true) : (setEarlier(false), setStartMonth(v)))}
+            options={[...months.slice(0, 3).map((m) => ({ value: m, label: sheetName(m).split(' ')[0]! })), { value: 'earlier', label: 'Earlier…' }]}
+          />
+          {earlier && (
+            <Select aria-label="Earlier month" value={startMonth} onChange={(e) => setStartMonth(e.target.value)}>
               {months.map((m) => (
                 <option key={m} value={m}>
                   {sheetName(m)}
                 </option>
               ))}
             </Select>
-          </Field>
-        </Card>
+          )}
+        </Field>
 
-        <Card>
-          <h2 className="mb-2 font-semibold">Members who share the cost</h2>
-          <ul className="mb-3 divide-y divide-slate-100">
-            <li className="flex min-h-11 items-center">{user.name} (you)</li>
-            {members.map((m) => (
-              <li key={m} className="flex min-h-11 items-center justify-between">
-                <span>
-                  {m} <span className="text-xs text-slate-500">can join later</span>
-                </span>
-                <button type="button" aria-label={`Remove ${m}`} className="size-11 text-slate-400" onClick={() => setMembers(members.filter((x) => x !== m))}>
-                  ✕
-                </button>
-              </li>
+        <Field label="Counts in each member's spending as">
+          <Select value={category} onChange={(e) => setCategory(e.target.value as Category)}>
+            {CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
             ))}
-          </ul>
-          <div className="flex gap-2">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  addMember()
-                }
-              }}
-              placeholder="Name"
-              maxLength={60}
-              aria-label="New member name"
-            />
-            <Button type="button" variant="secondary" onClick={addMember}>
-              Add
-            </Button>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">They don't need the app. You can add their bills for them.</p>
-        </Card>
-
+          </Select>
+        </Field>
         <ErrorBox error={create.error} />
-        <Button type="submit" className="w-full" disabled={create.isPending}>
-          Create Hisaab
-        </Button>
-        <p className="text-center text-xs text-slate-500">A new month opens by itself on the 1st.</p>
       </form>
     </Page>
   )

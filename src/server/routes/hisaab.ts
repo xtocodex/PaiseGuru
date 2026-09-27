@@ -53,6 +53,34 @@ async function findByInvite(token: string) {
   return h
 }
 
+type SheetStats = { totalPaise: number; entryCount: number; forInPaise: number; forUsedPaise: number; unpaidCount: number }
+type RecentSheet = SheetStats & { id: string; name: string; state: 'open' | 'closed' | 'cleared' | 'carried' }
+
+/** Per-sheet numbers for lists: total (bills − refunds), entries, the For person's money in/used, unpaid payments. */
+async function sheetStats(sheetIds: string[]): Promise<(id: string) => SheetStats> {
+  const empty: SheetStats = { totalPaise: 0, entryCount: 0, forInPaise: 0, forUsedPaise: 0, unpaidCount: 0 }
+  if (!sheetIds.length) return () => empty
+  const [sums, unpaid] = await Promise.all([
+    db
+      .select({
+        sheetId: entry.sheetId,
+        totalPaise: sql<number>`coalesce(sum(case when ${entry.type} = 'bill' then ${entry.amountPaise} when ${entry.type} = 'refund' then -${entry.amountPaise} else 0 end), 0)`.mapWith(Number),
+        entryCount: sql<number>`count(*)`.mapWith(Number),
+        forInPaise: sql<number>`coalesce(sum(case when ${entry.type} = 'money_in' then ${entry.amountPaise} else 0 end), 0)`.mapWith(Number),
+        forUsedPaise: sql<number>`coalesce(sum(case when ${entry.type} = 'bill' and ${entry.paidByMemberId} is null then ${entry.amountPaise} else 0 end), 0)`.mapWith(Number),
+      })
+      .from(entry)
+      .where(and(inArray(entry.sheetId, sheetIds), isNull(entry.deletedAt)))
+      .groupBy(entry.sheetId),
+    db
+      .select({ sheetId: transfer.sheetId, n: sql<number>`count(*)`.mapWith(Number) })
+      .from(transfer)
+      .where(and(inArray(transfer.sheetId, sheetIds), eq(transfer.status, 'unpaid')))
+      .groupBy(transfer.sheetId),
+  ])
+  return (id) => ({ ...empty, ...sums.find((x) => x.sheetId === id), unpaidCount: unpaid.find((x) => x.sheetId === id)?.n ?? 0 })
+}
+
 export const hisaabRoutes = new Hono<Env>()
   .get('/hisaabs', async (c) => {
     const rows = await db
@@ -61,7 +89,29 @@ export const hisaabRoutes = new Hono<Env>()
       .innerJoin(hisaab, eq(hisaab.id, member.hisaabId))
       .where(and(eq(member.userId, c.var.user.id), ne(member.status, 'deleted')))
       .orderBy(asc(hisaab.name))
-    return c.json({ hisaabs: rows })
+    const visible = rows.filter((r) => r.status === 'active').map((r) => r.id)
+    if (!visible.length) return c.json({ hisaabs: rows.map((r) => ({ ...r, memberCount: 0, recent: [] as RecentSheet[] })) })
+    const [counts, sheets] = await Promise.all([
+      db
+        .select({ hisaabId: member.hisaabId, n: sql<number>`count(*)`.mapWith(Number) })
+        .from(member)
+        .where(and(inArray(member.hisaabId, visible), inArray(member.status, ['active', 'pending'])))
+        .groupBy(member.hisaabId),
+      db.select().from(sheet).where(inArray(sheet.hisaabId, visible)).orderBy(sql`${sheet.startDate} desc`),
+    ])
+    const recent = new Map<string, typeof sheets>()
+    for (const s of sheets) {
+      const list = recent.get(s.hisaabId) ?? []
+      if (list.length < 2) recent.set(s.hisaabId, [...list, s])
+    }
+    const stats = await sheetStats([...recent.values()].flat().map((s) => s.id))
+    return c.json({
+      hisaabs: rows.map((r) => ({
+        ...r,
+        memberCount: counts.find((x) => x.hisaabId === r.id)?.n ?? 0,
+        recent: (recent.get(r.id) ?? []).map((s): RecentSheet => ({ id: s.id, name: sheetName(s.month), state: s.state, ...stats(s.id) })),
+      })),
+    })
   })
 
   .post('/hisaabs', json(createHisaabSchema), async (c) => {
@@ -93,27 +143,18 @@ export const hisaabRoutes = new Hono<Env>()
     if (me.status === 'active') await db.transaction((tx) => ensureSheets(tx, h))
 
     const members = await db.select().from(member).where(eq(member.hisaabId, h.id)).orderBy(asc(member.seq))
-    const totals = db
-      .select({
-        sheetId: entry.sheetId,
-        total: sql<number>`sum(case when ${entry.type} = 'bill' then ${entry.amountPaise} when ${entry.type} = 'refund' then -${entry.amountPaise} else 0 end)`
-          .mapWith(Number)
-          .as('total'),
-      })
-      .from(entry)
-      .where(and(eq(entry.hisaabId, h.id), isNull(entry.deletedAt)))
-      .groupBy(entry.sheetId)
-      .as('totals')
     let sheetsQuery = db
-      .select({ id: sheet.id, month: sheet.month, startDate: sheet.startDate, endDate: sheet.endDate, state: sheet.state, total: totals.total })
+      .select({ id: sheet.id, month: sheet.month, startDate: sheet.startDate, endDate: sheet.endDate, state: sheet.state })
       .from(sheet)
-      .leftJoin(totals, eq(totals.sheetId, sheet.id))
       .where(eq(sheet.hisaabId, h.id))
       .$dynamic()
     if (me.status === 'former') {
       sheetsQuery = sheetsQuery.innerJoin(sheetParticipant, and(eq(sheetParticipant.sheetId, sheet.id), eq(sheetParticipant.memberId, me.id)))
     }
     const sheets = await sheetsQuery.orderBy(sql`${sheet.startDate} desc`)
+    const stats = await sheetStats(sheets.map((s) => s.id))
+    // The For person's money left now: money in − bills paid from it, over every month (never stored).
+    const forBalancePaise = sheets.reduce((sum, s) => sum + stats(s.id).forInPaise - stats(s.id).forUsedPaise, 0)
 
     return c.json({
       id: h.id,
@@ -125,7 +166,8 @@ export const hisaabRoutes = new Hono<Env>()
       me: { memberId: me.id, role: me.role, status: me.status },
       inviteLink: me.status === 'active' ? inviteLink(h.inviteNonce) : null,
       members: members.filter((m) => m.status !== 'former' || m.id === me.id).map((m) => memberView(m, me.id)),
-      sheets: sheets.map((s) => ({ ...s, name: sheetName(s.month), totalPaise: s.total ?? 0 })),
+      forBalancePaise,
+      sheets: sheets.map((s) => ({ ...s, name: sheetName(s.month), ...stats(s.id) })),
     })
   })
 

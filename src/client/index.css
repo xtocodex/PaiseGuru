@@ -1,18 +1,175 @@
 @import 'tailwindcss';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
 
-@theme {
-  --color-brand: #0f766e;
-  --color-brand-dark: #115e59;
-  --color-brand-soft: #ccfbf1;
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+/* Design tokens (docs/designs/v2). Components use only these names; dark values live below. */
+@theme inline {
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
+  --color-brand-text: var(--brand-text);
+  --color-brand-soft: var(--brand-soft);
+  --color-gets: var(--gets);
+  --color-gets-soft: var(--gets-soft);
+  --color-on-gets: var(--on-gets);
+  --color-pays: var(--pays);
+  --color-pays-soft: var(--pays-soft);
+  --color-marigold: var(--marigold);
+  --color-on-marigold: #2b1d00;
+  --color-marigold-soft: var(--marigold-soft);
+  --color-marigold-text: var(--marigold-text);
+  --color-field: var(--field);
+  --color-scrim: var(--scrim);
 }
 
-html {
-  -webkit-tap-highlight-color: transparent;
+:root {
+  --paper: #f4f5f7;
+  --card: #ffffff;
+  --line: #e3e6ec;
+  --field: #cfd4de;
+  --text: #1a1f2e;
+  --muted: #5d6477;
+  --faint: #636a7c;
+  --brand: #23306e;
+  --on-brand: #ffffff;
+  --brand-text: #23306e;
+  --brand-soft: #e6e9f5;
+  --gets: #0e7a5c;
+  --gets-soft: #e3f3ec;
+  --on-gets: #ffffff;
+  --pays: #b42d45;
+  --pays-soft: #fbe9ec;
+  --marigold: #f0a30a;
+  --marigold-soft: #fff3d6;
+  --marigold-text: #7a4f00;
+  --scrim: rgb(16 19 28 / 0.45);
+  color-scheme: light;
 }
-body {
-  background: #f1f5f9;
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #0f1320;
+    --card: #171c2b;
+    --line: #262c3d;
+    --field: #3a4156;
+    --text: #e8ebf3;
+    --muted: #a6adbf;
+    --faint: #9aa1b4;
+    --brand: #4a5bd0;
+    --brand-text: #aab5ff;
+    --brand-soft: #222a4a;
+    --gets: #3fcf9a;
+    --gets-soft: #12302a;
+    --on-gets: #0f1320;
+    --pays: #ff8196;
+    --pays-soft: #3a1a22;
+    --marigold-soft: #3a2c0a;
+    --marigold-text: #ffcf6b;
+    --scrim: rgb(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
 }
-.num {
+
+:root[data-theme='dark'] {
+  --paper: #0f1320;
+  --card: #171c2b;
+  --line: #262c3d;
+  --field: #3a4156;
+  --text: #e8ebf3;
+  --muted: #a6adbf;
+  --faint: #9aa1b4;
+  --brand: #4a5bd0;
+  --brand-text: #aab5ff;
+  --brand-soft: #222a4a;
+  --gets: #3fcf9a;
+  --gets-soft: #12302a;
+  --on-gets: #0f1320;
+  --pays: #ff8196;
+  --pays-soft: #3a1a22;
+  --marigold-soft: #3a2c0a;
+  --marigold-text: #ffcf6b;
+  --scrim: rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+/* Base styles sit in the base layer so every utility class can override them. */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    background: var(--paper);
+  }
+  body {
+    background: var(--paper);
+    color: var(--text);
+    font-family: var(--font-sans);
+    overscroll-behavior-y: none;
+  }
+}
+
+@utility num {
   font-variant-numeric: tabular-nums;
+}
+/* Pressed feedback for anything tappable: slight scale, never a layout shift. */
+@utility press {
+  transition: transform 120ms ease-out, opacity 120ms ease-out;
+  &:active {
+    transform: scale(0.98);
+  }
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--brand-text);
+    outline-offset: 2px;
+  }
+}
+
+/* Sheets slide up; pages cross-fade (View Transitions). Both off with reduced motion. */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.sheet-enter {
+  animation: sheet-up 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.scrim-enter {
+  animation: fade-in 200ms ease-out;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 160ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-enter,
+  .scrim-enter {
+    animation: none;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+  .press:active {
+    transform: none;
+  }
 }

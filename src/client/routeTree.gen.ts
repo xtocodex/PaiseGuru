@@ -12,7 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppActivityRouteImport } from './routes/_app/activity'
+import { Route as AppAddRouteImport } from './routes/_app/add'
 import { Route as AppMeRouteImport } from './routes/_app/me'
+import { Route as AppHisaabsIndexRouteImport } from './routes/_app/hisaabs/index'
 import { Route as AppHisaabsNewRouteImport } from './routes/_app/hisaabs/new'
 import { Route as AppJoinTokenRouteImport } from './routes/_app/join/$token'
 import { Route as AppHisaabsIdIndexRouteImport } from './routes/_app/hisaabs/$id/index'
@@ -35,9 +38,24 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppActivityRoute = AppActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAddRoute = AppAddRouteImport.update({
+  id: '/add',
+  path: '/add',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMeRoute = AppMeRouteImport.update({
   id: '/me',
   path: '/me',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHisaabsIndexRoute = AppHisaabsIndexRouteImport.update({
+  id: '/hisaabs/',
+  path: '/hisaabs/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppHisaabsNewRoute = AppHisaabsNewRouteImport.update({
@@ -80,9 +98,12 @@ const AppSheetsIdEntriesEntryIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
+  '/activity': typeof AppActivityRoute
+  '/add': typeof AppAddRoute
   '/me': typeof AppMeRoute
   '/hisaabs/new': typeof AppHisaabsNewRoute
   '/join/$token': typeof AppJoinTokenRoute
+  '/hisaabs/': typeof AppHisaabsIndexRoute
   '/hisaabs/$id/add': typeof AppHisaabsIdAddRoute
   '/sheets/$id/close': typeof AppSheetsIdCloseRoute
   '/hisaabs/$id/': typeof AppHisaabsIdIndexRoute
@@ -91,10 +112,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/activity': typeof AppActivityRoute
+  '/add': typeof AppAddRoute
   '/me': typeof AppMeRoute
   '/': typeof AppIndexRoute
   '/hisaabs/new': typeof AppHisaabsNewRoute
   '/join/$token': typeof AppJoinTokenRoute
+  '/hisaabs': typeof AppHisaabsIndexRoute
   '/hisaabs/$id/add': typeof AppHisaabsIdAddRoute
   '/sheets/$id/close': typeof AppSheetsIdCloseRoute
   '/hisaabs/$id': typeof AppHisaabsIdIndexRoute
@@ -105,10 +129,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/activity': typeof AppActivityRoute
+  '/_app/add': typeof AppAddRoute
   '/_app/me': typeof AppMeRoute
   '/_app/': typeof AppIndexRoute
   '/_app/hisaabs/new': typeof AppHisaabsNewRoute
   '/_app/join/$token': typeof AppJoinTokenRoute
+  '/_app/hisaabs/': typeof AppHisaabsIndexRoute
   '/_app/hisaabs/$id/add': typeof AppHisaabsIdAddRoute
   '/_app/sheets/$id/close': typeof AppSheetsIdCloseRoute
   '/_app/hisaabs/$id/': typeof AppHisaabsIdIndexRoute
@@ -120,9 +147,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/activity'
+    | '/add'
     | '/me'
     | '/hisaabs/new'
     | '/join/$token'
+    | '/hisaabs/'
     | '/hisaabs/$id/add'
     | '/sheets/$id/close'
     | '/hisaabs/$id/'
@@ -131,10 +161,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/activity'
+    | '/add'
     | '/me'
     | '/'
     | '/hisaabs/new'
     | '/join/$token'
+    | '/hisaabs'
     | '/hisaabs/$id/add'
     | '/sheets/$id/close'
     | '/hisaabs/$id'
@@ -144,10 +177,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/login'
+    | '/_app/activity'
+    | '/_app/add'
     | '/_app/me'
     | '/_app/'
     | '/_app/hisaabs/new'
     | '/_app/join/$token'
+    | '/_app/hisaabs/'
     | '/_app/hisaabs/$id/add'
     | '/_app/sheets/$id/close'
     | '/_app/hisaabs/$id/'
@@ -183,11 +219,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/activity': {
+      id: '/_app/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof AppActivityRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/add': {
+      id: '/_app/add'
+      path: '/add'
+      fullPath: '/add'
+      preLoaderRoute: typeof AppAddRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/me': {
       id: '/_app/me'
       path: '/me'
       fullPath: '/me'
       preLoaderRoute: typeof AppMeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/hisaabs/': {
+      id: '/_app/hisaabs/'
+      path: '/hisaabs'
+      fullPath: '/hisaabs/'
+      preLoaderRoute: typeof AppHisaabsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/hisaabs/new': {
@@ -243,10 +300,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppActivityRoute: typeof AppActivityRoute
+  AppAddRoute: typeof AppAddRoute
   AppMeRoute: typeof AppMeRoute
   AppIndexRoute: typeof AppIndexRoute
   AppHisaabsNewRoute: typeof AppHisaabsNewRoute
   AppJoinTokenRoute: typeof AppJoinTokenRoute
+  AppHisaabsIndexRoute: typeof AppHisaabsIndexRoute
   AppHisaabsIdAddRoute: typeof AppHisaabsIdAddRoute
   AppSheetsIdCloseRoute: typeof AppSheetsIdCloseRoute
   AppHisaabsIdIndexRoute: typeof AppHisaabsIdIndexRoute
@@ -255,10 +315,13 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppActivityRoute: AppActivityRoute,
+  AppAddRoute: AppAddRoute,
   AppMeRoute: AppMeRoute,
   AppIndexRoute: AppIndexRoute,
   AppHisaabsNewRoute: AppHisaabsNewRoute,
   AppJoinTokenRoute: AppJoinTokenRoute,
+  AppHisaabsIndexRoute: AppHisaabsIndexRoute,
   AppHisaabsIdAddRoute: AppHisaabsIdAddRoute,
   AppSheetsIdCloseRoute: AppSheetsIdCloseRoute,
   AppHisaabsIdIndexRoute: AppHisaabsIdIndexRoute,

@@ -5,6 +5,7 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@ta
 import { ApiError } from './api.ts'
 import { routeTree } from './routeTree.gen.ts'
 import './index.css'
+import { registerServiceWorker } from './pwa.ts'
 
 // Signed out mid-session (expired cookie): drop cached data and go to sign-in.
 const onError = (error: Error) => {
@@ -16,9 +17,16 @@ const onError = (error: Error) => {
 const queryClient = new QueryClient({
   queryCache: new QueryCache({ onError }),
   mutationCache: new MutationCache({ onError }),
-  defaultOptions: { queries: { retry: (n, e) => !(e instanceof ApiError && e.status < 500) && n < 2 } },
+  defaultOptions: { queries: { staleTime: 10_000, retry: (n, e) => !(e instanceof ApiError && e.status < 500) && n < 2 } },
 })
-const router = createRouter({ routeTree, context: { queryClient } })
+const router = createRouter({
+  routeTree,
+  context: { queryClient },
+  defaultPreload: 'intent',
+  defaultViewTransition: true,
+  scrollRestoration: true,
+})
+registerServiceWorker()
 
 declare module '@tanstack/react-router' {
   interface Register {

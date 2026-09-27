@@ -225,7 +225,9 @@ describe('home (S7 ledger lines, S15 news)', () => {
 
     await admin.req('POST', `/api/hisaabs/${hisaabId}/entries`, bill(id('Ramesh'), R(300)))
     let home = (await suresh.req('GET', '/api/home')).body
-    expect(home.hisaabs[0].lines).toEqual([{ sheetId: oct, sheetName: 'October 2026', state: 'open', myPaise: R(100), estimate: true }])
+    expect(home.hisaabs[0].lines).toEqual([
+      { sheetId: oct, sheetName: 'October 2026', state: 'open', myPaise: R(100), myPaidPaise: 0, totalPaise: R(300), entryCount: 1, estimate: true },
+    ])
     expect(home.spendPaise).toBe(0)
     expect(home.news.map((n: any) => n.kind)).toEqual(['entry_create'])
     expect((await suresh.req('GET', '/api/home')).body.news).toEqual([])
@@ -271,5 +273,22 @@ describe('admin-only member changes and user-ID sign-in', () => {
     expect(created.status).toBe(200)
     expect((await anon('POST', '/api/auth/sign-in/username', { username: 'bhabesh', password: 'wrong-pass' })).status).toBe(401)
     expect((await anon('POST', '/api/auth/sign-in/username', { username: 'bhabesh', password: 'secret-123' })).status).toBe(200)
+  })
+})
+
+describe('lists for the app screens', () => {
+  it('Hisaab list shows member count and recent months; Activity lists changes with who made them', async () => {
+    const { admin, hisaabId, id } = await setup()
+    await admin.req('POST', `/api/hisaabs/${hisaabId}/entries`, bill(id('Ramesh'), R(250)))
+    await admin.req('POST', `/api/hisaabs/${hisaabId}/entries`, { ...bill(id('Ramesh'), R(900)), type: 'money_in', category: null, paidByMemberId: null })
+    const list = (await admin.req('GET', '/api/hisaabs')).body.hisaabs
+    expect(list[0]).toMatchObject({ name: 'Family', memberCount: 3, recent: [{ name: 'October 2026', state: 'open', totalPaise: R(250), entryCount: 2, forInPaise: R(900), unpaidCount: 0 }] })
+    const detail = (await admin.req('GET', `/api/hisaabs/${hisaabId}`)).body
+    expect(detail.forBalancePaise).toBe(R(900))
+    const items = (await admin.req('GET', '/api/activity')).body.items
+    expect(items.map((i: any) => i.kind)).toEqual(['entry_create', 'entry_create', 'hisaab_create'])
+    expect(items[0]).toMatchObject({ hisaabName: 'Family', sheetName: 'October 2026', mine: true, actor: 'Ramesh' })
+    const stranger = await signUp('Stranger')
+    expect((await stranger.req('GET', '/api/activity')).body.items).toEqual([])
   })
 })

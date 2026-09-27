@@ -26,3 +26,5 @@ export async function call<T extends Response>(p: Promise<T>) {
 export type SheetView = InferResponseType<(typeof api.sheets)[':id']['$get'], 200>
 export type HisaabView = Extract<InferResponseType<(typeof api.hisaabs)[':id']['$get'], 200>, { pending: false }>
 export type HomeView = InferResponseType<typeof api.home.$get, 200>
+export type HisaabsView = InferResponseType<typeof api.hisaabs.$get, 200>
+export type ActivityView = InferResponseType<typeof api.activity.$get, 200>

@@ -47,6 +47,39 @@ export const meRoutes = new Hono<Env>()
     return c.json({ ok: true })
   })
 
+  // Everything that changed in the caller's Hisaabs, newest first (S15 Activity tab).
+  .get('/activity', async (c) => {
+    const uid = c.var.user.id
+    const mine = await db
+      .select({ hisaabId: member.hisaabId, name: hisaab.name })
+      .from(member)
+      .innerJoin(hisaab, eq(hisaab.id, member.hisaabId))
+      .where(and(eq(member.userId, uid), eq(member.status, 'active')))
+    if (!mine.length) return c.json({ items: [] })
+    const rows = await db
+      .select({
+        id: activity.id,
+        hisaabId: activity.hisaabId,
+        sheetId: activity.sheetId,
+        kind: activity.kind,
+        payload: activity.payload,
+        createdAt: activity.createdAt,
+        actor: user.name,
+        actorUserId: activity.actorUserId,
+        month: sheet.month,
+      })
+      .from(activity)
+      .leftJoin(user, eq(user.id, activity.actorUserId))
+      .leftJoin(sheet, eq(sheet.id, activity.sheetId))
+      .where(inArray(activity.hisaabId, mine.map((m) => m.hisaabId)))
+      .orderBy(desc(activity.createdAt))
+      .limit(100)
+    const names = new Map(mine.map((m) => [m.hisaabId, m.name]))
+    return c.json({
+      items: rows.map(({ month, actorUserId, ...r }) => ({ ...r, hisaabName: names.get(r.hisaabId)!, sheetName: month ? sheetName(month) : null, mine: actorUserId === uid })),
+    })
+  })
+
   .get('/home', async (c) => {
     const uid = c.var.user.id
     const today = clock.today()
@@ -85,7 +118,7 @@ export const meRoutes = new Hono<Env>()
       openIds.length ? db.select().from(entry).where(and(inArray(entry.sheetId, openIds), isNull(entry.deletedAt))) : [],
       closedIds.length ? db.select().from(sheetSnapshot).where(inArray(sheetSnapshot.sheetId, closedIds)) : [],
       !myMemberIds.length ? [] : db
-        .select({ id: transfer.id, sheetId: transfer.sheetId, hisaabId: transfer.hisaabId, from: transfer.fromMemberId, to: transfer.toMemberId, amountPaise: transfer.amountPaise, month: sheet.month })
+        .select({ id: transfer.id, sheetId: transfer.sheetId, hisaabId: transfer.hisaabId, from: transfer.fromMemberId, to: transfer.toMemberId, amountPaise: transfer.amountPaise, month: sheet.month, version: sheet.version })
         .from(transfer)
         .innerJoin(sheet, eq(sheet.id, transfer.sheetId))
         .where(and(eq(transfer.status, 'unpaid'), or(inArray(transfer.fromMemberId, myMemberIds), inArray(transfer.toMemberId, myMemberIds)))),
@@ -100,15 +133,15 @@ export const meRoutes = new Hono<Env>()
 
     const prevSeen = new Map(seen.rows.map((r) => [r.hisaab_id, r.prev ? new Date(r.prev) : null]))
     const nameById = new Map(memberships.map((m) => [m.hisaabId, m.name]))
-    const memberNames = new Map(
-      (payments.length
-        ? await db
-            .select({ id: member.id, name: member.displayName })
-            .from(member)
-            .where(inArray(member.id, [...new Set(payments.flatMap((p) => [p.from, p.to]))]))
-        : []
-      ).map((m) => [m.id, m.name]),
-    )
+    const parties = payments.length
+      ? await db
+          .select({ id: member.id, name: member.displayName, upiId: user.upiId })
+          .from(member)
+          .leftJoin(user, eq(user.id, member.userId))
+          .where(inArray(member.id, [...new Set(payments.flatMap((p) => [p.from, p.to]))]))
+      : []
+    const memberNames = new Map(parties.map((m) => [m.id, m.name]))
+    const upiIds = new Map(parties.map((m) => [m.id, m.upiId]))
 
     let spendPaise = 0
     const hisaabs = active.map((m) => {
@@ -127,8 +160,18 @@ export const meRoutes = new Hono<Env>()
           }
           const mine = result?.members.find((x) => x.memberId === m.memberId)?.obligationPaise ?? null
           if (s.state !== 'open' && s.month === thisMonth && mine) spendPaise += mine
+          const myPaid = result?.members.find((x) => x.memberId === m.memberId)?.paidPaise ?? 0
           // Before close this is an estimate only; it never counts toward spend (S7).
-          return { sheetId: s.id, sheetName: sheetName(s.month), state: s.state, myPaise: mine, estimate: s.state === 'open' }
+          return {
+            sheetId: s.id,
+            sheetName: sheetName(s.month),
+            state: s.state,
+            myPaise: mine,
+            myPaidPaise: myPaid,
+            totalPaise: result?.totalPaise ?? 0,
+            entryCount: s.state === 'open' ? entries.filter((e) => e.sheetId === s.id).length : null,
+            estimate: s.state === 'open',
+          }
         })
       return { id: m.hisaabId, name: m.name, lines }
     })
@@ -144,7 +187,9 @@ export const meRoutes = new Hono<Env>()
         sheetName: sheetName(p.month),
         fromName: memberNames.get(p.from)!,
         toName: memberNames.get(p.to)!,
+        toUpiId: upiIds.get(p.to) ?? null,
         iPay: myMemberIds.includes(p.from),
+        iGet: myMemberIds.includes(p.to),
       })),
       news: news
         .filter((n) => {

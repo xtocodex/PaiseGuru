@@ -3,9 +3,9 @@ import type { QueryClient } from '@tanstack/react-query'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: () => (
-    <div className="mx-auto min-h-dvh max-w-md bg-slate-50 text-slate-900 shadow-sm">
+    <div className="mx-auto min-h-dvh max-w-md bg-paper text-text">
       <Outlet />
     </div>
   ),
-  notFoundComponent: () => <p className="p-6 text-center text-slate-600">Not found.</p>,
+  notFoundComponent: () => <p className="p-6 pt-20 text-center text-muted">This page doesn't exist.</p>,
 })
