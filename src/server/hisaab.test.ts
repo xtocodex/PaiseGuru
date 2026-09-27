@@ -252,3 +252,24 @@ describe('news under concurrent Home loads (S15)', () => {
     expect(a.body.news.length + b.body.news.length).toBe(1)
   })
 })
+
+describe('admin-only member changes and user-ID sign-in', () => {
+  it('only the admin adds or removes members; anyone can leave', async () => {
+    const { admin, hisaabId, id } = await setup()
+    const link = (await admin.req('POST', `/api/hisaabs/${hisaabId}/invite`)).body.link
+    const suresh = await signUp('Suresh')
+    await join(suresh, link, id('Suresh'))
+    await admin.req('POST', `/api/hisaabs/${hisaabId}/members/${id('Suresh')}/approve`)
+    expect((await suresh.req('POST', `/api/hisaabs/${hisaabId}/members`, { name: 'X' })).body.error).toBe('admin_only')
+    expect((await suresh.req('DELETE', `/api/hisaabs/${hisaabId}/members/${id('Mahesh')}`)).body.error).toBe('admin_only')
+    expect((await admin.req('DELETE', `/api/hisaabs/${hisaabId}/members/${id('Mahesh')}`)).status).toBe(200)
+    expect((await suresh.req('DELETE', `/api/hisaabs/${hisaabId}/members/${id('Suresh')}`)).status).toBe(200)
+  })
+
+  it('signs in with a user ID and password', async () => {
+    const created = await anon('POST', '/api/auth/sign-up/email', { name: 'Bhabesh', email: 'b@test.local', password: 'secret-123', username: 'bhabesh' })
+    expect(created.status).toBe(200)
+    expect((await anon('POST', '/api/auth/sign-in/username', { username: 'bhabesh', password: 'wrong-pass' })).status).toBe(401)
+    expect((await anon('POST', '/api/auth/sign-in/username', { username: 'bhabesh', password: 'secret-123' })).status).toBe(200)
+  })
+})

@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "node --env-file-if-exists=.env src/server/migrate.ts"
+    "db:migrate": "node --env-file-if-exists=.env src/server/migrate.ts",
+    "user:create": "node --env-file-if-exists=.env src/server/create-user.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",

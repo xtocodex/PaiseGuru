@@ -15,6 +15,13 @@
       "when": 1790459705306,
       "tag": "0001_invite_nonce",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790496856506,
+      "tag": "0002_username",
+      "breakpoints": true
     }
   ]
 }

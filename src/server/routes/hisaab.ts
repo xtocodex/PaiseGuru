@@ -144,7 +144,7 @@ export const hisaabRoutes = new Hono<Env>()
     const id = c.req.param('id')
     const { name } = c.req.valid('json')
     const memberId = await db.transaction(async (tx) => {
-      await requireMember(tx, id, c.var.user.id)
+      await requireMember(tx, id, c.var.user.id, { admin: true })
       await ensureSheets(tx, await loadHisaab(tx, id))
       const sheets = await lockSheets(tx, id)
       const [count] = await tx.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(member).where(eq(member.hisaabId, id))
@@ -176,6 +176,8 @@ export const hisaabRoutes = new Hono<Env>()
     const { id, mid } = c.req.param()
     await db.transaction(async (tx) => {
       const me = await requireMember(tx, id, c.var.user.id)
+      // Anyone may leave; only the admin removes other people (founder, 2026-09-27).
+      if (mid !== me.id && me.role !== 'admin') throw new AppError(403, 'admin_only', 'Only the Hisaab admin can remove members.')
       const sheets = await lockSheets(tx, id)
       const target = await loadMember(tx, id, mid)
       if (target.status !== 'active' && target.status !== 'pending') throw notFound()

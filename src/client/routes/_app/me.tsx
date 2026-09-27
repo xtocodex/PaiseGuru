@@ -47,7 +47,7 @@ function Me() {
             save.mutate({ name: String(f.get('name')), upiId })
           }}
         >
-          <p className="text-sm text-slate-500">{me.data.email}</p>
+          <p className="text-sm text-slate-500">{me.data.username ? `User ID: ${me.data.username}` : me.data.email}</p>
           <Field label="Name">
             <Input name="name" defaultValue={me.data.name} required maxLength={60} />
           </Field>

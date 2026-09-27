@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
     env: { ...env, DATABASE_URL: env.TEST_DATABASE_URL ?? '', NODE_ENV: 'test', DEV_LOGIN: '1', BETTER_AUTH_URL: 'http://localhost:3000' },
     globalSetup: ['./tests/global-setup.ts'],
     fileParallelism: false, // integration tests share one test database
-    testTimeout: 30_000,
+    testTimeout: 90_000, // integration tests make many round trips to a remote database
     hookTimeout: 60_000,
   },
   }

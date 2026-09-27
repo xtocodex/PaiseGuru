@@ -56,7 +56,7 @@ function HisaabDetail({ h }: { h: HisaabView }) {
     if (isAdmin && !m.isMe && !m.placeholder && (m.status === 'active' || m.status === 'pending')) {
       acts.push({ label: 'Undo join (wrong name)', confirm: `${m.name} will be a name without an account again.`, run: () => api.hisaabs[':id'].members[':mid'].unclaim.$post({ param: { id: h.id, mid: m.id } }) })
     }
-    if (active && !m.isMe && (m.status === 'active' || m.status === 'pending')) {
+    if (isAdmin && !m.isMe && (m.status === 'active' || m.status === 'pending')) {
       acts.push({ label: 'Remove', confirm: `Remove ${m.name} from ${h.name}?`, run: () => api.hisaabs[':id'].members[':mid'].$delete({ param: { id: h.id, mid: m.id } }) })
     }
     return acts
@@ -149,7 +149,7 @@ function HisaabDetail({ h }: { h: HisaabView }) {
           })}
         </ul>
         <ErrorBox error={act.error} />
-        {active && (
+        {isAdmin && (
           <form
             className="mt-3 flex gap-2"
             onSubmit={(e) => {

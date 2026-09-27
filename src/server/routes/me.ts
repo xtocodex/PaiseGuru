@@ -5,11 +5,13 @@ import { closeSheet, monthOf, sheetName, type CloseResult, type Participant } fr
 import { updateMeSchema } from '../../shared/schemas.ts'
 import { activity, entry, hisaab, member, sheet, sheetParticipant, sheetSnapshot, transfer, user } from '../db.ts'
 import { clock, db, json, type Env } from '../core.ts'
+import { NO_EMAIL_DOMAIN } from '../auth.ts'
 
 export const meRoutes = new Hono<Env>()
   .get('/me', async (c) => {
     const [u] = await db.select().from(user).where(eq(user.id, c.var.user.id))
-    return c.json({ id: u!.id, name: u!.name, email: u!.email, image: u!.image, upiId: u!.upiId })
+    const email = u!.email.endsWith(`@${NO_EMAIL_DOMAIN}`) ? null : u!.email
+    return c.json({ id: u!.id, name: u!.name, email, username: u!.username, image: u!.image, upiId: u!.upiId })
   })
 
   .patch('/me', json(updateMeSchema), async (c) => {
