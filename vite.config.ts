@@ -3,10 +3,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
-const api = 'http://localhost:3000'
-
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  const api = `http://localhost:${env.PORT ?? 3000}`
   return {
   plugins: [
     tanstackRouter({
@@ -19,7 +18,7 @@ export default defineConfig(({ mode }) => {
     tailwindcss(),
   ],
   build: { outDir: 'dist' },
-  server: { proxy: { '/api': api, '/s/': api, '/health': api } },
+  server: { port: Number(env.DEV_PORT ?? 5173), strictPort: true, proxy: { '/api': api, '/s/': api, '/health': api } },
   test: {
     include: ['src/**/*.test.ts'],
     // Tests run against the disposable test database only (tests/setup.ts truncates it).

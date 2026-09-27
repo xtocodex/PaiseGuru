@@ -3,7 +3,7 @@ import { csrf } from 'hono/csrf'
 import { requestId } from 'hono/request-id'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { sql } from 'drizzle-orm'
-import { auth } from './auth.ts'
+import { auth, authConfig } from './auth.ts'
 import { AppError, appUrl, db, notFound, type Env } from './core.ts'
 import { hisaabRoutes } from './routes/hisaab.ts'
 import { meRoutes } from './routes/me.ts'
@@ -43,6 +43,7 @@ export const app = new Hono<Env>()
     }
   })
   .on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
+  .get('/api/config', (c) => c.json(authConfig))
   .use('/api/*', csrf({ origin: new URL(appUrl()).origin }))
   .route('/api', api)
   .all('/api/*', () => {

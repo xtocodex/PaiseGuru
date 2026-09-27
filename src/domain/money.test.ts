@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import fc from 'fast-check'
-import { allocate, formatRupees, parseRupees, MAX_ENTRY_PAISE } from './money.ts'
+import { allocate, formatRupees, parseRupees, upiAmount, MAX_ENTRY_PAISE } from './money.ts'
 
 describe('allocate (S2)', () => {
   it('₹100 / 3: the payer (first in order) gets the extra paisa', () => {
@@ -87,5 +87,13 @@ describe('parseRupees', () => {
         expect(parseRupees(formatRupees(p))).toBe(p)
       }),
     )
+  })
+})
+
+describe('upiAmount', () => {
+  it('always has two decimals and no grouping', () => {
+    expect(upiAmount(300_000)).toBe('3000.00')
+    expect(upiAmount(3334)).toBe('33.34')
+    expect(upiAmount(7)).toBe('0.07')
   })
 })

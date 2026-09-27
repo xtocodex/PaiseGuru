@@ -64,9 +64,8 @@ export const meRoutes = new Hono<Env>()
     const active = memberships.filter((m) => m.status === 'active')
     const hisaabIds = active.map((m) => m.hisaabId)
     const myMemberIds = active.map((m) => m.memberId)
-    if (!hisaabIds.length) return c.json({ monthName: sheetName(thisMonth), spendPaise: 0, hisaabs: [], pending: memberships, payments: [], news: [] })
 
-    const sheets = await db
+    const sheets = !hisaabIds.length ? [] : await db
       .select()
       .from(sheet)
       .where(and(inArray(sheet.hisaabId, hisaabIds), or(eq(sheet.state, 'open'), eq(sheet.month, thisMonth))))
@@ -83,12 +82,12 @@ export const meRoutes = new Hono<Env>()
         : [],
       openIds.length ? db.select().from(entry).where(and(inArray(entry.sheetId, openIds), isNull(entry.deletedAt))) : [],
       closedIds.length ? db.select().from(sheetSnapshot).where(inArray(sheetSnapshot.sheetId, closedIds)) : [],
-      db
+      !myMemberIds.length ? [] : db
         .select({ id: transfer.id, sheetId: transfer.sheetId, hisaabId: transfer.hisaabId, from: transfer.fromMemberId, to: transfer.toMemberId, amountPaise: transfer.amountPaise, month: sheet.month })
         .from(transfer)
         .innerJoin(sheet, eq(sheet.id, transfer.sheetId))
         .where(and(eq(transfer.status, 'unpaid'), or(inArray(transfer.fromMemberId, myMemberIds), inArray(transfer.toMemberId, myMemberIds)))),
-      db
+      !hisaabIds.length ? [] : db
         .select({ id: activity.id, hisaabId: activity.hisaabId, sheetId: activity.sheetId, kind: activity.kind, payload: activity.payload, createdAt: activity.createdAt, actor: user.name })
         .from(activity)
         .leftJoin(user, eq(user.id, activity.actorUserId))

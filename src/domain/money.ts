@@ -44,6 +44,9 @@ export function formatRupees(paise: number): string {
   return paise < 0 ? `-${text}` : text
 }
 
+/** "3000.00" for UPI links (`am=`): plain digits, always 2 decimals, integer math only. */
+export const upiAmount = (paise: number) => `${Math.trunc(paise / 100)}.${String(paise % 100).padStart(2, '0')}`
+
 const RUPEE_TEXT = /^\s*(?:₹|rs\.?|inr)?\s*(\d[\d,]*)(?:\.(\d{1,2}))?\s*$/i
 
 /** "1,250.50" → 125050. Returns null for anything that is not a clean amount within the entry bound. */

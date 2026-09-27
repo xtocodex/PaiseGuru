@@ -19,7 +19,7 @@ import {
 } from '../../domain/hisaab.ts'
 import { MAX_ENTRIES_PER_SHEET } from '../../domain/money.ts'
 import { createEntrySchema, markPaidSchema, participantSchema, updateEntrySchema, versionSchema } from '../../shared/schemas.ts'
-import { entry, hisaab, member, sheet, sheetParticipant, sheetSnapshot, statementToken, transfer, type Db, type Tx } from '../db.ts'
+import { entry, hisaab, member, sheet, sheetParticipant, sheetSnapshot, statementToken, transfer, user, type Db, type Tx } from '../db.ts'
 import {
   AppError,
   appUrl,
@@ -111,7 +111,7 @@ export async function sheetData(q: Q, s: SheetRow) {
     hisaab: { id: h!.id, name: h!.name, forLabel: h!.forLabel },
     sheet: { id: s.id, name: sheetName(s.month), month: s.month, startDate: s.startDate, endDate: s.endDate, state: s.state, version: s.version },
     names,
-    participants: participants.map(({ memberId, name, exception, exceptionPaise, status }) => ({ memberId, name, exception, exceptionPaise, status })),
+    participants: participants.map(({ memberId, name, exception, exceptionPaise, status, hasUser }) => ({ memberId, name, exception, exceptionPaise, status, hasUser })),
     entries: entries.map((e) => ({
       id: e.id,
       type: e.type,
@@ -259,7 +259,19 @@ export const sheetRoutes = new Hono<Env>()
     const { s, me } = await readableSheet(c.req.param('id'), c.var.user.id)
     const data = await sheetData(db, s)
     const statement = me.status === 'active' ? await activeStatement(db, s.id) : null
-    return c.json({ ...data, me: { memberId: me.id, role: me.role, status: me.status }, statement, share: statement ? share(data, statement.link) : null })
+    // Payees' UPI IDs for the Pay button (S8). Members only; never on the statement page.
+    const payees = [...new Set(data.transfers.filter((t) => t.status === 'unpaid').map((t) => t.to))]
+    const upi =
+      me.status === 'active' && payees.length
+        ? await db.select({ id: member.id, upiId: user.upiId }).from(member).innerJoin(user, eq(user.id, member.userId)).where(inArray(member.id, payees))
+        : []
+    return c.json({
+      ...data,
+      me: { memberId: me.id, role: me.role, status: me.status },
+      statement,
+      share: statement ? share(data, statement.link) : null,
+      upiIds: Object.fromEntries(upi.filter((u) => u.upiId).map((u) => [u.id, u.upiId!])) as Record<string, string>,
+    })
   })
 
   .put('/sheets/:id/participants/:mid', json(participantSchema), async (c) => {

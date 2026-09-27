@@ -9,50 +9,268 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppMeRouteImport } from './routes/_app/me'
+import { Route as AppHisaabsNewRouteImport } from './routes/_app/hisaabs/new'
+import { Route as AppJoinTokenRouteImport } from './routes/_app/join/$token'
+import { Route as AppHisaabsIdIndexRouteImport } from './routes/_app/hisaabs/$id/index'
+import { Route as AppHisaabsIdAddRouteImport } from './routes/_app/hisaabs/$id/add'
+import { Route as AppSheetsIdIndexRouteImport } from './routes/_app/sheets/$id/index'
+import { Route as AppSheetsIdCloseRouteImport } from './routes/_app/sheets/$id/close'
+import { Route as AppSheetsIdEntriesEntryIdRouteImport } from './routes/_app/sheets/$id/entries/$entryId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMeRoute = AppMeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHisaabsNewRoute = AppHisaabsNewRouteImport.update({
+  id: '/hisaabs/new',
+  path: '/hisaabs/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppJoinTokenRoute = AppJoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHisaabsIdIndexRoute = AppHisaabsIdIndexRouteImport.update({
+  id: '/hisaabs/$id/',
+  path: '/hisaabs/$id/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHisaabsIdAddRoute = AppHisaabsIdAddRouteImport.update({
+  id: '/hisaabs/$id/add',
+  path: '/hisaabs/$id/add',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSheetsIdIndexRoute = AppSheetsIdIndexRouteImport.update({
+  id: '/sheets/$id/',
+  path: '/sheets/$id/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSheetsIdCloseRoute = AppSheetsIdCloseRouteImport.update({
+  id: '/sheets/$id/close',
+  path: '/sheets/$id/close',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSheetsIdEntriesEntryIdRoute =
+  AppSheetsIdEntriesEntryIdRouteImport.update({
+    id: '/sheets/$id/entries/$entryId',
+    path: '/sheets/$id/entries/$entryId',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AppIndexRoute
+  '/login': typeof LoginRoute
+  '/me': typeof AppMeRoute
+  '/hisaabs/new': typeof AppHisaabsNewRoute
+  '/join/$token': typeof AppJoinTokenRoute
+  '/hisaabs/$id/add': typeof AppHisaabsIdAddRoute
+  '/sheets/$id/close': typeof AppSheetsIdCloseRoute
+  '/hisaabs/$id/': typeof AppHisaabsIdIndexRoute
+  '/sheets/$id/': typeof AppSheetsIdIndexRoute
+  '/sheets/$id/entries/$entryId': typeof AppSheetsIdEntriesEntryIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/me': typeof AppMeRoute
+  '/': typeof AppIndexRoute
+  '/hisaabs/new': typeof AppHisaabsNewRoute
+  '/join/$token': typeof AppJoinTokenRoute
+  '/hisaabs/$id/add': typeof AppHisaabsIdAddRoute
+  '/sheets/$id/close': typeof AppSheetsIdCloseRoute
+  '/hisaabs/$id': typeof AppHisaabsIdIndexRoute
+  '/sheets/$id': typeof AppSheetsIdIndexRoute
+  '/sheets/$id/entries/$entryId': typeof AppSheetsIdEntriesEntryIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/me': typeof AppMeRoute
+  '/_app/': typeof AppIndexRoute
+  '/_app/hisaabs/new': typeof AppHisaabsNewRoute
+  '/_app/join/$token': typeof AppJoinTokenRoute
+  '/_app/hisaabs/$id/add': typeof AppHisaabsIdAddRoute
+  '/_app/sheets/$id/close': typeof AppSheetsIdCloseRoute
+  '/_app/hisaabs/$id/': typeof AppHisaabsIdIndexRoute
+  '/_app/sheets/$id/': typeof AppSheetsIdIndexRoute
+  '/_app/sheets/$id/entries/$entryId': typeof AppSheetsIdEntriesEntryIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/me'
+    | '/hisaabs/new'
+    | '/join/$token'
+    | '/hisaabs/$id/add'
+    | '/sheets/$id/close'
+    | '/hisaabs/$id/'
+    | '/sheets/$id/'
+    | '/sheets/$id/entries/$entryId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/login'
+    | '/me'
+    | '/'
+    | '/hisaabs/new'
+    | '/join/$token'
+    | '/hisaabs/$id/add'
+    | '/sheets/$id/close'
+    | '/hisaabs/$id'
+    | '/sheets/$id'
+    | '/sheets/$id/entries/$entryId'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/login'
+    | '/_app/me'
+    | '/_app/'
+    | '/_app/hisaabs/new'
+    | '/_app/join/$token'
+    | '/_app/hisaabs/$id/add'
+    | '/_app/sheets/$id/close'
+    | '/_app/hisaabs/$id/'
+    | '/_app/sheets/$id/'
+    | '/_app/sheets/$id/entries/$entryId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/me': {
+      id: '/_app/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof AppMeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/hisaabs/new': {
+      id: '/_app/hisaabs/new'
+      path: '/hisaabs/new'
+      fullPath: '/hisaabs/new'
+      preLoaderRoute: typeof AppHisaabsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/join/$token': {
+      id: '/_app/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof AppJoinTokenRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/hisaabs/$id/': {
+      id: '/_app/hisaabs/$id/'
+      path: '/hisaabs/$id'
+      fullPath: '/hisaabs/$id/'
+      preLoaderRoute: typeof AppHisaabsIdIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/hisaabs/$id/add': {
+      id: '/_app/hisaabs/$id/add'
+      path: '/hisaabs/$id/add'
+      fullPath: '/hisaabs/$id/add'
+      preLoaderRoute: typeof AppHisaabsIdAddRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sheets/$id/': {
+      id: '/_app/sheets/$id/'
+      path: '/sheets/$id'
+      fullPath: '/sheets/$id/'
+      preLoaderRoute: typeof AppSheetsIdIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sheets/$id/close': {
+      id: '/_app/sheets/$id/close'
+      path: '/sheets/$id/close'
+      fullPath: '/sheets/$id/close'
+      preLoaderRoute: typeof AppSheetsIdCloseRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sheets/$id/entries/$entryId': {
+      id: '/_app/sheets/$id/entries/$entryId'
+      path: '/sheets/$id/entries/$entryId'
+      fullPath: '/sheets/$id/entries/$entryId'
+      preLoaderRoute: typeof AppSheetsIdEntriesEntryIdRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
 
+interface AppRouteChildren {
+  AppMeRoute: typeof AppMeRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppHisaabsNewRoute: typeof AppHisaabsNewRoute
+  AppJoinTokenRoute: typeof AppJoinTokenRoute
+  AppHisaabsIdAddRoute: typeof AppHisaabsIdAddRoute
+  AppSheetsIdCloseRoute: typeof AppSheetsIdCloseRoute
+  AppHisaabsIdIndexRoute: typeof AppHisaabsIdIndexRoute
+  AppSheetsIdIndexRoute: typeof AppSheetsIdIndexRoute
+  AppSheetsIdEntriesEntryIdRoute: typeof AppSheetsIdEntriesEntryIdRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppMeRoute: AppMeRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppHisaabsNewRoute: AppHisaabsNewRoute,
+  AppJoinTokenRoute: AppJoinTokenRoute,
+  AppHisaabsIdAddRoute: AppHisaabsIdAddRoute,
+  AppSheetsIdCloseRoute: AppSheetsIdCloseRoute,
+  AppHisaabsIdIndexRoute: AppHisaabsIdIndexRoute,
+  AppSheetsIdIndexRoute: AppSheetsIdIndexRoute,
+  AppSheetsIdEntriesEntryIdRoute: AppSheetsIdEntriesEntryIdRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

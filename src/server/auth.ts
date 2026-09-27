@@ -19,10 +19,13 @@ const google =
     ? { google: { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, prompt: 'select_account' as const } }
     : {}
 
+/** What the sign-in page offers. Public. */
+export const authConfig = { devLogin: devLoginEnabled(process.env), google: 'google' in google }
+
 export const auth = betterAuth({
   appName: 'PaiseGuru',
   database: drizzleAdapter(db, { provider: 'pg', schema }),
-  emailAndPassword: { enabled: devLoginEnabled(process.env) },
+  emailAndPassword: { enabled: authConfig.devLogin },
   socialProviders: google,
   user: { additionalFields: { upiId: { type: 'string', required: false, input: false } } },
   advanced: { database: { generateId: 'uuid' } },
