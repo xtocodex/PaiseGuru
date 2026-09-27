@@ -29,6 +29,7 @@ pnpm dev                # app on http://localhost:5173, API on :3000
 | `pnpm build` / `pnpm start` | production build / run |
 | `pnpm deploy:vercel` | build and deploy to Vercel production (run `pnpm db:migrate` against production first when there are new migrations) |
 | `pnpm user:create <id> "<Full Name>"` | create a sign-in account (prints a password once); point `DATABASE_URL` at the right database |
+| `pnpm user:password <id> <new-password>` | set a new password for an account |
 
 ## Production
 
