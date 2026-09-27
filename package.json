@@ -16,7 +16,9 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env src/server/migrate.ts",
-    "user:create": "node --env-file-if-exists=.env src/server/create-user.ts"
+    "user:create": "node --env-file-if-exists=.env src/server/create-user.ts",
+    "build:vercel": "node scripts/build-vercel.ts",
+    "deploy:vercel": "node scripts/build-vercel.ts && vercel deploy --prebuilt --prod"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
@@ -41,9 +43,11 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
     "fast-check": "^4.10.2",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
+    "vercel": "^60.1.3",
     "vite": "^8.3.1",
     "vitest": "^5.0.2"
   },

@@ -37,7 +37,11 @@ export const auth = betterAuth({
   rateLimit: { customRules: { '/sign-in/*': { window: 60, max: 5 } } },
   socialProviders: google,
   user: { additionalFields: { upiId: { type: 'string', required: false, input: false } } },
-  advanced: { database: { generateId: 'uuid' } },
+  advanced: {
+    database: { generateId: 'uuid' },
+    // Vercel sets these from the real client address; used for the sign-in rate limit.
+    ipAddress: { ipAddressHeaders: ['x-vercel-forwarded-for', 'x-forwarded-for'] },
+  },
 })
 
 export type SessionUser = typeof auth.$Infer.Session.user
