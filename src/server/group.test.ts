@@ -228,3 +228,12 @@ describe('funds', () => {
     expect(bad.body.message).toBe('Money in needs a fund, an amount and a date.')
   })
 })
+
+// protects=the public privacy page Google's consent screen links to; fails_when=it needs sign-in or 404s; no_claim=its wording
+describe('privacy page', () => {
+  it('loads without signing in', async () => {
+    const res = await anon('GET', '/privacy')
+    expect(res.status).toBe(200)
+    expect(res.text).toContain('Deleting your account')
+  })
+})

@@ -38,7 +38,7 @@ writeFileSync(
       { src: '^/assets/.+$', headers: { 'cache-control': 'public, max-age=31536000, immutable' }, continue: true },
       { src: '^/manifest\\.webmanifest$', headers: { 'content-type': 'application/manifest+json' }, continue: true },
       { src: '^/$', dest: '/index.html' }, // Vercel would otherwise send the root path to the function
-      { src: '^/(api/.*|s/.*|health)$', dest: '/_server' },
+      { src: '^/(api/.*|s/.*|health|privacy)$', dest: '/_server' },
       { handle: 'filesystem' },
       { src: '^/assets/.*$', status: 404 },
       { src: '^/.*$', dest: '/index.html' }, // SPA: every other path is the app

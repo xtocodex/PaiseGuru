@@ -104,7 +104,12 @@ function Login() {
           {mode === 'up' ? 'I have an account' : 'New here? Create an account'}
         </Button>
       </form>
-      <p className="py-6 text-center text-xs text-faint">Free. No limits on how many expenses you add.</p>
+      <p className="py-6 text-center text-xs text-faint">
+        Free. No limits on how many expenses you add. ·{' '}
+        <a href="/privacy" className="underline underline-offset-2">
+          Privacy
+        </a>
+      </p>
     </div>
   )
 }

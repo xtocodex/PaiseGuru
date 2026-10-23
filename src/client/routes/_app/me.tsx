@@ -72,6 +72,9 @@ function Me() {
         <p className="mt-1 text-xl font-bold tracking-tight text-brand-text">PaiseGuru</p>
         <p className="text-[13px] text-muted">Split expenses as you go or once a month, settle in the fewest UPI payments.</p>
         <MadeBy className="mt-3" />
+        <a href="/privacy" className="mt-2 inline-block text-[13px] font-semibold text-brand-text underline-offset-2 hover:underline">
+          Privacy
+        </a>
       </Card>
 
       <button type="button" className="mx-auto min-h-11 px-4 text-[13px] text-muted underline-offset-2 hover:underline" onClick={() => setPanel('delete')}>

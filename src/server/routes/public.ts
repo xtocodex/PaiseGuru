@@ -31,7 +31,24 @@ const page = (title: string, body: unknown) => html`<!doctype html>
 const STATE_TEXT = { open: 'Not closed yet', closed: 'Closed' }
 const SPLIT_TEXT: Record<string, string> = { sheet: 'Divided at month end', equal: 'Split equally', exact: 'Split by amounts', shares: 'Split by shares', percent: 'Split by percent', adjust: 'Split with changes' }
 
-export const publicRoutes = new Hono().get('/s/:token', async (c) => {
+const PRIVACY = html`<h1>PaiseGuru privacy</h1>
+  <p class="muted">Last updated 23 October 2026</p>
+  <h2>What we store</h2>
+  <p>Your name, email address and, if you sign in with Google, your Google profile picture. Your UPI ID if you add one. The groups you are in, and the expenses, payments, funds and notes that you or other members of those groups add.</p>
+  <h2>Who can see it</h2>
+  <p>Members of a group see that group's members, expenses, payments and notes. Your UPI ID is shown only to members of your groups, on the Pay button. A month's share link, if a member makes one, shows names and amounts to anyone who has the link, never UPI IDs or emails; any member can turn it off.</p>
+  <h2>What we do not do</h2>
+  <p>We do not sell your data, show ads, or read your bank account or SMS. PaiseGuru never receives your UPI PIN or any payment details: payments happen in your UPI app, and a member marks them as sent by hand.</p>
+  <h2>Google sign-in</h2>
+  <p>If you choose Google sign-in, we receive only your name, email address and profile picture from Google, to create and sign in to your account.</p>
+  <h2>Deleting your account</h2>
+  <p>Open Me, then Delete my account. Your name, sign-in and UPI ID are deleted. Amounts you added to shared groups stay under "Deleted user", so other members' balances do not change.</p>
+  <h2>Contact</h2>
+  <p>PaiseGuru is a product of xtocodex. Questions or requests: <a href="mailto:xtocodex@gmail.com">xtocodex@gmail.com</a>.</p>`
+
+export const publicRoutes = new Hono()
+  .get('/privacy', (c) => c.html(page('PaiseGuru privacy', PRIVACY)))
+  .get('/s/:token', async (c) => {
   const [row] = await db
     .select({ sheetId: statementToken.sheetId })
     .from(statementToken)
