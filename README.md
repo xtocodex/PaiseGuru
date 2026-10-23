@@ -32,8 +32,16 @@ pnpm dev                # app on http://localhost:$DEV_PORT, API on :$PORT
 | `pnpm db:generate` | make a migration after changing the schema |
 | `pnpm db:migrate` | apply migrations |
 | `pnpm build` / `pnpm start` | production build / run |
-| `pnpm deploy:vercel` | build and deploy to Vercel production (run `pnpm db:migrate` against production first when there are new migrations) |
+| `pnpm deploy:vercel` | manual emergency deploy to Vercel production (normally a merge to `main` deploys; run `pnpm db:migrate` against production first when there are new migrations) |
 | `pnpm user:password <email> <new-password>` | set a new password for an account (there is no forgot-password email yet); point `DATABASE_URL` at the right database |
+
+## Shipping
+
+1. Branch from `main`, commit, push, open a pull request.
+2. CI (`.github/workflows/ci.yml`) runs typecheck, unit + integration tests and e2e. `main` is protected: it changes only through a PR whose `test` check passed.
+3. Merge. The `deploy` job then applies new migrations to the production database, builds, and deploys to Vercel production, then checks `/health`.
+
+Secrets live in the GitHub `Production` environment: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `PROD_DATABASE_URL`. The old Next.js app is in tag `v1-legacy` and branch `legacy-v1`.
 
 ## Production
 
@@ -42,4 +50,4 @@ pnpm dev                # app on http://localhost:$DEV_PORT, API on :$PORT
 - Settings on Vercel: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (https://paiseguru.gopalmohapatra.in), `TRUSTED_ORIGINS` (https://paiseguru.vercel.app), `NODE_ENV=production`.
 - Sign-in: anyone can sign up with email + password. Google appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (redirect URI `https://paiseguru.gopalmohapatra.in/api/auth/callback/google`). Emails are not verified, so Google never joins an existing password account.
 - The v2 launch (2026-10-23) started from an empty database; the phase-1 data is kept in Neon branch `backup-pre-v2-2026-10-23`.
-- Deploys must come from commits authored by the Vercel account email (this repo uses `xtocodex@gmail.com`).
+- Vercel Hobby blocks deploys whose git commit author is not a team member. CI deploys from a folder without git data, so merges deploy fine; a manual `pnpm deploy:vercel` from a local checkout needs commits authored as `xtocodex@gmail.com`.

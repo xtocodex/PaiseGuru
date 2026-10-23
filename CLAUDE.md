@@ -12,7 +12,7 @@ Split-first money PWA for India: friends, flatmates, trips, couples and families
 TypeScript, pnpm · React 19 + Vite + Tailwind v4 + shadcn/ui + TanStack Router (file-based) + TanStack Query · Hono on Node (typed client `hc<AppType>`) · better-auth (email + password with open sign-up, plus Google) · Drizzle ORM + Postgres (local Postgres 18 on this machine) · Vitest + Playwright · structured JSON logs only (no Sentry, decision ef00621d).
 
 ## Current work: v2 (issue #2)
-Branch `rebuild`. v2 launched 2026-10-23 on a clean database (phase-1 data in Neon branch `backup-pre-v2-2026-10-23`). Live at https://paiseguru.gopalmohapatra.in. Out of scope for now: 1:1 friends, friend view, recurring, comments, search, CSV, multi-currency, itemized splits, offline entry, Hindi, guest links, phone OTP, forgot password, carry to next month.
+Default branch `main` (protected: PR + green `test` check; a merge deploys production via the CI `deploy` job). v2 launched 2026-10-23 on a clean database (phase-1 data in Neon branch `backup-pre-v2-2026-10-23`). Live at https://paiseguru.gopalmohapatra.in. Out of scope for now: 1:1 friends, friend view, recurring, comments, search, CSV, multi-currency, itemized splits, offline entry, Hindi, guest links, phone OTP, forgot password, carry to next month.
 
 ## Code layout (decided, "smaller arrangement")
 ```
