@@ -10,8 +10,8 @@ export async function resetDb() {
   if (!process.env.DATABASE_URL || process.env.DATABASE_URL !== process.env.TEST_DATABASE_URL) {
     throw new Error('refusing to truncate: DATABASE_URL is not TEST_DATABASE_URL')
   }
-  await db.execute(sql`truncate table "user", session, account, verification, hisaab, member, sheet, sheet_participant,
-    entry, transfer, sheet_snapshot, statement_token, activity restart identity cascade`)
+  await db.execute(sql`truncate table "user", session, account, verification, "group", member, sheet, sheet_participant,
+    fund, expense, expense_payer, expense_share, payment, sheet_snapshot, statement_token, activity restart identity cascade`)
 }
 
 export function setToday(date: string) {
@@ -39,7 +39,7 @@ export async function anon(method: string, path: string, body?: unknown, cookie?
   return { status: res.status, body: parsed, text }
 }
 
-/** Sign up through better-auth's dev email login and return a client carrying the session cookie. */
+/** Sign up with email + password and return a client carrying the session cookie. */
 export async function signUp(name: string): Promise<Client> {
   const res = await app.request(`${ORIGIN}/api/auth/sign-up/email`, {
     method: 'POST',

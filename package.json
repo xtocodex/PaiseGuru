@@ -1,6 +1,6 @@
 {
   "name": "paiseguru",
-  "description": "Split-first family finance: monthly Hisaab, settled in the fewest UPI payments.",
+  "description": "Split bills with friends, flatmates, trips and family: as you go or once a month, settled in the fewest UPI payments.",
   "author": "xtocodex \u00b7 Gopal Mohapatra (https://gopalmohapatra.in)",
   "private": true,
   "type": "module",
@@ -16,7 +16,6 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env src/server/migrate.ts",
-    "user:create": "node --env-file-if-exists=.env src/server/create-user.ts",
     "build:vercel": "node scripts/build-vercel.ts",
     "deploy:vercel": "node scripts/build-vercel.ts && vercel deploy --prebuilt --prod",
     "user:password": "node --env-file-if-exists=.env src/server/set-password.ts"

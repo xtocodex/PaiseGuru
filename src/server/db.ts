@@ -1,4 +1,4 @@
-// Drizzle schema (eng review Section 1 data model) and the database client.
+// Drizzle schema (v2 money model, issue #2) and the database client.
 import { sql } from 'drizzle-orm'
 import {
   bigint,
@@ -36,8 +36,6 @@ export const user = pgTable('user', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
-  username: text('username').unique(), // better-auth username plugin: sign-in ID
-  displayUsername: text('display_username'),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
   upiId: text('upi_id'),
@@ -97,68 +95,64 @@ export const verification = pgTable(
   (t) => [index('verification_identifier_idx').on(t.identifier)],
 )
 
-// ── Hisaab ──
+// ── Groups ──
 
-export const hisaab = pgTable(
-  'hisaab',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    name: text('name').notNull(),
-    forLabel: text('for_label'),
-    category: text('category').notNull().default('Shared'),
-    kind: text('kind', { enum: ['monthly', 'one_time'] }).notNull().default('monthly'),
-    cycleDay: integer('cycle_day').notNull().default(1),
-    startMonth: day('start_month').notNull(),
-    joinApproval: boolean('join_approval').notNull().default(true),
-    inviteNonce: uuid('invite_nonce'), // invite token = HMAC(secret, nonce); regenerating replaces the nonce
-    inviteTokenHash: text('invite_token_hash').unique(),
-    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
-    createdAt: createdAt(),
-  },
-  (t) => [check('hisaab_cycle_day', sql`${t.cycleDay} between 1 and 28`)],
-)
+export const group = pgTable('group', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  settleMode: text('settle_mode', { enum: ['as_you_go', 'monthly'] }).notNull(),
+  category: text('category').notNull().default('Shared'),
+  startMonth: day('start_month').notNull(), // monthly groups: the first month
+  joinApproval: boolean('join_approval').notNull().default(false),
+  inviteNonce: uuid('invite_nonce'), // invite token = HMAC(secret, nonce); regenerating replaces the nonce
+  inviteTokenHash: text('invite_token_hash').unique(),
+  createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: createdAt(),
+})
 
 export const member = pgTable(
   'member',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    hisaabId: uuid('hisaab_id')
+    groupId: uuid('group_id')
       .notNull()
-      .references(() => hisaab.id),
-    // Allocation tie-break order (S2). Global identity: increasing per Hisaab, never changes, no insert race.
+      .references(() => group.id),
+    // Allocation tie-break order. Global identity: increasing per group, never changes, no insert race.
     seq: integer('seq').notNull().generatedAlwaysAsIdentity(),
     userId: uuid('user_id').references(() => user.id, { onDelete: 'set null' }), // null = placeholder
     displayName: text('display_name').notNull(),
     role: text('role', { enum: ['admin', 'member'] }).notNull().default('member'),
     status: text('status', { enum: ['pending', 'active', 'former', 'deleted'] }).notNull().default('active'),
+    defaultWeight: integer('default_weight').notNull().default(100), // shares prefill: 100 = 1 share
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
-    unique('member_hisaab_user').on(t.hisaabId, t.userId),
-    unique('member_hisaab_id').on(t.hisaabId, t.id),
-    uniqueIndex('member_one_admin').on(t.hisaabId).where(sql`${t.role} = 'admin'`),
+    unique('member_group_user').on(t.groupId, t.userId),
+    unique('member_group_id').on(t.groupId, t.id),
+    uniqueIndex('member_one_admin').on(t.groupId).where(sql`${t.role} = 'admin'`),
     index('member_user_idx').on(t.userId),
+    check('member_default_weight', sql`${t.defaultWeight} between 1 and 10000`),
   ],
 )
 
+/** A month of a monthly group. As-you-go groups have none. */
 export const sheet = pgTable(
   'sheet',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    hisaabId: uuid('hisaab_id')
+    groupId: uuid('group_id')
       .notNull()
-      .references(() => hisaab.id),
+      .references(() => group.id),
     startDate: day('start_date').notNull(),
-    endDate: day('end_date'), // null only for one-time Hisaabs (phase 2)
+    endDate: day('end_date').notNull(),
     month: day('month').notNull(),
-    state: text('state', { enum: ['open', 'closed', 'cleared', 'carried'] }).notNull().default('open'),
+    state: text('state', { enum: ['open', 'closed'] }).notNull().default('open'),
     version: integer('version').notNull().default(0),
-    weightMode: text('weight_mode', { enum: ['shares', 'percent'] }).notNull().default('shares'),
     closedAt: timestamp('closed_at', { withTimezone: true }),
     closedBy: uuid('closed_by').references(() => user.id, { onDelete: 'set null' }),
   },
-  (t) => [unique('sheet_hisaab_start').on(t.hisaabId, t.startDate), unique('sheet_hisaab_id').on(t.hisaabId, t.id)],
+  (t) => [unique('sheet_group_start').on(t.groupId, t.startDate), unique('sheet_group_id').on(t.groupId, t.id)],
 )
 
 export const sheetParticipant = pgTable(
@@ -181,58 +175,124 @@ export const sheetParticipant = pgTable(
   ],
 )
 
-export const entry = pgTable(
-  'entry',
+/** Money held for the group (e.g. a parent's pension, a trip kitty). Its balance never enters members' nets. */
+export const fund = pgTable(
+  'fund',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => group.id),
+    name: text('name').notNull(),
+    holderMemberId: uuid('holder_member_id'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique('fund_group_id').on(t.groupId, t.id),
+    foreignKey({ columns: [t.groupId, t.holderMemberId], foreignColumns: [member.groupId, member.id] }),
+  ],
+)
+
+/**
+ * expense: a bill. refund: money back (payers = who received it; counts with the opposite sign).
+ * fund_in: money received by a fund. sheet_close: a month's obligations (shares only, no payers).
+ * split_mode 'sheet': divided at month close, so it counts only once its month is closed.
+ * split_mode 'none': fund money (fund_in, fund-paid bills) and sheet_close.
+ */
+export const expense = pgTable(
+  'expense',
   {
     id: uuid('id').primaryKey(), // client-generated: a double-tapped save inserts once
-    hisaabId: uuid('hisaab_id').notNull(),
-    sheetId: uuid('sheet_id').notNull(),
-    type: text('type', { enum: ['bill', 'refund', 'money_given', 'money_in'] }).notNull(),
+    groupId: uuid('group_id').notNull(),
+    sheetId: uuid('sheet_id'),
+    fundId: uuid('fund_id'),
+    kind: text('kind', { enum: ['expense', 'refund', 'fund_in', 'sheet_close'] }).notNull(),
     amountPaise: paise('amount_paise').notNull(),
+    splitMode: text('split_mode', { enum: ['equal', 'exact', 'shares', 'percent', 'adjust', 'sheet', 'none'] }).notNull(),
     category: text('category'),
     date: day('date').notNull(),
     note: text('note').notNull().default(''),
-    paidByMemberId: uuid('paid_by_member_id'), // bill: null = outside the split
-    toMemberId: uuid('to_member_id'),
-    source: text('source').notNull().default('manual'),
+    version: integer('version').notNull().default(0),
     createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (t) => [
-    foreignKey({ columns: [t.hisaabId, t.sheetId], foreignColumns: [sheet.hisaabId, sheet.id] }),
-    foreignKey({ columns: [t.hisaabId, t.paidByMemberId], foreignColumns: [member.hisaabId, member.id] }),
-    foreignKey({ columns: [t.hisaabId, t.toMemberId], foreignColumns: [member.hisaabId, member.id] }),
-    index('entry_sheet_date_idx').on(t.sheetId, t.date).where(sql`${t.deletedAt} is null`),
-    check('entry_amount', sql`${t.amountPaise} > 0 and ${t.amountPaise} <= 1000000000`),
+    foreignKey({ columns: [t.groupId], foreignColumns: [group.id] }),
+    foreignKey({ columns: [t.groupId, t.sheetId], foreignColumns: [sheet.groupId, sheet.id] }),
+    foreignKey({ columns: [t.groupId, t.fundId], foreignColumns: [fund.groupId, fund.id] }),
+    index('expense_group_date_idx').on(t.groupId, t.date).where(sql`${t.deletedAt} is null`),
+    index('expense_sheet_idx').on(t.sheetId).where(sql`${t.deletedAt} is null`),
+    check('expense_amount', sql`${t.amountPaise} > 0 and (${t.amountPaise} <= 1000000000 or ${t.kind} = 'sheet_close')`),
+    check('expense_fund', sql`(${t.kind} = 'fund_in') <= (${t.fundId} is not null)`),
   ],
 )
 
-export const transfer = pgTable(
-  'transfer',
+export const expensePayer = pgTable(
+  'expense_payer',
   {
-    id: uuid('id').primaryKey().defaultRandom(),
-    hisaabId: uuid('hisaab_id').notNull(),
-    sheetId: uuid('sheet_id').notNull(),
+    expenseId: uuid('expense_id')
+      .notNull()
+      .references(() => expense.id),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => member.id),
+    paidPaise: paise('paid_paise').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.expenseId, t.memberId] }), index('expense_payer_member_idx').on(t.memberId), check('payer_amount', sql`${t.paidPaise} > 0`)],
+)
+
+/** Who owes what. owed_paise is computed once at write, so a later rounding change never rewrites history. */
+export const expenseShare = pgTable(
+  'expense_share',
+  {
+    expenseId: uuid('expense_id')
+      .notNull()
+      .references(() => expense.id),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => member.id),
+    exception: text('exception', { enum: ['none', 'fixed', 'extra'] }).notNull().default('none'),
+    exceptionPaise: paise('exception_paise').notNull().default(0),
+    weight: integer('weight').notNull().default(100),
+    owedPaise: paise('owed_paise').notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.expenseId, t.memberId] }),
+    index('expense_share_member_idx').on(t.memberId),
+    check('share_amounts', sql`${t.owedPaise} >= 0 and ${t.exceptionPaise} >= 0 and ${t.weight} > 0`),
+  ],
+)
+
+/** A payment between two members. Counts as soon as it is sent; the receiver may confirm it. */
+export const payment = pgTable(
+  'payment',
+  {
+    id: uuid('id').primaryKey(), // client-generated
+    groupId: uuid('group_id').notNull(),
     fromMemberId: uuid('from_member_id').notNull(),
     toMemberId: uuid('to_member_id').notNull(),
     amountPaise: paise('amount_paise').notNull(),
-    status: text('status', { enum: ['unpaid', 'paid'] }).notNull().default('unpaid'),
-    paidAt: timestamp('paid_at', { withTimezone: true }),
-    paidBy: uuid('paid_by').references(() => user.id, { onDelete: 'set null' }),
-    via: text('via', { enum: ['upi_link', 'manual'] }),
+    status: text('status', { enum: ['sent', 'confirmed'] }).notNull().default('sent'),
+    via: text('via', { enum: ['upi', 'cash', 'other'] }).notNull(),
+    utr: text('utr'),
+    note: text('note').notNull().default(''),
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+    confirmedBy: uuid('confirmed_by').references(() => user.id, { onDelete: 'set null' }),
+    confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (t) => [
-    foreignKey({ columns: [t.hisaabId, t.sheetId], foreignColumns: [sheet.hisaabId, sheet.id] }),
-    foreignKey({ columns: [t.hisaabId, t.fromMemberId], foreignColumns: [member.hisaabId, member.id] }),
-    foreignKey({ columns: [t.hisaabId, t.toMemberId], foreignColumns: [member.hisaabId, member.id] }),
-    index('transfer_sheet_idx').on(t.sheetId),
-    check('transfer_amount', sql`${t.amountPaise} > 0`),
+    foreignKey({ columns: [t.groupId, t.fromMemberId], foreignColumns: [member.groupId, member.id] }),
+    foreignKey({ columns: [t.groupId, t.toMemberId], foreignColumns: [member.groupId, member.id] }),
+    index('payment_group_idx').on(t.groupId).where(sql`${t.deletedAt} is null`),
+    check('payment_amount', sql`${t.amountPaise} > 0 and ${t.fromMemberId} <> ${t.toMemberId}`),
   ],
 )
 
-/** D5: the computed close result (a CloseResult), written in the close transaction. */
+/** The computed month close (a CloseResult), written in the close transaction. */
 export const sheetSnapshot = pgTable('sheet_snapshot', {
   sheetId: uuid('sheet_id')
     .primaryKey()
@@ -256,20 +316,20 @@ export const activity = pgTable(
   'activity',
   {
     id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
-    hisaabId: uuid('hisaab_id')
+    groupId: uuid('group_id')
       .notNull()
-      .references(() => hisaab.id),
+      .references(() => group.id),
     sheetId: uuid('sheet_id'),
     actorUserId: uuid('actor_user_id').references(() => user.id, { onDelete: 'set null' }),
     kind: text('kind').notNull(),
     payload: jsonb('payload').notNull().default({}),
     createdAt: createdAt(),
   },
-  (t) => [index('activity_hisaab_created_idx').on(t.hisaabId, t.createdAt.desc())],
+  (t) => [index('activity_group_created_idx').on(t.groupId, t.createdAt.desc())],
 )
 
 export const schema = {
-  user, session, account, verification, hisaab, member, sheet, sheetParticipant, entry, transfer, sheetSnapshot, statementToken, activity,
+  user, session, account, verification, group, member, sheet, sheetParticipant, fund, expense, expensePayer, expenseShare, payment, sheetSnapshot, statementToken, activity,
 }
 
 export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 10 })

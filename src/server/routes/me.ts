@@ -1,17 +1,16 @@
-// The signed-in user: profile, account deletion (S3), Home (S7 ledger lines, S15 news).
+// The signed-in user: profile, account deletion, Activity, Home (balances, what to pay, what to confirm, news).
 import { Hono } from 'hono'
 import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm'
-import { closeSheet, monthOf, sheetName, type CloseResult, type Participant } from '../../domain/hisaab.ts'
+import { sheetName } from '../../domain/group.ts'
 import { updateMeSchema } from '../../shared/schemas.ts'
-import { activity, entry, hisaab, member, sheet, sheetParticipant, sheetSnapshot, transfer, user } from '../db.ts'
-import { clock, db, json, type Env } from '../core.ts'
-import { NO_EMAIL_DOMAIN } from '../auth.ts'
+import { activity, group, member, payment, sheet, user } from '../db.ts'
+import { db, json, type Env } from '../core.ts'
+import { groupBalances, upiIdsOf } from './payment.ts'
 
 export const meRoutes = new Hono<Env>()
   .get('/me', async (c) => {
     const [u] = await db.select().from(user).where(eq(user.id, c.var.user.id))
-    const email = u!.email.endsWith(`@${NO_EMAIL_DOMAIN}`) ? null : u!.email
-    return c.json({ id: u!.id, name: u!.name, email, username: u!.username, image: u!.image, upiId: u!.upiId })
+    return c.json({ id: u!.id, name: u!.name, email: u!.email, image: u!.image, upiId: u!.upiId })
   })
 
   .patch('/me', json(updateMeSchema), async (c) => {
@@ -23,7 +22,7 @@ export const meRoutes = new Hono<Env>()
     return c.json({ ok: true })
   })
 
-  // S3: member rows become "Deleted user" with every amount kept; admin roles pass to the oldest real member.
+  // Member rows become "Deleted user" with every amount kept; admin roles pass to the oldest real member.
   .delete('/me', async (c) => {
     const uid = c.var.user.id
     await db.transaction(async (tx) => {
@@ -34,7 +33,7 @@ export const meRoutes = new Hono<Env>()
         const [heir] = await tx
           .select({ id: member.id })
           .from(member)
-          .where(and(eq(member.hisaabId, m.hisaabId), eq(member.status, 'active'), sql`${member.userId} is not null`))
+          .where(and(eq(member.groupId, m.groupId), eq(member.status, 'active'), sql`${member.userId} is not null`))
           .orderBy(asc(member.seq))
           .limit(1)
         await tx
@@ -47,19 +46,19 @@ export const meRoutes = new Hono<Env>()
     return c.json({ ok: true })
   })
 
-  // Everything that changed in the caller's Hisaabs, newest first (S15 Activity tab).
+  // Everything that changed in the caller's groups, newest first.
   .get('/activity', async (c) => {
     const uid = c.var.user.id
     const mine = await db
-      .select({ hisaabId: member.hisaabId, name: hisaab.name })
+      .select({ groupId: member.groupId, name: group.name })
       .from(member)
-      .innerJoin(hisaab, eq(hisaab.id, member.hisaabId))
+      .innerJoin(group, eq(group.id, member.groupId))
       .where(and(eq(member.userId, uid), eq(member.status, 'active')))
     if (!mine.length) return c.json({ items: [] })
     const rows = await db
       .select({
         id: activity.id,
-        hisaabId: activity.hisaabId,
+        groupId: activity.groupId,
         sheetId: activity.sheetId,
         kind: activity.kind,
         payload: activity.payload,
@@ -71,132 +70,83 @@ export const meRoutes = new Hono<Env>()
       .from(activity)
       .leftJoin(user, eq(user.id, activity.actorUserId))
       .leftJoin(sheet, eq(sheet.id, activity.sheetId))
-      .where(inArray(activity.hisaabId, mine.map((m) => m.hisaabId)))
+      .where(inArray(activity.groupId, mine.map((m) => m.groupId)))
       .orderBy(desc(activity.createdAt))
       .limit(100)
-    const names = new Map(mine.map((m) => [m.hisaabId, m.name]))
+    const names = new Map(mine.map((m) => [m.groupId, m.name]))
     return c.json({
-      items: rows.map(({ month, actorUserId, ...r }) => ({ ...r, hisaabName: names.get(r.hisaabId)!, sheetName: month ? sheetName(month) : null, mine: actorUserId === uid })),
+      items: rows.map(({ month, actorUserId, ...r }) => ({ ...r, groupName: names.get(r.groupId)!, sheetName: month ? sheetName(month) : null, mine: actorUserId === uid })),
     })
   })
 
   .get('/home', async (c) => {
     const uid = c.var.user.id
-    const today = clock.today()
-    const thisMonth = monthOf(today)
 
-    // S15: advance last_seen atomically and read the previous value, so two tabs never repeat or lose news.
-    const seen = await db.execute<{ hisaab_id: string; prev: string | null }>(sql`
+    // Advance last_seen atomically and read the previous value, so two tabs never repeat or lose news.
+    const seen = await db.execute<{ group_id: string; prev: string | null }>(sql`
       with prev as (select id, last_seen_at from ${member} where user_id = ${uid} and status = 'active' for update)
       update ${member} m set last_seen_at = now() from prev where m.id = prev.id
-      returning m.hisaab_id, prev.last_seen_at as prev`)
+      returning m.group_id, prev.last_seen_at as prev`)
     const memberships = await db
-      .select({ memberId: member.id, hisaabId: hisaab.id, name: hisaab.name, status: member.status })
+      .select({ memberId: member.id, groupId: group.id, name: group.name, settleMode: group.settleMode, status: member.status })
       .from(member)
-      .innerJoin(hisaab, eq(hisaab.id, member.hisaabId))
+      .innerJoin(group, eq(group.id, member.groupId))
       .where(and(eq(member.userId, uid), inArray(member.status, ['active', 'pending'])))
-      .orderBy(asc(hisaab.name))
+      .orderBy(asc(group.name))
     const active = memberships.filter((m) => m.status === 'active')
-    const hisaabIds = active.map((m) => m.hisaabId)
+    const groupIds = active.map((m) => m.groupId)
     const myMemberIds = active.map((m) => m.memberId)
 
-    const sheets = !hisaabIds.length ? [] : await db
-      .select()
-      .from(sheet)
-      .where(and(inArray(sheet.hisaabId, hisaabIds), or(eq(sheet.state, 'open'), eq(sheet.month, thisMonth))))
-      .orderBy(asc(sheet.startDate))
-    const openIds = sheets.filter((s) => s.state === 'open').map((s) => s.id)
-    const closedIds = sheets.filter((s) => s.state !== 'open').map((s) => s.id)
-    const [parts, entries, snaps, payments, news] = await Promise.all([
-      openIds.length
-        ? db
-            .select({ sheetId: sheetParticipant.sheetId, memberId: sheetParticipant.memberId, seq: member.seq, exception: sheetParticipant.exception, exceptionPaise: sheetParticipant.exceptionPaise, weight: sheetParticipant.weight })
-            .from(sheetParticipant)
-            .innerJoin(member, eq(member.id, sheetParticipant.memberId))
-            .where(inArray(sheetParticipant.sheetId, openIds))
-        : [],
-      openIds.length ? db.select().from(entry).where(and(inArray(entry.sheetId, openIds), isNull(entry.deletedAt))) : [],
-      closedIds.length ? db.select().from(sheetSnapshot).where(inArray(sheetSnapshot.sheetId, closedIds)) : [],
-      !myMemberIds.length ? [] : db
-        .select({ id: transfer.id, sheetId: transfer.sheetId, hisaabId: transfer.hisaabId, from: transfer.fromMemberId, to: transfer.toMemberId, amountPaise: transfer.amountPaise, month: sheet.month, version: sheet.version })
-        .from(transfer)
-        .innerJoin(sheet, eq(sheet.id, transfer.sheetId))
-        .where(and(eq(transfer.status, 'unpaid'), or(inArray(transfer.fromMemberId, myMemberIds), inArray(transfer.toMemberId, myMemberIds)))),
-      !hisaabIds.length ? [] : db
-        .select({ id: activity.id, hisaabId: activity.hisaabId, sheetId: activity.sheetId, kind: activity.kind, payload: activity.payload, createdAt: activity.createdAt, actor: user.name })
-        .from(activity)
-        .leftJoin(user, eq(user.id, activity.actorUserId))
-        .where(and(inArray(activity.hisaabId, hisaabIds), or(isNull(activity.actorUserId), ne(activity.actorUserId, uid))))
-        .orderBy(desc(activity.createdAt))
-        .limit(100),
-    ])
-
-    const prevSeen = new Map(seen.rows.map((r) => [r.hisaab_id, r.prev ? new Date(r.prev) : null]))
-    const nameById = new Map(memberships.map((m) => [m.hisaabId, m.name]))
-    const parties = payments.length
-      ? await db
-          .select({ id: member.id, name: member.displayName, upiId: user.upiId })
-          .from(member)
-          .leftJoin(user, eq(user.id, member.userId))
-          .where(inArray(member.id, [...new Set(payments.flatMap((p) => [p.from, p.to]))]))
-      : []
-    const memberNames = new Map(parties.map((m) => [m.id, m.name]))
-    const upiIds = new Map(parties.map((m) => [m.id, m.upiId]))
-
-    let spendPaise = 0
-    const hisaabs = active.map((m) => {
-      const lines = sheets
-        .filter((s) => s.hisaabId === m.hisaabId)
-        .map((s) => {
-          let result: CloseResult | null = null
-          if (s.state === 'open') {
-            const r = closeSheet(
-              parts.filter((p) => p.sheetId === s.id) as Participant[],
-              entries.filter((e) => e.sheetId === s.id).map((e) => ({ type: e.type, amountPaise: e.amountPaise, category: e.category, paidBy: e.paidByMemberId, to: e.toMemberId })),
-            )
-            result = r.ok ? r : null
-          } else {
-            result = (snaps.find((x) => x.sheetId === s.id)?.data as CloseResult | undefined) ?? null
-          }
-          const mine = result?.members.find((x) => x.memberId === m.memberId)?.obligationPaise ?? null
-          if (s.state !== 'open' && s.month === thisMonth && mine) spendPaise += mine
-          const myPaid = result?.members.find((x) => x.memberId === m.memberId)?.paidPaise ?? 0
-          // Before close this is an estimate only; it never counts toward spend (S7).
-          return {
-            sheetId: s.id,
-            sheetName: sheetName(s.month),
-            state: s.state,
-            myPaise: mine,
-            myPaidPaise: myPaid,
-            totalPaise: result?.totalPaise ?? 0,
-            entryCount: s.state === 'open' ? entries.filter((e) => e.sheetId === s.id).length : null,
-            estimate: s.state === 'open',
-          }
-        })
-      return { id: m.hisaabId, name: m.name, lines }
+    const balances = await Promise.all(active.map((m) => groupBalances(db, m.groupId)))
+    const toPay: { groupId: string; groupName: string; from: string; to: string; toName: string; amountPaise: number }[] = []
+    const toGet: { groupId: string; groupName: string; from: string; fromName: string; to: string; amountPaise: number }[] = []
+    const groups = active.map((m, i) => {
+      const b = balances[i]!
+      const name = new Map(b.members.map((x) => [x.memberId, x.name]))
+      for (const t of b.plan) {
+        if (t.from === m.memberId) toPay.push({ groupId: m.groupId, groupName: m.name, ...t, toName: name.get(t.to)! })
+        if (t.to === m.memberId) toGet.push({ groupId: m.groupId, groupName: m.name, ...t, fromName: name.get(t.from)! })
+      }
+      return { id: m.groupId, name: m.name, settleMode: m.settleMode, netPaise: b.members.find((x) => x.memberId === m.memberId)?.netPaise ?? 0 }
     })
 
+    const [toConfirm, news, upiIds] = await Promise.all([
+      !myMemberIds.length
+        ? []
+        : db
+            .select({ id: payment.id, groupId: payment.groupId, from: payment.fromMemberId, fromName: member.displayName, amountPaise: payment.amountPaise, via: payment.via, utr: payment.utr, createdAt: payment.createdAt })
+            .from(payment)
+            .innerJoin(member, eq(member.id, payment.fromMemberId))
+            .where(and(inArray(payment.toMemberId, myMemberIds), eq(payment.status, 'sent'), isNull(payment.deletedAt)))
+            .orderBy(desc(payment.createdAt)),
+      !groupIds.length
+        ? []
+        : db
+            .select({ id: activity.id, groupId: activity.groupId, sheetId: activity.sheetId, kind: activity.kind, payload: activity.payload, createdAt: activity.createdAt, actor: user.name })
+            .from(activity)
+            .leftJoin(user, eq(user.id, activity.actorUserId))
+            .where(and(inArray(activity.groupId, groupIds), or(isNull(activity.actorUserId), ne(activity.actorUserId, uid))))
+            .orderBy(desc(activity.createdAt))
+            .limit(100),
+      upiIdsOf(db, [...new Set(toPay.map((t) => t.to))]),
+    ])
+
+    const prevSeen = new Map(seen.rows.map((r) => [r.group_id, r.prev ? new Date(r.prev) : null]))
+    const nameById = new Map(memberships.map((m) => [m.groupId, m.name]))
     return c.json({
-      monthName: sheetName(thisMonth),
-      spendPaise,
-      hisaabs,
-      pending: memberships.filter((m) => m.status === 'pending').map((m) => ({ id: m.hisaabId, name: m.name })),
-      payments: payments.map((p) => ({
-        ...p,
-        hisaabName: nameById.get(p.hisaabId)!,
-        sheetName: sheetName(p.month),
-        fromName: memberNames.get(p.from)!,
-        toName: memberNames.get(p.to)!,
-        toUpiId: upiIds.get(p.to) ?? null,
-        iPay: myMemberIds.includes(p.from),
-        iGet: myMemberIds.includes(p.to),
-      })),
+      owePaise: groups.reduce((s, g) => s + Math.max(0, -g.netPaise), 0),
+      owedPaise: groups.reduce((s, g) => s + Math.max(0, g.netPaise), 0),
+      groups,
+      pending: memberships.filter((m) => m.status === 'pending').map((m) => ({ id: m.groupId, name: m.name })),
+      toPay: toPay.map((t) => ({ ...t, toUpiId: upiIds[t.to] ?? null })),
+      toGet,
+      toConfirm: toConfirm.map((p) => ({ ...p, groupName: nameById.get(p.groupId)! })),
       news: news
         .filter((n) => {
-          const prev = prevSeen.get(n.hisaabId)
+          const prev = prevSeen.get(n.groupId)
           return prev === undefined || prev === null ? false : n.createdAt > prev
         })
         .slice(0, 30)
-        .map((n) => ({ ...n, hisaabName: nameById.get(n.hisaabId)! })),
+        .map((n) => ({ ...n, groupName: nameById.get(n.groupId)! })),
     })
   })

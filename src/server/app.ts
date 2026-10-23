@@ -5,10 +5,11 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { sql } from 'drizzle-orm'
 import { auth, authConfig } from './auth.ts'
 import { AppError, allowedOrigins, db, notFound, type Env } from './core.ts'
-import { hisaabRoutes } from './routes/hisaab.ts'
+import { expenseRoutes } from './routes/expense.ts'
+import { groupRoutes } from './routes/group.ts'
 import { meRoutes } from './routes/me.ts'
+import { paymentRoutes } from './routes/payment.ts'
 import { publicRoutes } from './routes/public.ts'
-import { sheetRoutes } from './routes/sheet.ts'
 
 const api = new Hono<Env>()
   .use(async (c, next) => {
@@ -17,8 +18,9 @@ const api = new Hono<Env>()
     c.set('user', session.user)
     await next()
   })
-  .route('/', hisaabRoutes)
-  .route('/', sheetRoutes)
+  .route('/', groupRoutes)
+  .route('/', expenseRoutes)
+  .route('/', paymentRoutes)
   .route('/', meRoutes)
 
 const log = (fields: Record<string, unknown>) => console.log(JSON.stringify({ time: new Date().toISOString(), ...fields }))
@@ -60,7 +62,7 @@ app.onError((err, c) => {
     log({ level: 'error', requestId: c.var.requestId, msg: 'database unavailable', code })
     return c.json({ error: 'db_unavailable', message: 'Something went wrong, try again.' }, 503)
   }
-  // gstack-shortcut(dec-ef00621d): browser errors not reported, upgrade before non-family users
+  // gstack-shortcut(dec-ef00621d): browser errors not reported, upgrade when the first bug report cannot be explained from logs
   log({ level: 'error', requestId: c.var.requestId, path: c.req.path, msg: err.message, cause: String(err.cause ?? ''), stack: err.stack })
   return c.json({ error: 'internal', message: 'Something went wrong.', requestId: c.var.requestId }, 500)
 })

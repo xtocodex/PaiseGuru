@@ -1,8 +1,8 @@
-// Shared server pieces: errors, clock, authz, sheet locking and versions, opening sheets, tokens.
+// Shared server pieces: errors, clock, authz, group locking and month versions, opening months, tokens.
 import { createHash, createHmac } from 'node:crypto'
 import { and, asc, desc, eq, inArray, lt, sql } from 'drizzle-orm'
-import { addMonths, istDate, monthEnd, monthOf, monthsFrom, type ISODate } from '../domain/hisaab.ts'
-import { activity, db, hisaab, member, sheet, sheetParticipant, type Db, type Tx } from './db.ts'
+import { addMonths, istDate, monthEnd, monthOf, monthsFrom, type ISODate } from '../domain/group.ts'
+import { activity, db, group, member, sheet, sheetParticipant, type Db, type Tx } from './db.ts'
 import type { SessionUser } from './auth.ts'
 import { zValidator } from '@hono/zod-validator'
 import type { ZodType } from 'zod'
@@ -21,7 +21,7 @@ export class AppError extends Error {
 }
 
 export const notFound = () => new AppError(404, 'not_found', 'Not found')
-export const versionConflict = () => new AppError(409, 'version_conflict', 'This month changed, review again')
+export const versionConflict = () => new AppError(409, 'version_conflict', 'This changed while you were looking. Review it again.')
 export const badRequest = (message: string, code = 'invalid') => new AppError(400, code, message)
 
 /** "Today" in IST. Tests replace `clock.today` to fix the date. */
@@ -41,50 +41,44 @@ export const json = <T extends ZodType>(schema: T) =>
 export type MemberRow = typeof member.$inferSelect
 
 /**
- * The caller's membership of a Hisaab. Not a member (or deleted) → 404, so foreign ids leak nothing.
+ * The caller's membership of a group. Not a member (or deleted) → 404, so foreign ids leak nothing.
  * Pending members pass only with `pending: true` (they see the name only). Former members pass only
- * with `former: true` (read-only, and the caller must also scope reads to their sheets).
+ * with `former: true` (read-only).
  */
 export async function requireMember(
   q: Q,
-  hisaabId: string,
+  groupId: string,
   userId: string,
   opts: { admin?: boolean; pending?: boolean; former?: boolean } = {},
 ): Promise<MemberRow> {
   const [me] = await q
     .select()
     .from(member)
-    .where(and(eq(member.hisaabId, hisaabId), eq(member.userId, userId)))
+    .where(and(eq(member.groupId, groupId), eq(member.userId, userId)))
   if (!me || me.status === 'deleted') throw notFound()
   if (me.status === 'pending' && !opts.pending) throw notFound()
-  if (me.status === 'former' && !opts.former) throw new AppError(403, 'read_only', 'You have left this Hisaab, so you can only look.')
-  if (opts.admin && me.role !== 'admin') throw new AppError(403, 'admin_only', 'Only the Hisaab admin can do this.')
+  if (me.status === 'former' && !opts.former) throw new AppError(403, 'read_only', 'You have left this group, so you can only look.')
+  if (opts.admin && me.role !== 'admin') throw new AppError(403, 'admin_only', 'Only the group admin can do this.')
   return me
 }
 
-/** A former member may read only sheets they took part in. */
-export async function assertCanReadSheet(q: Q, me: MemberRow, sheetId: string) {
-  if (me.status !== 'former') return
-  const [row] = await q
-    .select({ id: sheetParticipant.memberId })
-    .from(sheetParticipant)
-    .where(and(eq(sheetParticipant.sheetId, sheetId), eq(sheetParticipant.memberId, me.id)))
-  if (!row) throw notFound()
-}
+// ── groups and months ──
 
-// ── sheets ──
-
+export type GroupRow = typeof group.$inferSelect
 export type SheetRow = typeof sheet.$inferSelect
 
 /**
- * Every Hisaab write starts here: lock all of the Hisaab's sheet rows (ordered, so no deadlocks).
- * This serializes writes per Hisaab; the version check then catches clients acting on an old view.
+ * Every group write starts here: lock the group row, then return its months (oldest first).
+ * This serializes writes per group; month versions then catch clients acting on an old view.
  */
-export function lockSheets(tx: Tx, hisaabId: string): Promise<SheetRow[]> {
-  return tx.select().from(sheet).where(eq(sheet.hisaabId, hisaabId)).orderBy(asc(sheet.startDate)).for('update')
+export async function lockGroup(tx: Tx, groupId: string): Promise<{ g: GroupRow; sheets: SheetRow[] }> {
+  const [g] = await tx.select().from(group).where(eq(group.id, groupId)).for('update')
+  if (!g) throw notFound()
+  const sheets = await tx.select().from(sheet).where(eq(sheet.groupId, groupId)).orderBy(asc(sheet.startDate))
+  return { g, sheets }
 }
 
-/** S7 concurrency: UPDATE … WHERE version = expected; no row → 409. Without `expected` it just bumps. */
+/** UPDATE … WHERE version = expected; no row → 409. Without `expected` it just bumps. */
 export async function bumpVersion(tx: Tx, sheetId: string, expected?: number): Promise<SheetRow> {
   const where = expected === undefined ? eq(sheet.id, sheetId) : and(eq(sheet.id, sheetId), eq(sheet.version, expected))
   const [row] = await tx
@@ -101,30 +95,31 @@ export async function bumpOpenSheets(tx: Tx, sheets: readonly SheetRow[]) {
 }
 
 /**
- * Open every missing monthly sheet from the Hisaab's start month up to `untilMonth` (phase 1: cycle day 1).
- * Idempotent: INSERT … ON CONFLICT DO NOTHING on (hisaab, start date), so concurrent callers make one sheet.
- * New sheets take the active members as participants, with exceptions copied from the previous sheet.
+ * Monthly groups: open every missing month from the start month up to `untilMonth`. Idempotent:
+ * INSERT … ON CONFLICT DO NOTHING on (group, start date). New months take the active members, with
+ * exceptions copied from the previous month. As-you-go groups have no months.
  */
-export async function ensureSheets(tx: Tx, h: { id: string; startMonth: string }, untilMonth: ISODate = monthOf(clock.today())) {
-  const [latest] = await tx.select({ month: sheet.month }).from(sheet).where(eq(sheet.hisaabId, h.id)).orderBy(desc(sheet.month)).limit(1)
+export async function ensureSheets(tx: Tx, g: { id: string; startMonth: string; settleMode: string }, untilMonth: ISODate = monthOf(clock.today())) {
+  if (g.settleMode !== 'monthly') return
+  const [latest] = await tx.select({ month: sheet.month }).from(sheet).where(eq(sheet.groupId, g.id)).orderBy(desc(sheet.month)).limit(1)
   if (latest && latest.month >= untilMonth) return
-  const first = latest ? addMonths(latest.month, 1) : h.startMonth
+  const first = latest ? addMonths(latest.month, 1) : g.startMonth
   for (const month of monthsFrom(first, untilMonth)) {
     const [created] = await tx
       .insert(sheet)
-      .values({ hisaabId: h.id, startDate: month, endDate: monthEnd(month), month })
+      .values({ groupId: g.id, startDate: month, endDate: monthEnd(month), month })
       .onConflictDoNothing()
       .returning()
     if (!created) continue
     const members = await tx
       .select({ id: member.id })
       .from(member)
-      .where(and(eq(member.hisaabId, h.id), eq(member.status, 'active')))
+      .where(and(eq(member.groupId, g.id), eq(member.status, 'active')))
     if (!members.length) continue
     const [prev] = await tx
       .select({ id: sheet.id })
       .from(sheet)
-      .where(and(eq(sheet.hisaabId, h.id), lt(sheet.startDate, month)))
+      .where(and(eq(sheet.groupId, g.id), lt(sheet.startDate, month)))
       .orderBy(desc(sheet.startDate))
       .limit(1)
     const prevRows = prev ? await tx.select().from(sheetParticipant).where(eq(sheetParticipant.sheetId, prev.id)) : []
@@ -138,7 +133,7 @@ export async function ensureSheets(tx: Tx, h: { id: string; startMonth: string }
   }
 }
 
-/** Add a member to every Open sheet (S7: someone joining mid-month starts with Skip). */
+/** Add a member to every open month (someone joining mid-month by link starts with Skip). */
 export async function addToOpenSheets(tx: Tx, sheets: readonly SheetRow[], memberId: string, exception: 'none' | 'skip') {
   const open = sheets.filter((s) => s.state === 'open')
   if (!open.length) return
@@ -164,15 +159,15 @@ export async function removeFromOpenSheets(tx: Tx, sheets: readonly SheetRow[], 
   await bumpOpenSheets(tx, open)
 }
 
-export async function loadHisaab(q: Q, id: string) {
-  const [h] = await q.select().from(hisaab).where(eq(hisaab.id, id))
-  if (!h) throw notFound()
-  return h
+export async function loadGroup(q: Q, id: string) {
+  const [g] = await q.select().from(group).where(eq(group.id, id))
+  if (!g) throw notFound()
+  return g
 }
 
 export function logActivity(
   tx: Tx,
-  row: { hisaabId: string; sheetId?: string | null; actorUserId: string; kind: string; payload?: Record<string, unknown> },
+  row: { groupId: string; sheetId?: string | null; actorUserId: string; kind: string; payload?: Record<string, unknown> },
 ) {
   return tx.insert(activity).values({ ...row, payload: row.payload ?? {} })
 }

@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
   test: {
     include: ['src/**/*.test.ts'],
     // Tests run against the disposable test database only (tests/setup.ts truncates it).
-    env: { ...env, DATABASE_URL: env.TEST_DATABASE_URL ?? '', NODE_ENV: 'test', DEV_LOGIN: '1', BETTER_AUTH_URL: 'http://localhost:3000' },
+    env: { ...env, DATABASE_URL: env.TEST_DATABASE_URL ?? '', NODE_ENV: 'test', BETTER_AUTH_URL: 'http://localhost:3000' },
     globalSetup: ['./tests/global-setup.ts'],
     fileParallelism: false, // integration tests share one test database
     testTimeout: 90_000, // integration tests make many round trips to a remote database

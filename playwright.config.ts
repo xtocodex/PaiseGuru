@@ -22,7 +22,6 @@ export default defineConfig({
     env: {
       PORT: String(port),
       NODE_ENV: 'test',
-      DEV_LOGIN: '1',
       DATABASE_URL: process.env.TEST_DATABASE_URL ?? '',
       BETTER_AUTH_URL: url,
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'e2e-only-secret-not-for-production-use',

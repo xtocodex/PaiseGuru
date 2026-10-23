@@ -1,13 +1,13 @@
-// GET /s/:token — read-only statement page, no login (S10). Server-rendered; every value is escaped by hono/html.
+// GET /s/:token — read-only month statement, no login. Server-rendered; every value is escaped by hono/html.
 // Shows names and amounts only, never UPI IDs or emails.
 import { Hono } from 'hono'
 import { html } from 'hono/html'
 import { and, eq, isNull } from 'drizzle-orm'
-import { shortDate } from '../../domain/hisaab.ts'
+import { shortDate } from '../../domain/group.ts'
 import { formatRupees } from '../../domain/money.ts'
 import { sheet, statementToken } from '../db.ts'
 import { db, hashToken } from '../core.ts'
-import { sheetData } from './sheet.ts'
+import { sheetData } from './expense.ts'
 
 const page = (title: string, body: unknown) => html`<!doctype html>
   <html lang="en">
@@ -28,66 +28,58 @@ const page = (title: string, body: unknown) => html`<!doctype html>
     </body>
   </html>`
 
-const STATE_TEXT = { open: 'Not closed yet', closed: 'Closed, payments pending', cleared: 'Settled', carried: 'Carried to next month' }
-const TYPE_TEXT = { bill: 'Bill', refund: 'Refund', money_given: 'Money given', money_in: 'Money in' }
+const STATE_TEXT = { open: 'Not closed yet', closed: 'Closed' }
+const SPLIT_TEXT: Record<string, string> = { sheet: 'Divided at month end', equal: 'Split equally', exact: 'Split by amounts', shares: 'Split by shares', percent: 'Split by percent', adjust: 'Split with changes' }
 
 export const publicRoutes = new Hono().get('/s/:token', async (c) => {
   const [row] = await db
     .select({ sheetId: statementToken.sheetId })
     .from(statementToken)
     .where(and(eq(statementToken.tokenHash, hashToken(c.req.param('token'))), isNull(statementToken.revokedAt)))
-  if (!row) return c.html(page('Link not valid', html`<h1>This link was replaced or turned off</h1><p>Ask the family for the new link.</p>`), 404)
+  if (!row) return c.html(page('Link not valid', html`<h1>This link was replaced or turned off</h1><p>Ask the group for the new link.</p>`), 404)
 
   const [s] = await db.select().from(sheet).where(eq(sheet.id, row.sheetId))
   const data = await sheetData(db, s!)
-  const forLabel = data.hisaab.forLabel
-  const name = (id: string | null) => (id ? (data.names[id] ?? '') : forLabel ? `From ${forLabel}'s money` : 'Outside the split')
+  const name = (id: string) => data.names[id] ?? ''
   const r = data.result
+  const who = (e: (typeof data.entries)[number]) => {
+    if (e.kind === 'fund_in') return `Into ${data.fundNames[e.fundId!] ?? 'fund'}`
+    if (e.fundId) return `From ${data.fundNames[e.fundId] ?? 'fund'}`
+    const payers = e.payers.map((p) => name(p.memberId)).join(', ')
+    return e.kind === 'refund' ? `To ${payers}` : payers
+  }
 
   return c.html(
     page(
-      `${data.hisaab.name} – ${data.sheet.name}`,
-      html`<h1>${data.hisaab.name} – ${data.sheet.name}</h1>
-        <p class="muted">${STATE_TEXT[data.sheet.state]}${data.hisaab.forLabel ? html` · For ${data.hisaab.forLabel}` : ''}</p>
+      `${data.group.name} – ${data.sheet.name}`,
+      html`<h1>${data.group.name} – ${data.sheet.name}</h1>
+        <p class="muted">${STATE_TEXT[data.sheet.state]}</p>
         ${r.ok
           ? html`<h2>Total ${formatRupees(r.totalPaise)}</h2>
               ${r.dividablePaise !== r.totalPaise ? html`<p class="muted">Divided between members: ${formatRupees(r.dividablePaise)}</p>` : ''}
-              ${forLabel && (r.forInPaise || r.forUsedPaise)
-                ? html`<p class="muted">${forLabel}'s money: received ${formatRupees(r.forInPaise)}, used ${formatRupees(r.forUsedPaise)}, left ${formatRupees(data.forBalancePaise)}</p>`
-                : ''}
+              ${Object.entries(r.funds).map(
+                ([id, f]) => html`<p class="muted">${data.fundNames[id] ?? 'Fund'}: received ${formatRupees(f.inPaise)}, used ${formatRupees(f.usedPaise)}</p>`,
+              )}
               <table>
-                <tr><th>Name</th><th class="n">Paid</th><th class="n">Share</th><th class="n">Balance</th></tr>
+                <tr><th>Name</th><th class="n">Paid</th><th class="n">Share</th></tr>
                 ${r.members.map(
-                  (m) =>
-                    html`<tr><td>${name(m.memberId)}</td><td class="n">${formatRupees(m.paidPaise)}</td><td class="n">${formatRupees(m.obligationPaise)}</td><td class="n">${formatRupees(m.netPaise)}</td></tr>`,
+                  (m) => html`<tr><td>${name(m.memberId)}</td><td class="n">${formatRupees(m.paidPaise)}</td><td class="n">${formatRupees(m.obligationPaise)}</td></tr>`,
                 )}
               </table>`
           : html`<p>${r.message}</p>`}
-        ${data.transfers.length
-          ? html`<h2>Payments</h2>
-              <table>
-                ${data.transfers.map(
-                  (t) =>
-                    html`<tr><td>${name(t.from)} pays ${name(t.to)}</td><td class="n">${formatRupees(t.amountPaise)}</td><td>${t.status === 'paid' ? 'Paid' : 'Not paid yet'}</td></tr>`,
-                )}
-              </table>`
-          : ''}
         <h2>Entries</h2>
         <table>
           ${data.entries.map(
             (e) =>
               html`<tr>
                 <td>${shortDate(e.date)}${e.late ? html`<div class="muted">Late</div>` : ''}</td>
-                <td>${TYPE_TEXT[e.type]}${e.category ? html` · ${e.category}` : ''}${e.note ? html`<div class="muted">${e.note}</div>` : ''}</td>
-                <td>${e.type === 'money_in' ? `For ${forLabel ?? 'the Hisaab'}` : e.type === 'refund' ? `To ${name(e.toMemberId)}` : e.type === 'money_given' ? `${name(e.paidByMemberId)} → ${name(e.toMemberId)}` : name(e.paidByMemberId)}</td>
+                <td>${e.kind === 'refund' ? 'Refund' : e.kind === 'fund_in' ? 'Money in' : (e.category ?? 'Bill')}${e.note ? html`<div class="muted">${e.note}</div>` : ''}${!e.fundId && SPLIT_TEXT[e.splitMode] && e.splitMode !== 'sheet' ? html`<div class="muted">${SPLIT_TEXT[e.splitMode]}</div>` : ''}</td>
+                <td>${who(e)}</td>
                 <td class="n">${formatRupees(e.amountPaise)}</td>
               </tr>`,
           )}
         </table>
-        <p class="muted" style="margin-top:2rem;text-align:center">
-          PaiseGuru · a product of <b>xtocodex</b> ·
-          <a href="https://gopalmohapatra.in" rel="noreferrer" style="color:#0f766e">gopalmohapatra.in</a>
-        </p>`,
+        <p class="muted" style="margin-top:2rem;text-align:center">Made with PaiseGuru</p>`,
     ),
   )
 })
