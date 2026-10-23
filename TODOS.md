@@ -2,10 +2,6 @@
 
 ## v2 follow-ups (issue #2, after launch)
 
-### Google sign-in credentials (founder)
-**What:** Google Cloud console → OAuth client (Web). Redirect URI `https://paiseguru.gopalmohapatra.in/api/auth/callback/google` (dev: `http://localhost:5180/api/auth/callback/google`). Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` on Vercel and redeploy. The sign-in page shows "Continue with Google" once both are set.
-**Priority:** P1
-
 ### Check UPI pay on real phones
 **What:** On the live site, tap Pay (Android) and the GPay / PhonePe / Paytm buttons (iPhone) on a suggested payment. Record whether the amount is filled, blocked or warned. QR and "Copy UPI ID + amount" are the fallbacks that already ship.
 **Priority:** P1
@@ -14,9 +10,9 @@
 **What:** Pick a mail service (Resend free tier suggested), then turn on better-auth password reset and email verification. Until then the admin resets with `pnpm user:password <email> <new-password>`.
 **Priority:** P1 before inviting strangers at scale
 
-### Privacy page and DPDP notice
-**What:** Plain-English page: what PaiseGuru stores, who sees it, how to delete an account. DPDP Rules duties apply from about May 2027.
-**Priority:** P1
+### DPDP review of /privacy
+**What:** `/privacy` is live (plain statement, not lawyer-reviewed). Review it against the DPDP Rules before about May 2027 (notice, erasure, breach reporting).
+**Priority:** P2
 
 ### Revisit error reporting
 **What:** Browser errors are invisible (decision ef00621d, marker at the Hono error handler). Add reporting with PII scrubbing when the first bug report cannot be explained from logs.
@@ -31,6 +27,8 @@
 **Priority:** P2
 
 ## Completed
+
+- Google sign-in live (2026-10-23): OAuth client "PaiseGuru web" in Google Cloud project `xtocodex-org`, app published (In production), keys on Vercel; `/privacy` page added for the consent screen.
 
 - v2 (2026-10-23, issue #2): groups that settle as you go or monthly, per-expense splits (equal, amounts, shares, percent, fixed/extra) with several payers, stable settle plan, Sent → Got it payments with QR and per-app iPhone buttons, funds, open sign-up. Clean database; phase-1 data in Neon branch `backup-pre-v2-2026-10-23`.
 
