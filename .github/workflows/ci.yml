@@ -1,0 +1,81 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: pg
+          POSTGRES_PASSWORD: pg
+          POSTGRES_DB: paiseguru_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://pg:pg@localhost:5432/paiseguru_test
+      BETTER_AUTH_SECRET: ci-only-secret-not-used-anywhere-else
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: test-results/
+
+  # A merge to main deploys production, only after the tests above pass.
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: Production
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Forward-only: applies migrations the production database has not seen yet.
+      - run: node src/server/migrate.ts
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+      - run: node scripts/build-vercel.ts
+      # Deploy from a folder outside the git checkout: Vercel Hobby blocks deploys whose git commit
+      # author is not a team member, and GitHub merge commits carry the GitHub noreply author.
+      - name: Deploy to Vercel production
+        run: |
+          mkdir -p "$RUNNER_TEMP/deploy/.vercel"
+          cp -r .vercel/output "$RUNNER_TEMP/deploy/.vercel/output"
+          cd "$RUNNER_TEMP/deploy"
+          "$GITHUB_WORKSPACE/node_modules/.bin/vercel" deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: Check the live site
+        run: |
+          sleep 5
+          curl -fsS https://paiseguru.gopalmohapatra.in/health

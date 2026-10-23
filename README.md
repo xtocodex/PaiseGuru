@@ -1,49 +1,53 @@
-# 💸 Paise Guru - AI-Based Personal Finance Platform
+# PaiseGuru
 
-**Paise Guru** is a full-stack AI-powered personal finance management platform designed to help users track, analyze, and optimize their spending habits. Using advanced features like receipt scanning, AI insights, and budget alerts, it offers a complete financial planning experience.
+Split bills with friends, flatmates, trips and family, settled in the fewest UPI payments. Every group settles one of two ways:
 
----
+- **As you go**: each expense is split when it is added (equally, by amounts, shares, percent, or with a fixed or extra amount for someone; one or more payers). Settle up any time.
+- **Once a month**: bills pile up all month and are divided at month end, with Fixed, Extra or Skip per person.
 
-## ⚙️ Tech Stack
+Both use one rule: a member's balance is what they paid − what they owe + payments sent − payments received, always worked out from the stored rows. Payments are recorded by a tap (Sent, then Got it from the receiver). A **fund** holds money for the group (a parent's pension, a trip kitty) and pays bills without changing anyone's balance.
 
-- **Frontend**: Next.js, React, Tailwind CSS, Shadcn UI
-- **Backend**: Node.js, Prisma ORM
-- **AI Integration**: Gemini API
-- **Auth**: Clerk
-- **Background Tasks**: Inngest
-- **Email Service**: Resend
-- **Security**: Arcjet
-- **Deployment**: Vercel
+PaiseGuru is a product of **xtocodex**, founded by [Gopal Mohapatra](https://gopalmohapatra.in).
 
+The v2 plan is issue [#2](https://github.com/xtocodex/PaiseGuru/issues/2); research behind it is in [docs/research/2026-10-split-apps.md](docs/research/2026-10-split-apps.md). The phase-1 design is in [docs/designs/paiseguru-mvp.md](docs/designs/paiseguru-mvp.md). The old Next.js app is kept at tag `v1-legacy` for reference only.
 
-## 🚀 Features
+## Setup
 
-- 📸 **Receipt Scanning**: Upload receipts and let AI auto-categorize expenses.
-- 📊 **Category-Wise Transaction Management**: View spending by Food, Travel, Bills, etc.
-- 📈 **Monthly AI Insights**: Gemini API provides summaries and recommendations.
-- ⏰ **Budget Alerts**: Get notified when crossing budget limits in a category.
-- 🔒 **Authentication & Security**: Clerk integration with Arcjet for bot protection.
-- 📬 **Email Notifications**: Triggered using Resend API.
-- ⏱ **Background Jobs**: Scheduled via Inngest for insights and budget reports.
-- ☁️ **Fully Deployed on Vercel**: Scalable and performant.
+Needs Node 24+ and pnpm.
 
-
-### Make sure to create a `.env` file with following variables -
-
+```sh
+pnpm install
+cp .env.example .env    # fill in the values
+pnpm db:migrate
+pnpm dev                # app on http://localhost:$DEV_PORT, API on :$PORT
 ```
-DATABASE_URL=
-DIRECT_URL=
 
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/onboarding
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/onboarding
+## Commands
 
-GEMINI_API_KEY=
+| Command | What it does |
+|---|---|
+| `pnpm dev` | API server (auto-restart) + Vite dev server |
+| `pnpm test` | unit and integration tests (uses `TEST_DATABASE_URL`) |
+| `pnpm test:e2e` | Playwright end-to-end tests |
+| `pnpm db:generate` | make a migration after changing the schema |
+| `pnpm db:migrate` | apply migrations |
+| `pnpm build` / `pnpm start` | production build / run |
+| `pnpm deploy:vercel` | manual emergency deploy to Vercel production (normally a merge to `main` deploys; run `pnpm db:migrate` against production first when there are new migrations) |
+| `pnpm user:password <email> <new-password>` | set a new password for an account (there is no forgot-password email yet); point `DATABASE_URL` at the right database |
 
-RESEND_API_KEY=
+## Shipping
 
-ARCJET_KEY=
-```
+1. Branch from `main`, commit, push, open a pull request.
+2. CI (`.github/workflows/ci.yml`) runs typecheck, unit + integration tests and e2e. `main` is protected: it changes only through a PR whose `test` check passed.
+3. Merge. The `deploy` job then applies new migrations to the production database, builds, and deploys to Vercel production, then checks `/health`.
+
+Secrets live in the GitHub `Production` environment: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `PROD_DATABASE_URL`. The old Next.js app is in tag `v1-legacy` and branch `legacy-v1`.
+
+## Production
+
+- Hosting: Vercel project `paiseguru` (team xtocodexs-projects). The React app is served from Vercel's CDN; the Hono server runs as one Node function in Singapore (`sin1`). `scripts/build-vercel.ts` writes the ready-made deployment.
+- Database: Neon database `paiseguru_prod` (pooled URL in the Vercel `DATABASE_URL` setting).
+- Settings on Vercel: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (https://paiseguru.gopalmohapatra.in), `TRUSTED_ORIGINS` (https://paiseguru.vercel.app), `NODE_ENV=production`.
+- Sign-in: anyone can sign up with email + password. Google appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (redirect URI `https://paiseguru.gopalmohapatra.in/api/auth/callback/google`). Emails are not verified, so Google never joins an existing password account.
+- The v2 launch (2026-10-23) started from an empty database; the phase-1 data is kept in Neon branch `backup-pre-v2-2026-10-23`.
+- Vercel Hobby blocks deploys whose git commit author is not a team member. CI deploys from a folder without git data, so merges deploy fine; a manual `pnpm deploy:vercel` from a local checkout needs commits authored as `xtocodex@gmail.com`.

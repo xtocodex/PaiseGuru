@@ -1,0 +1,129 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>PaiseGuru wireframe</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#fafafa;color:#222;margin:0;padding:24px;display:flex;gap:28px;align-items:flex-start}
+  .phone{width:340px;border:2px solid #444;border-radius:28px;background:#fff;padding:18px 16px 70px;position:relative;min-height:640px}
+  .cap{font-size:12px;color:#777;text-align:center;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em}
+  .box{border:1.5px dashed #999;border-radius:10px;padding:10px;margin:10px 0}
+  .big{font-size:26px;font-weight:700}
+  .muted{color:#777;font-size:13px}
+  .bar{height:10px;border:1.5px solid #444;border-radius:6px;margin:6px 0}
+  .bar i{display:block;height:100%;width:73%;background:#bbb}
+  .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:14px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1.5px solid #555;border-radius:14px;padding:4px 10px;font-size:13px}
+  .fab{position:absolute;right:18px;bottom:78px;border:2px solid #222;border-radius:24px;padding:10px 16px;font-weight:700;background:#fff}
+  .tabs{position:absolute;left:0;right:0;bottom:0;border-top:1.5px solid #444;display:flex;justify-content:space-around;padding:14px 0;font-size:13px}
+  .btn{border:2px solid #222;border-radius:10px;padding:10px;text-align:center;font-weight:700;margin-top:10px}
+  .field{border:1.5px solid #888;border-radius:8px;padding:8px;margin:6px 0;font-size:14px}
+  .tag{font-size:11px;border:1px solid #999;border-radius:4px;padding:1px 4px;color:#555}
+</style></head><body>
+
+<!-- SCREEN 1: Home. Hierarchy: 1) my month (personal ledger), 2) money owed both ways, 3) groups, 4) recent. -->
+<div><div class="cap">1 · Home</div><div class="phone">
+  <div class="muted">September · your spending</div>
+  <div class="big">₹18,240 <span class="muted">of ₹25,000</span></div>
+  <div class="bar"><i></i></div>
+  <div class="muted">Includes only YOUR share of group costs</div>
+  <div class="box"><div class="row" style="border:0"><span>Friends owe you</span><b>₹2,750</b></div>
+    <div class="row" style="border:0"><span>You owe</span><b>₹900</b></div></div>
+  <div class="muted">Groups</div>
+  <div class="chips"><span class="chip">Flat 402 · +₹1,250</span><span class="chip">Goa Trip · +₹900</span><span class="chip">Office lunch · −₹300</span></div>
+  <div class="muted" style="margin-top:12px">New since your last visit (2)</div>
+  <div class="row"><span>Swiggy <span class="tag">from SMS</span></span><span>₹250</span></div>
+  <div class="row"><span>Dinner at Toit · Goa Trip<br><span class="muted">paid ₹3,000 · your share ₹750</span></span><span>₹750</span></div>
+  <div class="row"><span>Electricity · Flat 402<br><span class="muted">Rahul paid · your share ₹600</span></span><span>₹600</span></div>
+  <!-- Empty state (no entries yet): "Share any bank SMS to PaiseGuru, or tap + Add" -->
+  <div class="fab">+ Add</div>
+  <div class="tabs"><span><b>Home</b></span><span>Groups</span><span>Budget</span><span>Me</span></div>
+</div></div>
+
+<!-- SCREEN 2: Add expense. One form for personal AND group: choosing a group reveals split. -->
+<div><div class="cap">2 · Add expense (one entry, two ledgers)</div><div class="phone">
+  <div class="big">₹3,000</div>
+  <div class="field">Dinner at Toit</div>
+  <div class="field">Category: Food ▾</div>
+  <div class="field">Group: Goa Trip ▾ <span class="muted">(or "Just me")</span></div>
+  <div class="field">Paid by: You ▾</div>
+  <div class="box"><div class="muted">Split equally · 4 people</div>
+    <div class="row"><span>You</span><span>₹750</span></div>
+    <div class="row"><span>Aman</span><span>₹750</span></div>
+    <div class="row"><span>Priya</span><span>₹750</span></div>
+    <div class="row" style="border:0"><span>Neha</span><span>₹750</span></div></div>
+  <div class="muted">Your budget: +₹750 Food · They owe you ₹2,250</div>
+  <div class="btn">Save</div>
+  <div class="btn" style="border-style:dashed">Save &amp; tell the group on WhatsApp</div>
+  <div class="tabs"><span>Home</span><span>Groups</span><span>Budget</span><span>Me</span></div>
+</div></div>
+
+<!-- SCREEN 3: Share-target prefill from bank SMS. User confirms, never auto-saved. -->
+<div><div class="cap">3 · Shared from SMS (AI prefill)</div><div class="phone">
+  <div class="box muted" style="font-size:12px">"Rs.250.00 debited from A/c XX1234 on 27-09-26 to VPA swiggy@icici UPI Ref 4271..."</div>
+  <div class="muted">We filled this in. Check and save.</div>
+  <div class="big">₹250</div>
+  <div class="field">Swiggy</div>
+  <div class="field">Category: Food ▾ <span class="tag">guessed</span></div>
+  <div class="field">27 Sep 2026</div>
+  <div class="field">Group: Just me ▾</div>
+  <div class="btn">Save</div>
+  <div class="muted" style="text-align:center;margin-top:8px">Couldn't read it? Edit fields above.</div>
+  <div class="muted" style="text-align:center;margin-top:6px;font-size:11px">This text is sent to our AI to read it; we don't store it</div>
+  <div class="tabs"><span>Home</span><span>Groups</span><span>Budget</span><span>Me</span></div>
+</div></div>
+
+<!-- SCREEN 4: Settle up. UPI deep link opens GPay/PhonePe prefilled; user returns and marks paid. -->
+<div><div class="cap">4 · Settle up</div><div class="phone">
+  <div class="muted">Goa Trip</div>
+  <div class="big">You owe Aman ₹600</div>
+  <div class="muted">Hotel ₹5,400 (Aman paid, your share ₹1,350) minus Toit dinner (you paid, Aman's share ₹750)</div>
+  <div class="btn">Pay ₹600 via UPI</div>
+  <div class="muted" style="text-align:center">Opens your UPI app (behavior checked in build Hour 1)</div>
+  <div class="btn" style="border-style:dashed">I paid, mark settled</div>
+  <div class="box"><div class="muted">You and each member (net, no debt simplification in v1)</div>
+    <div class="row"><span>Priya owes you</span><span>₹750</span></div>
+    <div class="row"><span>Neha owes you</span><span>₹750</span></div>
+    <div class="row" style="border:0"><span>You owe Aman</span><span>₹600</span></div></div>
+  <div class="btn" style="border-style:dashed">Remind on WhatsApp</div>
+  <div class="muted" style="text-align:center">No UPI ID for payee? Pay button hidden; "Copy UPI ID + amount" and QR are fallbacks</div>
+  <div class="tabs"><span>Home</span><span><b>Groups</b></span><span>Budget</span><span>Me</span></div>
+</div></div>
+
+<!-- SCREEN 5: Hisaab month close. Generic project; example data only. Default = split equally, so no
+     "equal" label anywhere; only exceptions get a tag. Tap a member to set an exception. -->
+<div><div class="cap">5 · Hisaab: close September</div><div class="phone">
+  <div class="muted">Dadi's care · September sheet</div>
+  <div class="big">₹20,000 <span class="muted">42 entries</span></div>
+  <div class="muted">Healthcare ₹11,000 · Food ₹6,000 · Household help ₹3,000</div>
+  <div class="box"><div class="muted">Each member's share (tap to change)</div>
+    <div class="row"><span>Ramesh <span class="tag">fixed ₹8,000</span></span><span>₹8,000</span></div>
+    <div class="row"><span>Suresh</span><span>₹4,000</span></div>
+    <div class="row"><span>Mahesh</span><span>₹4,000</span></div>
+    <div class="row" style="border:0"><span>Dinesh</span><span>₹4,000</span></div></div>
+  <div class="box"><div class="muted">Paid so far → result</div>
+    <div class="row"><span>Ramesh paid ₹9,500</span><span>gets ₹1,500</span></div>
+    <div class="row"><span>Suresh paid ₹7,000</span><span>gets ₹3,000</span></div>
+    <div class="row"><span>Mahesh paid ₹2,500</span><span>pays ₹1,500</span></div>
+    <div class="row" style="border:0"><span>Dinesh paid ₹1,000</span><span>pays ₹3,000</span></div></div>
+  <div class="muted"><b>2 payments clear the month:</b> Dinesh → Suresh ₹3,000 · Mahesh → Ramesh ₹1,500</div>
+  <div class="btn">Close month &amp; share on WhatsApp</div>
+  <div class="tabs"><span>Home</span><span><b>Groups</b></span><span>Budget</span><span>Me</span></div>
+</div></div>
+
+<!-- SCREEN 6: Create a Hisaab. Generic: any pooled monthly cost. "For" is optional and never pays. -->
+<div><div class="cap">6 · New Hisaab</div><div class="phone">
+  <div class="big" style="font-size:20px">New Hisaab</div>
+  <div class="muted">Pool bills all month, settle once at month-end</div>
+  <div class="field">Name: Dadi's care</div>
+  <div class="muted" style="font-size:12px">e.g. Flat 402 monthly · Hostel mess · Office tea fund</div>
+  <div class="field">For (optional): Dadi</div>
+  <div class="field">Counts in my budget as: Family support ▾</div>
+  <div class="box"><div class="muted">Members who share the cost</div>
+    <div class="row"><span>You (Gopal)</span><span></span></div>
+    <div class="row"><span>Ramesh</span><span class="muted">invite later</span></div>
+    <div class="row"><span>Suresh</span><span class="muted">invite later</span></div>
+    <div class="row" style="border:0"><span>+ Add member</span><span></span></div></div>
+  <div class="muted">A new month sheet opens automatically on the 1st.</div>
+  <div class="btn">Create Hisaab</div>
+  <div class="tabs"><span>Home</span><span><b>Groups</b></span><span>Budget</span><span>Me</span></div>
+</div></div>
+</body></html>
