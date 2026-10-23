@@ -15,14 +15,16 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppActivityRouteImport } from './routes/_app/activity'
 import { Route as AppAddRouteImport } from './routes/_app/add'
 import { Route as AppMeRouteImport } from './routes/_app/me'
-import { Route as AppHisaabsIndexRouteImport } from './routes/_app/hisaabs/index'
-import { Route as AppHisaabsNewRouteImport } from './routes/_app/hisaabs/new'
+import { Route as AppGroupsIndexRouteImport } from './routes/_app/groups/index'
+import { Route as AppGroupsNewRouteImport } from './routes/_app/groups/new'
 import { Route as AppJoinTokenRouteImport } from './routes/_app/join/$token'
-import { Route as AppHisaabsIdIndexRouteImport } from './routes/_app/hisaabs/$id/index'
-import { Route as AppHisaabsIdAddRouteImport } from './routes/_app/hisaabs/$id/add'
+import { Route as AppGroupsIdIndexRouteImport } from './routes/_app/groups/$id/index'
+import { Route as AppGroupsIdAddRouteImport } from './routes/_app/groups/$id/add'
+import { Route as AppGroupsIdSettingsRouteImport } from './routes/_app/groups/$id/settings'
+import { Route as AppGroupsIdSettleRouteImport } from './routes/_app/groups/$id/settle'
 import { Route as AppSheetsIdIndexRouteImport } from './routes/_app/sheets/$id/index'
 import { Route as AppSheetsIdCloseRouteImport } from './routes/_app/sheets/$id/close'
-import { Route as AppSheetsIdEntriesEntryIdRouteImport } from './routes/_app/sheets/$id/entries/$entryId'
+import { Route as AppGroupsIdExpensesExpenseIdRouteImport } from './routes/_app/groups/$id/expenses/$expenseId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -53,14 +55,14 @@ const AppMeRoute = AppMeRouteImport.update({
   path: '/me',
   getParentRoute: () => AppRoute,
 } as any)
-const AppHisaabsIndexRoute = AppHisaabsIndexRouteImport.update({
-  id: '/hisaabs/',
-  path: '/hisaabs/',
+const AppGroupsIndexRoute = AppGroupsIndexRouteImport.update({
+  id: '/groups/',
+  path: '/groups/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppHisaabsNewRoute = AppHisaabsNewRouteImport.update({
-  id: '/hisaabs/new',
-  path: '/hisaabs/new',
+const AppGroupsNewRoute = AppGroupsNewRouteImport.update({
+  id: '/groups/new',
+  path: '/groups/new',
   getParentRoute: () => AppRoute,
 } as any)
 const AppJoinTokenRoute = AppJoinTokenRouteImport.update({
@@ -68,14 +70,24 @@ const AppJoinTokenRoute = AppJoinTokenRouteImport.update({
   path: '/join/$token',
   getParentRoute: () => AppRoute,
 } as any)
-const AppHisaabsIdIndexRoute = AppHisaabsIdIndexRouteImport.update({
-  id: '/hisaabs/$id/',
-  path: '/hisaabs/$id/',
+const AppGroupsIdIndexRoute = AppGroupsIdIndexRouteImport.update({
+  id: '/groups/$id/',
+  path: '/groups/$id/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppHisaabsIdAddRoute = AppHisaabsIdAddRouteImport.update({
-  id: '/hisaabs/$id/add',
-  path: '/hisaabs/$id/add',
+const AppGroupsIdAddRoute = AppGroupsIdAddRouteImport.update({
+  id: '/groups/$id/add',
+  path: '/groups/$id/add',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGroupsIdSettingsRoute = AppGroupsIdSettingsRouteImport.update({
+  id: '/groups/$id/settings',
+  path: '/groups/$id/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGroupsIdSettleRoute = AppGroupsIdSettleRouteImport.update({
+  id: '/groups/$id/settle',
+  path: '/groups/$id/settle',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSheetsIdIndexRoute = AppSheetsIdIndexRouteImport.update({
@@ -88,10 +100,10 @@ const AppSheetsIdCloseRoute = AppSheetsIdCloseRouteImport.update({
   path: '/sheets/$id/close',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSheetsIdEntriesEntryIdRoute =
-  AppSheetsIdEntriesEntryIdRouteImport.update({
-    id: '/sheets/$id/entries/$entryId',
-    path: '/sheets/$id/entries/$entryId',
+const AppGroupsIdExpensesExpenseIdRoute =
+  AppGroupsIdExpensesExpenseIdRouteImport.update({
+    id: '/groups/$id/expenses/$expenseId',
+    path: '/groups/$id/expenses/$expenseId',
     getParentRoute: () => AppRoute,
   } as any)
 
@@ -101,14 +113,16 @@ export interface FileRoutesByFullPath {
   '/activity': typeof AppActivityRoute
   '/add': typeof AppAddRoute
   '/me': typeof AppMeRoute
-  '/hisaabs/new': typeof AppHisaabsNewRoute
+  '/groups/new': typeof AppGroupsNewRoute
   '/join/$token': typeof AppJoinTokenRoute
-  '/hisaabs/': typeof AppHisaabsIndexRoute
-  '/hisaabs/$id/add': typeof AppHisaabsIdAddRoute
+  '/groups/': typeof AppGroupsIndexRoute
+  '/groups/$id/add': typeof AppGroupsIdAddRoute
+  '/groups/$id/settings': typeof AppGroupsIdSettingsRoute
+  '/groups/$id/settle': typeof AppGroupsIdSettleRoute
   '/sheets/$id/close': typeof AppSheetsIdCloseRoute
-  '/hisaabs/$id/': typeof AppHisaabsIdIndexRoute
+  '/groups/$id/': typeof AppGroupsIdIndexRoute
   '/sheets/$id/': typeof AppSheetsIdIndexRoute
-  '/sheets/$id/entries/$entryId': typeof AppSheetsIdEntriesEntryIdRoute
+  '/groups/$id/expenses/$expenseId': typeof AppGroupsIdExpensesExpenseIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -116,14 +130,16 @@ export interface FileRoutesByTo {
   '/add': typeof AppAddRoute
   '/me': typeof AppMeRoute
   '/': typeof AppIndexRoute
-  '/hisaabs/new': typeof AppHisaabsNewRoute
+  '/groups/new': typeof AppGroupsNewRoute
   '/join/$token': typeof AppJoinTokenRoute
-  '/hisaabs': typeof AppHisaabsIndexRoute
-  '/hisaabs/$id/add': typeof AppHisaabsIdAddRoute
+  '/groups': typeof AppGroupsIndexRoute
+  '/groups/$id/add': typeof AppGroupsIdAddRoute
+  '/groups/$id/settings': typeof AppGroupsIdSettingsRoute
+  '/groups/$id/settle': typeof AppGroupsIdSettleRoute
   '/sheets/$id/close': typeof AppSheetsIdCloseRoute
-  '/hisaabs/$id': typeof AppHisaabsIdIndexRoute
+  '/groups/$id': typeof AppGroupsIdIndexRoute
   '/sheets/$id': typeof AppSheetsIdIndexRoute
-  '/sheets/$id/entries/$entryId': typeof AppSheetsIdEntriesEntryIdRoute
+  '/groups/$id/expenses/$expenseId': typeof AppGroupsIdExpensesExpenseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -133,14 +149,16 @@ export interface FileRoutesById {
   '/_app/add': typeof AppAddRoute
   '/_app/me': typeof AppMeRoute
   '/_app/': typeof AppIndexRoute
-  '/_app/hisaabs/new': typeof AppHisaabsNewRoute
+  '/_app/groups/new': typeof AppGroupsNewRoute
   '/_app/join/$token': typeof AppJoinTokenRoute
-  '/_app/hisaabs/': typeof AppHisaabsIndexRoute
-  '/_app/hisaabs/$id/add': typeof AppHisaabsIdAddRoute
+  '/_app/groups/': typeof AppGroupsIndexRoute
+  '/_app/groups/$id/add': typeof AppGroupsIdAddRoute
+  '/_app/groups/$id/settings': typeof AppGroupsIdSettingsRoute
+  '/_app/groups/$id/settle': typeof AppGroupsIdSettleRoute
   '/_app/sheets/$id/close': typeof AppSheetsIdCloseRoute
-  '/_app/hisaabs/$id/': typeof AppHisaabsIdIndexRoute
+  '/_app/groups/$id/': typeof AppGroupsIdIndexRoute
   '/_app/sheets/$id/': typeof AppSheetsIdIndexRoute
-  '/_app/sheets/$id/entries/$entryId': typeof AppSheetsIdEntriesEntryIdRoute
+  '/_app/groups/$id/expenses/$expenseId': typeof AppGroupsIdExpensesExpenseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -150,14 +168,16 @@ export interface FileRouteTypes {
     | '/activity'
     | '/add'
     | '/me'
-    | '/hisaabs/new'
+    | '/groups/new'
     | '/join/$token'
-    | '/hisaabs/'
-    | '/hisaabs/$id/add'
+    | '/groups/'
+    | '/groups/$id/add'
+    | '/groups/$id/settings'
+    | '/groups/$id/settle'
     | '/sheets/$id/close'
-    | '/hisaabs/$id/'
+    | '/groups/$id/'
     | '/sheets/$id/'
-    | '/sheets/$id/entries/$entryId'
+    | '/groups/$id/expenses/$expenseId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -165,14 +185,16 @@ export interface FileRouteTypes {
     | '/add'
     | '/me'
     | '/'
-    | '/hisaabs/new'
+    | '/groups/new'
     | '/join/$token'
-    | '/hisaabs'
-    | '/hisaabs/$id/add'
+    | '/groups'
+    | '/groups/$id/add'
+    | '/groups/$id/settings'
+    | '/groups/$id/settle'
     | '/sheets/$id/close'
-    | '/hisaabs/$id'
+    | '/groups/$id'
     | '/sheets/$id'
-    | '/sheets/$id/entries/$entryId'
+    | '/groups/$id/expenses/$expenseId'
   id:
     | '__root__'
     | '/_app'
@@ -181,14 +203,16 @@ export interface FileRouteTypes {
     | '/_app/add'
     | '/_app/me'
     | '/_app/'
-    | '/_app/hisaabs/new'
+    | '/_app/groups/new'
     | '/_app/join/$token'
-    | '/_app/hisaabs/'
-    | '/_app/hisaabs/$id/add'
+    | '/_app/groups/'
+    | '/_app/groups/$id/add'
+    | '/_app/groups/$id/settings'
+    | '/_app/groups/$id/settle'
     | '/_app/sheets/$id/close'
-    | '/_app/hisaabs/$id/'
+    | '/_app/groups/$id/'
     | '/_app/sheets/$id/'
-    | '/_app/sheets/$id/entries/$entryId'
+    | '/_app/groups/$id/expenses/$expenseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -240,18 +264,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMeRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/hisaabs/': {
-      id: '/_app/hisaabs/'
-      path: '/hisaabs'
-      fullPath: '/hisaabs/'
-      preLoaderRoute: typeof AppHisaabsIndexRouteImport
+    '/_app/groups/': {
+      id: '/_app/groups/'
+      path: '/groups'
+      fullPath: '/groups/'
+      preLoaderRoute: typeof AppGroupsIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/hisaabs/new': {
-      id: '/_app/hisaabs/new'
-      path: '/hisaabs/new'
-      fullPath: '/hisaabs/new'
-      preLoaderRoute: typeof AppHisaabsNewRouteImport
+    '/_app/groups/new': {
+      id: '/_app/groups/new'
+      path: '/groups/new'
+      fullPath: '/groups/new'
+      preLoaderRoute: typeof AppGroupsNewRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/join/$token': {
@@ -261,18 +285,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppJoinTokenRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/hisaabs/$id/': {
-      id: '/_app/hisaabs/$id/'
-      path: '/hisaabs/$id'
-      fullPath: '/hisaabs/$id/'
-      preLoaderRoute: typeof AppHisaabsIdIndexRouteImport
+    '/_app/groups/$id/': {
+      id: '/_app/groups/$id/'
+      path: '/groups/$id'
+      fullPath: '/groups/$id/'
+      preLoaderRoute: typeof AppGroupsIdIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/hisaabs/$id/add': {
-      id: '/_app/hisaabs/$id/add'
-      path: '/hisaabs/$id/add'
-      fullPath: '/hisaabs/$id/add'
-      preLoaderRoute: typeof AppHisaabsIdAddRouteImport
+    '/_app/groups/$id/add': {
+      id: '/_app/groups/$id/add'
+      path: '/groups/$id/add'
+      fullPath: '/groups/$id/add'
+      preLoaderRoute: typeof AppGroupsIdAddRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/groups/$id/settings': {
+      id: '/_app/groups/$id/settings'
+      path: '/groups/$id/settings'
+      fullPath: '/groups/$id/settings'
+      preLoaderRoute: typeof AppGroupsIdSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/groups/$id/settle': {
+      id: '/_app/groups/$id/settle'
+      path: '/groups/$id/settle'
+      fullPath: '/groups/$id/settle'
+      preLoaderRoute: typeof AppGroupsIdSettleRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/sheets/$id/': {
@@ -289,11 +327,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSheetsIdCloseRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/sheets/$id/entries/$entryId': {
-      id: '/_app/sheets/$id/entries/$entryId'
-      path: '/sheets/$id/entries/$entryId'
-      fullPath: '/sheets/$id/entries/$entryId'
-      preLoaderRoute: typeof AppSheetsIdEntriesEntryIdRouteImport
+    '/_app/groups/$id/expenses/$expenseId': {
+      id: '/_app/groups/$id/expenses/$expenseId'
+      path: '/groups/$id/expenses/$expenseId'
+      fullPath: '/groups/$id/expenses/$expenseId'
+      preLoaderRoute: typeof AppGroupsIdExpensesExpenseIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
@@ -304,14 +342,16 @@ interface AppRouteChildren {
   AppAddRoute: typeof AppAddRoute
   AppMeRoute: typeof AppMeRoute
   AppIndexRoute: typeof AppIndexRoute
-  AppHisaabsNewRoute: typeof AppHisaabsNewRoute
+  AppGroupsNewRoute: typeof AppGroupsNewRoute
   AppJoinTokenRoute: typeof AppJoinTokenRoute
-  AppHisaabsIndexRoute: typeof AppHisaabsIndexRoute
-  AppHisaabsIdAddRoute: typeof AppHisaabsIdAddRoute
+  AppGroupsIndexRoute: typeof AppGroupsIndexRoute
+  AppGroupsIdAddRoute: typeof AppGroupsIdAddRoute
+  AppGroupsIdSettingsRoute: typeof AppGroupsIdSettingsRoute
+  AppGroupsIdSettleRoute: typeof AppGroupsIdSettleRoute
   AppSheetsIdCloseRoute: typeof AppSheetsIdCloseRoute
-  AppHisaabsIdIndexRoute: typeof AppHisaabsIdIndexRoute
+  AppGroupsIdIndexRoute: typeof AppGroupsIdIndexRoute
   AppSheetsIdIndexRoute: typeof AppSheetsIdIndexRoute
-  AppSheetsIdEntriesEntryIdRoute: typeof AppSheetsIdEntriesEntryIdRoute
+  AppGroupsIdExpensesExpenseIdRoute: typeof AppGroupsIdExpensesExpenseIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -319,14 +359,16 @@ const AppRouteChildren: AppRouteChildren = {
   AppAddRoute: AppAddRoute,
   AppMeRoute: AppMeRoute,
   AppIndexRoute: AppIndexRoute,
-  AppHisaabsNewRoute: AppHisaabsNewRoute,
+  AppGroupsNewRoute: AppGroupsNewRoute,
   AppJoinTokenRoute: AppJoinTokenRoute,
-  AppHisaabsIndexRoute: AppHisaabsIndexRoute,
-  AppHisaabsIdAddRoute: AppHisaabsIdAddRoute,
+  AppGroupsIndexRoute: AppGroupsIndexRoute,
+  AppGroupsIdAddRoute: AppGroupsIdAddRoute,
+  AppGroupsIdSettingsRoute: AppGroupsIdSettingsRoute,
+  AppGroupsIdSettleRoute: AppGroupsIdSettleRoute,
   AppSheetsIdCloseRoute: AppSheetsIdCloseRoute,
-  AppHisaabsIdIndexRoute: AppHisaabsIdIndexRoute,
+  AppGroupsIdIndexRoute: AppGroupsIdIndexRoute,
   AppSheetsIdIndexRoute: AppSheetsIdIndexRoute,
-  AppSheetsIdEntriesEntryIdRoute: AppSheetsIdEntriesEntryIdRoute,
+  AppGroupsIdExpensesExpenseIdRoute: AppGroupsIdExpensesExpenseIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

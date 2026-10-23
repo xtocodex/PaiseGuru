@@ -9,7 +9,7 @@ import { Avatar, Card, Chips, Empty, ErrorBox, Loading, Page, Row, Rows } from '
 
 export const Route = createFileRoute('/_app/activity')({ component: ActivityPage })
 
-type Filter = 'all' | 'bills' | 'payments' | 'members'
+type Filter = 'all' | 'expenses' | 'payments' | 'members'
 type Item = ActivityView['items'][number]
 
 const dayKey = (iso: string) => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
@@ -38,13 +38,13 @@ function ActivityPage() {
         onChange={setFilter}
         options={[
           { value: 'all', label: 'All' },
-          { value: 'bills', label: 'Bills' },
+          { value: 'expenses', label: 'Expenses' },
           { value: 'payments', label: 'Payments' },
           { value: 'members', label: 'Members' },
         ]}
       />
       <ErrorBox error={error} />
-      {items.length === 0 && <Empty icon={Activity} title="Nothing here yet" text="Bills, payments and members your family changes show up here." />}
+      {items.length === 0 && <Empty icon={Activity} title="Nothing here yet" text="Expenses, payments and member changes in your groups show up here." />}
       {[...groups].map(([day, list]) => (
         <section key={day} className="flex flex-col gap-2">
           <h2 className="text-[13px] font-semibold text-muted">{dayLabel(day)}</h2>
@@ -53,11 +53,11 @@ function ActivityPage() {
               {list.map((n) => (
                 <Row
                   key={n.id}
-                  to={n.sheetId ? '/sheets/$id' : '/hisaabs/$id'}
-                  params={{ id: n.sheetId ?? n.hisaabId }}
-                  left={<Avatar name={n.actor ?? '?'} id={n.actor ?? n.hisaabId} />}
+                  to={n.sheetId ? '/sheets/$id' : '/groups/$id'}
+                  params={{ id: n.sheetId ?? n.groupId }}
+                  left={<Avatar name={n.actor ?? '?'} id={n.actor ?? n.groupId} />}
                   title={activityText(n, n.mine ? user.name : undefined)}
-                  subtitle={[n.hisaabName, n.sheetName?.split(' ')[0], timeAgo(n.createdAt)].filter(Boolean).join(' · ')}
+                  subtitle={[n.groupName, n.sheetName?.split(' ')[0], timeAgo(n.createdAt)].filter(Boolean).join(' · ')}
                 />
               ))}
             </Rows>

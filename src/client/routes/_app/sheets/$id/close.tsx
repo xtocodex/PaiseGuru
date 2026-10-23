@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CircleCheck, Lock, MessageCircle } from 'lucide-react'
+import { CircleCheck, HandCoins, Lock, MessageCircle } from 'lucide-react'
 import { formatRupees, parseRupees } from '../../../../../domain/money.ts'
 import { api, call, type SheetView } from '../../../../api.ts'
-import { PaymentSlip } from '../../../../payment-slip.tsx'
 import { sheetQuery } from '../../../../queries.ts'
-import { Avatar, Button, ButtonLink, Card, Chips, ErrorBox, Input, Loading, Money, Page, Row, Rows, SectionTitle, Segmented, Tag, cx } from '../../../../ui.tsx'
+import { Avatar, Button, ButtonLink, Card, Chips, ErrorBox, Input, Loading, Money, Page, Row, Rows, Segmented, Tag, cx } from '../../../../ui.tsx'
 
 export const Route = createFileRoute('/_app/sheets/$id/close')({ component: ClosePage })
 
@@ -55,7 +54,7 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
             <CircleCheck className="size-9" aria-hidden />
           </span>
           <p className="text-xl font-bold">{s.sheet.name} is closed</p>
-          <p className="max-w-xs text-sm text-muted">Send everyone the result. The link shows every entry and how it was divided.</p>
+          <p className="max-w-xs text-sm text-muted">Everyone's share is now in the group's balances. Send them the result; the link shows every entry and how it was divided.</p>
         </div>
         <div className="mt-auto flex flex-col gap-2">
           {close.data.share && (
@@ -64,8 +63,8 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
               Share on WhatsApp
             </a>
           )}
-          <ButtonLink to="/sheets/$id" params={{ id: s.sheet.id }} variant="secondary">
-            See payments
+          <ButtonLink to="/groups/$id/settle" params={{ id: s.group.id }} variant="secondary" icon={HandCoins}>
+            Settle up
           </ButtonLink>
         </div>
       </Page>
@@ -111,7 +110,7 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
           {r.ok ? <Money paise={r.dividablePaise} className="text-[40px] leading-tight font-bold tracking-tight" /> : <p role="alert" className="mt-1 font-medium text-pays">{r.message}</p>}
           {r.ok && r.dividablePaise !== r.totalPaise && (
             <p className="mt-1 text-[13px] text-muted">
-              Plus <Money paise={r.totalPaise - r.dividablePaise} /> {s.hisaab.forLabel ? `from ${s.hisaab.forLabel}'s money` : 'outside the split'}, not divided
+              Plus <Money paise={r.totalPaise - r.dividablePaise} /> already split or paid from a fund, not divided here
             </p>
           )}
         </Card>
@@ -158,7 +157,7 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
   return (
     <Page
       title={`Close ${month}`}
-      subtitle="Step 2 of 2 · settle up"
+      subtitle="Step 2 of 2 · check and close"
       close
       back={`/sheets/${s.sheet.id}`}
       footer={
@@ -181,25 +180,25 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
         <>
           <Card flush>
             <Rows>
-              {r.members.map((m) => (
-                <Row
-                  key={m.memberId}
-                  left={<Avatar name={name(m.memberId)} id={m.memberId} />}
-                  title={name(m.memberId)}
-                  subtitle={`Paid ${formatRupees(m.paidPaise)} · share ${formatRupees(m.obligationPaise)}`}
-                  right={
-                    <span className={cx('num text-[15px] font-semibold', m.netPaise > 0 ? 'text-gets' : m.netPaise < 0 ? 'text-pays' : 'text-muted')}>
-                      {m.netPaise > 0 ? `gets ${formatRupees(m.netPaise)}` : m.netPaise < 0 ? `pays ${formatRupees(-m.netPaise)}` : 'settled'}
-                    </span>
-                  }
-                />
-              ))}
+              {r.members.map((m) => {
+                const month = m.paidPaise - m.obligationPaise
+                return (
+                  <Row
+                    key={m.memberId}
+                    left={<Avatar name={name(m.memberId)} id={m.memberId} />}
+                    title={name(m.memberId)}
+                    subtitle={`Paid ${formatRupees(m.paidPaise)} · share ${formatRupees(m.obligationPaise)}`}
+                    right={
+                      <span className={cx('num text-[15px] font-semibold', month > 0 ? 'text-gets' : month < 0 ? 'text-pays' : 'text-muted')}>
+                        {month > 0 ? `gets ${formatRupees(month)}` : month < 0 ? `pays ${formatRupees(-month)}` : 'even'}
+                      </span>
+                    }
+                  />
+                )
+              })}
             </Rows>
           </Card>
-          <SectionTitle>{r.transfers.length === 0 ? 'Nothing to pay: everyone is settled' : `${r.transfers.length} ${r.transfers.length === 1 ? 'payment settles' : 'payments settle'} everyone`}</SectionTitle>
-          {r.transfers.map((t, i) => (
-            <PaymentSlip key={i} t={{ id: String(i), from: t.from, to: t.to, amountPaise: t.amountPaise, status: 'unpaid' }} names={s.names} meMemberId={s.me.memberId} hisaabName={s.hisaab.name} />
-          ))}
+          <p className="text-[13px] text-muted">After closing, Settle up shows the fewest payments that settle everyone, together with anything else owed in the group.</p>
         </>
       )}
     </Page>

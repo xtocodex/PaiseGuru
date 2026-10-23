@@ -1,5 +1,5 @@
 import { Link, Outlet, createFileRoute, redirect, useRouterState } from '@tanstack/react-router'
-import { Activity, CircleUserRound, House, NotebookTabs, Plus, type LucideIcon } from 'lucide-react'
+import { Activity, CircleUserRound, House, Plus, Users, type LucideIcon } from 'lucide-react'
 import { authClient } from '../auth.ts'
 import { cx } from '../ui.tsx'
 
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/_app')({
 })
 
 // Full-screen flows (add, close, forms) hide the tab bar, like a native modal.
-const FLOW = /^\/(add|join\/|hisaabs\/new|hisaabs\/[^/]+\/add|sheets\/[^/]+\/(close|entries\/))/
+const FLOW = /^\/(add|join\/|groups\/new|groups\/[^/]+\/(add|expenses\/)|sheets\/[^/]+\/close)/
 
 function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname })
@@ -48,8 +48,8 @@ function TabBar() {
     <nav aria-label="Main" className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card/95 backdrop-blur-md">
       <div className="mx-auto grid max-w-md grid-cols-5 px-1.5 pt-1.5 pb-2">
         <Tab to="/" icon={House} label="Home" exact />
-        <Tab to="/hisaabs" icon={NotebookTabs} label="Hisaabs" />
-        <Link to="/add" aria-label="Add a bill" className="press -mt-7 flex justify-center">
+        <Tab to="/groups" icon={Users} label="Groups" />
+        <Link to="/add" aria-label="Add an expense" className="press -mt-7 flex justify-center">
           <span className={cx('grid size-[58px] place-items-center rounded-[20px] border-4 border-paper bg-marigold text-on-marigold shadow-[0_6px_14px_-6px_rgb(16_19_28/0.35)]')}>
             <Plus className="size-7" aria-hidden />
           </span>

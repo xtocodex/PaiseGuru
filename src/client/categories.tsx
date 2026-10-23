@@ -2,7 +2,7 @@ import {
   BookOpen, Car, CircleEllipsis, Clapperboard, Gift, HandCoins, HandHelping, HeartHandshake, House, Landmark, Pill, Plane, Plug, ReceiptText,
   ShieldCheck, ShoppingBag, ShoppingBasket, Sparkles, Undo2, Users, UtensilsCrossed, type LucideIcon,
 } from 'lucide-react'
-import type { Category } from '../domain/hisaab.ts'
+import type { Category } from '../domain/group.ts'
 
 export const CATEGORY_ICON: Record<Category, LucideIcon> = {
   Food: UtensilsCrossed,
@@ -25,10 +25,11 @@ export const CATEGORY_ICON: Record<Category, LucideIcon> = {
   Other: CircleEllipsis,
 }
 
-/** The icon for an entry row: its category for bills and refunds, else its type. */
-export function entryIcon(e: { type: string; category: string | null }): LucideIcon {
-  if (e.type === 'money_in') return Landmark
-  if (e.type === 'money_given') return HandCoins
-  if (e.type === 'refund') return Undo2
+/** The icon for an expense row: money in, a refund, or its category. */
+export function expenseIcon(e: { kind: string; category: string | null }): LucideIcon {
+  if (e.kind === 'fund_in') return Landmark
+  if (e.kind === 'refund') return Undo2
   return CATEGORY_ICON[e.category as Category] ?? CircleEllipsis
 }
+
+export const PaymentIcon = HandCoins

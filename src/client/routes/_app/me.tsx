@@ -8,7 +8,7 @@ import { authClient } from '../../auth.ts'
 import { InstallHelp } from '../../install.tsx'
 import { getTheme, setTheme, useInstall, type Theme } from '../../pwa.ts'
 import { meQuery } from '../../queries.ts'
-import { Avatar, Button, Card, ErrorBox, FOUNDER_URL, Field, IconButton, IconTile, Input, Loading, Page, Row, Rows, Segmented, Sheet } from '../../ui.tsx'
+import { Avatar, Button, Card, ErrorBox, Field, IconButton, IconTile, Input, Loading, MadeBy, Page, Row, Rows, Segmented, Sheet } from '../../ui.tsx'
 
 export const Route = createFileRoute('/_app/me')({ component: Me })
 
@@ -40,7 +40,7 @@ function Me() {
           <Avatar name={u.name} id={u.id} size={56} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-semibold">{u.name}</p>
-            <p className="truncate text-[13px] text-muted">{u.username ? `User ID: ${u.username}` : u.email}</p>
+            <p className="truncate text-[13px] text-muted">{u.email}</p>
           </div>
           <IconButton icon={Pencil} label="Edit name" onClick={() => setPanel('name')} />
         </div>
@@ -48,8 +48,8 @@ function Me() {
 
       <Card flush>
         <Rows>
-          <Row onClick={() => setPanel('upi')} left={<IconTile icon={IndianRupee} />} title="UPI ID" subtitle={u.upiId ? `${u.upiId} · so family can pay you` : 'Add one so family can pay you'} chevron />
-          {u.username && <Row onClick={() => setPanel('password')} left={<IconTile icon={KeyRound} />} title="Change password" chevron />}
+          <Row onClick={() => setPanel('upi')} left={<IconTile icon={IndianRupee} />} title="UPI ID" subtitle={u.upiId ? `${u.upiId} · so people can pay you` : 'Add one so people can pay you'} chevron />
+          <Row onClick={() => setPanel('password')} left={<IconTile icon={KeyRound} />} title="Change password" chevron />
           {!install.installed && (
             <Row
               onClick={() => (install.canPrompt ? install.install() : setPanel('install'))}
@@ -68,15 +68,10 @@ function Me() {
       </Button>
 
       <Card className="text-center">
-        <p className="text-xl font-bold tracking-tight text-brand-text">PaiseGuru</p>
-        <p className="text-[13px] text-muted">A product of xtocodex</p>
-        <p className="mt-2 text-sm">
-          Founder{' '}
-          <a href={FOUNDER_URL} target="_blank" rel="noreferrer" className="font-semibold text-brand-text underline-offset-2 hover:underline">
-            Gopal Mohapatra
-          </a>{' '}
-          · gopalmohapatra.in
-        </p>
+        <p className="text-[13px] font-semibold text-muted">About</p>
+        <p className="mt-1 text-xl font-bold tracking-tight text-brand-text">PaiseGuru</p>
+        <p className="text-[13px] text-muted">Split expenses as you go or once a month, settle in the fewest UPI payments.</p>
+        <MadeBy className="mt-3" />
       </Card>
 
       <button type="button" className="mx-auto min-h-11 px-4 text-[13px] text-muted underline-offset-2 hover:underline" onClick={() => setPanel('delete')}>
@@ -153,7 +148,7 @@ function UpiSheet({ upiId, onClose }: { upiId: string | null; onClose: () => voi
           save.mutate({ upiId: v })
         }}
       >
-        <Field label="UPI ID" hint="Only members of your Hisaabs see it, on the Pay button." error={error}>
+        <Field label="UPI ID" hint="Only members of your groups see it, on the Pay button." error={error}>
           <Input value={value} onChange={(e) => setValue(e.target.value)} placeholder="name@bank" autoCapitalize="none" autoCorrect="off" spellCheck={false} inputMode="email" />
         </Field>
         <ErrorBox error={save.error} />
@@ -173,7 +168,7 @@ function PasswordSheet({ onClose }: { onClose: () => void }) {
   const change = useMutation({
     mutationFn: async () => {
       const res = await authClient.changePassword({ currentPassword: current, newPassword: next, revokeOtherSessions: true })
-      if (res.error) throw new Error(res.error.status === 400 || res.error.status === 401 ? 'Your current password is not right.' : (res.error.message ?? 'That did not work.'))
+      if (res.error) throw new Error(res.error.status === 400 || res.error.status === 401 ? 'Your current password is not right. If you sign in with Google, you have no password here.' : (res.error.message ?? 'That did not work.'))
     },
     onSuccess: () => setDone(true),
   })
@@ -216,7 +211,7 @@ function DeleteSheet({ onClose, onDeleted }: { onClose: () => void; onDeleted: (
   return (
     <Sheet open onClose={onClose} title="Delete my account">
       <p className="text-sm text-muted">
-        Your name, sign-in and UPI ID are deleted. Amounts you added stay in shared Hisaabs under "Deleted user", so nobody else's numbers change. This can't be undone.
+        Your name, sign-in and UPI ID are deleted. Amounts you added stay in shared groups under "Deleted user", so nobody else's numbers change. This can't be undone.
       </p>
       <Field label='Type "DELETE" to confirm'>
         <Input value={typed} onChange={(e) => setTyped(e.target.value)} autoCapitalize="characters" autoComplete="off" />

@@ -1,7 +1,7 @@
 {
   "name": "paiseguru",
   "description": "Split bills with friends, flatmates, trips and family: as you go or once a month, settled in the fewest UPI payments.",
-  "author": "xtocodex \u00b7 Gopal Mohapatra (https://gopalmohapatra.in)",
+  "author": "xtocodex · Gopal Mohapatra (https://gopalmohapatra.in)",
   "private": true,
   "type": "module",
   "engines": {
@@ -31,6 +31,7 @@
     "hono": "^4.13.9",
     "lucide-react": "^1.48.0",
     "pg": "^8.23.0",
+    "qrcode": "1.5.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "zod": "^4.6.5"
@@ -41,6 +42,7 @@
     "@tanstack/router-plugin": "^1.168.40",
     "@types/node": "^26.6.2",
     "@types/pg": "^8.23.1",
+    "@types/qrcode": "1.5.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",

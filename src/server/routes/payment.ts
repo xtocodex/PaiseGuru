@@ -110,7 +110,15 @@ export const paymentRoutes = new Hono<Env>()
         .where(and(eq(member.groupId, groupId), inArray(member.id, [input.fromMemberId, input.toMemberId])))
       if (parties.length !== 2 || parties.some((p) => p.status !== 'active')) throw badRequest('Both people must be members of this group.')
       await assertParty(tx, me.id, [input.fromMemberId, input.toMemberId], 'either')
-      await tx.insert(payment).values({ ...input, utr: input.utr || null, groupId, createdBy: user.id })
+      // The receiver recording it ("I got it") has confirmed it already.
+      const received = me.id === input.toMemberId
+      await tx.insert(payment).values({
+        ...input,
+        utr: input.utr || null,
+        groupId,
+        createdBy: user.id,
+        ...(received ? { status: 'confirmed' as const, confirmedBy: user.id, confirmedAt: new Date() } : {}),
+      })
       await logActivity(tx, { groupId, actorUserId: user.id, kind: 'payment_sent', payload: { amountPaise: input.amountPaise, via: input.via } })
       return { id: input.id, created: true }
     })

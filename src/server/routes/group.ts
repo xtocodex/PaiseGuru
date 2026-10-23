@@ -34,7 +34,7 @@ import {
   tokenFor,
   type Env,
 } from '../core.ts'
-import { groupBalances } from './payment.ts'
+import { groupBalances, upiIdsOf } from './payment.ts'
 
 const inviteLink = (nonce: string | null) => (nonce ? `${appUrl()}/join/${tokenFor('invite', nonce)}` : null)
 
@@ -160,6 +160,8 @@ export const groupRoutes = new Hono<Env>()
     const sheets = await sheetsQuery.orderBy(desc(sheet.startDate))
     const stats = await monthStats(sheets.map((s) => s.id))
     const net = new Map(balances.members.map((m) => [m.memberId, m.netPaise]))
+    // Payees' UPI IDs for the Pay buttons. Members only; never on the statement page.
+    const upiIds = me.status === 'active' ? await upiIdsOf(db, [...new Set(balances.plan.map((t) => t.to))]) : {}
 
     return c.json({
       id: g.id,
@@ -183,6 +185,7 @@ export const groupRoutes = new Hono<Env>()
           netPaise: net.get(m.id) ?? 0,
         })),
       plan: balances.plan,
+      upiIds,
       funds,
       sheets: sheets.map((s) => ({ ...s, name: sheetName(s.month), ...stats(s.id) })),
     })

@@ -223,9 +223,20 @@ export function Tag({ children, tone = 'brand' }: { children: ReactNode; tone?: 
   return <span className={cx('inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold leading-none', tones[tone])}>{children}</span>
 }
 
-export const STATE_LABEL = { open: 'Open', closed: 'Payments pending', cleared: 'Settled', carried: 'Carried' } as const
+export const STATE_LABEL = { open: 'Open', closed: 'Closed' } as const
 export function StateTag({ state }: { state: keyof typeof STATE_LABEL }) {
-  return <Tag tone={state === 'open' ? 'brand' : state === 'closed' ? 'marigold' : 'gets'}>{STATE_LABEL[state]}</Tag>
+  return <Tag tone={state === 'open' ? 'brand' : 'gets'}>{STATE_LABEL[state]}</Tag>
+}
+
+/** "You owe ₹500" / "You are owed ₹500" / "All settled", for a net (+ is owed money). */
+export function NetText({ paise, who = 'You', className }: { paise: number; who?: string; className?: string }) {
+  if (paise === 0) return <span className={cx('text-muted', className)}>All settled</span>
+  return (
+    <span className={className}>
+      {who} {paise > 0 ? (who === 'You' ? 'are owed' : 'is owed') : who === 'You' ? 'owe' : 'owes'}{' '}
+      <Money paise={Math.abs(paise)} className={cx('font-bold', paise > 0 ? 'text-gets' : 'text-pays')} />
+    </span>
+  )
 }
 
 const AVATAR_COLORS = ['#23306e', '#0e7a5c', '#8a3f9e', '#b56a00', '#1f6f9c', '#a3334e']
@@ -256,7 +267,7 @@ export function IconTile({ icon: Icon, tone = 'brand' }: { icon: LucideIcon; ton
  * A list row. The main part is a link, a button or plain content; `right` sits beside it (never inside it),
  * so it may hold its own button. Rows go inside <Card flush> with <Rows> dividers.
  */
-export function Row(props: { left?: ReactNode; title: ReactNode; subtitle?: ReactNode; right?: ReactNode; to?: string; params?: any; onClick?: () => void; chevron?: boolean }) {
+export function Row(props: { left?: ReactNode; title: ReactNode; subtitle?: ReactNode; right?: ReactNode; to?: string; params?: any; search?: any; onClick?: () => void; chevron?: boolean }) {
   const main = (
     <>
       {props.left}
@@ -271,7 +282,7 @@ export function Row(props: { left?: ReactNode; title: ReactNode; subtitle?: Reac
   return (
     <div className="flex items-center gap-3">
       {props.to ? (
-        <Link to={props.to as any} params={props.params} className={cx(cls, 'press')}>
+        <Link to={props.to as any} params={props.params} search={props.search} className={cx(cls, 'press')}>
           {main}
         </Link>
       ) : props.onClick ? (

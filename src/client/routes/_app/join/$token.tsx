@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { NotebookPen } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { api, call } from '../../../api.ts'
 import { Avatar, Button, ButtonLink, Card, ErrorBox, IconTile, Loading, Page, Row, Rows } from '../../../ui.tsx'
 
@@ -15,7 +15,7 @@ function Join() {
     mutationFn: (placeholderId?: string) => call(api.join[':token'].$post({ param: { token }, json: placeholderId ? { placeholderId } : {} })),
     onSuccess: (out) => {
       queryClient.invalidateQueries()
-      navigate({ to: '/hisaabs/$id', params: { id: out.hisaabId }, replace: true })
+      navigate({ to: '/groups/$id', params: { id: out.groupId }, replace: true })
     },
   })
 
@@ -28,7 +28,7 @@ function Join() {
         <Card>
           <p>{p.myStatus === 'active' ? 'You are already a member.' : 'You asked to join. Waiting for the admin to approve you.'}</p>
         </Card>
-        <ButtonLink to="/hisaabs/$id" params={{ id: p.hisaabId }}>
+        <ButtonLink to="/groups/$id" params={{ id: p.groupId }}>
           Open {p.name}
         </ButtonLink>
       </Page>
@@ -38,13 +38,13 @@ function Join() {
   return (
     <Page title={`Join ${p.name}`} close back="/">
       <div className="flex flex-col items-center gap-2 py-4 text-center">
-        <IconTile icon={NotebookPen} />
-        <p className="text-sm text-muted">You've been invited to share this Hisaab's bills and settle up each month.</p>
+        <IconTile icon={Users} />
+        <p className="text-sm text-muted">You've been invited to share this group's expenses and settle up in the fewest UPI payments.</p>
       </div>
       {p.placeholders.length > 0 && (
         <>
           <h2 className="text-[15px] font-semibold">Which one is you?</h2>
-          <p className="-mt-2 text-[13px] text-muted">If someone already added you by name, pick it so your past bills stay with you.</p>
+          <p className="-mt-2 text-[13px] text-muted">If someone already added you by name, pick it so your past expenses stay with you.</p>
           <Card flush>
             <Rows>
               {p.placeholders.map((m) => (

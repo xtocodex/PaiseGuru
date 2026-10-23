@@ -2,20 +2,22 @@ import { formatRupees } from '../domain/money.ts'
 
 type ActivityRow = { kind: string; actor: string | null; payload: unknown }
 
-/** Plain-English line for an activity row (S15). `me` is the viewer's name, shown as "You". */
+/** Plain-English line for an activity row. `me` is the viewer's name, shown as "You". */
 export function activityText(n: ActivityRow, me?: string) {
   const who = n.actor ? (n.actor === me ? 'You' : n.actor) : 'Someone'
-  const p = (n.payload ?? {}) as { type?: string; amountPaise?: number; name?: string; into?: string }
+  const p = (n.payload ?? {}) as { kind?: string; amountPaise?: number; name?: string; into?: string; note?: string }
   const amount = p.amountPaise ? formatRupees(p.amountPaise) : ''
-  const what = { bill: 'a bill', refund: 'a refund', money_given: 'money given', money_in: 'money in' }[p.type ?? ''] ?? 'an entry'
-  if (p.type === 'money_in' && n.kind === 'entry_create') return `${who} added ${amount} money in`
+  const what = p.note ? `"${p.note}"` : { expense: 'an expense', refund: 'a refund', fund_in: 'money in' }[p.kind ?? ''] ?? 'an expense'
   switch (n.kind) {
-    case 'entry_create': return `${who} added ${what} of ${amount}`
-    case 'entry_edit': return `${who} changed ${what} to ${amount}`
-    case 'entry_delete': return `${who} deleted ${what} of ${amount}`
+    case 'expense_create': return `${who} added ${what} of ${amount}`
+    case 'expense_edit': return `${who} changed ${what} to ${amount}`
+    case 'expense_delete': return `${who} deleted ${what} of ${amount}`
     case 'close': return `${who} closed a month`
     case 'reopen': return `${who} reopened a month`
-    case 'transfer_paid': return `${who} marked ${amount} paid`
+    case 'payment_sent': return `${who} recorded a payment of ${amount}`
+    case 'payment_confirmed': return `${who} confirmed getting ${amount}`
+    case 'payment_rejected': return `${who} said ${amount} was not received`
+    case 'payment_deleted': return `${who} removed a payment of ${amount}`
     case 'member_join': return `${p.name} joined`
     case 'member_claim': return `${who} joined as ${p.name}`
     case 'member_approve': return `${who} approved ${p.name}`
@@ -25,16 +27,18 @@ export function activityText(n: ActivityRow, me?: string) {
     case 'member_remove': return `${who} removed ${p.name}`
     case 'admin_handover': return `${p.name} is now the admin`
     case 'placeholder_add': return `${who} added ${p.name}`
-    case 'hisaab_create': return `${who} created ${p.name}`
+    case 'group_create': return `${who} created ${p.name}`
+    case 'group_edit': return `${who} changed the group settings`
+    case 'fund_create': return `${who} added the fund ${p.name}`
     default: return `${who} made a change`
   }
 }
 
-export const ACTIVITY_GROUP: Record<string, 'bills' | 'payments' | 'members'> = {
-  entry_create: 'bills', entry_edit: 'bills', entry_delete: 'bills',
-  close: 'payments', reopen: 'payments', transfer_paid: 'payments',
-  member_join: 'members', member_claim: 'members', member_approve: 'members', member_unclaim: 'members',
-  member_merge: 'members', member_leave: 'members', member_remove: 'members', admin_handover: 'members', placeholder_add: 'members', hisaab_create: 'members',
+export const ACTIVITY_GROUP: Record<string, 'expenses' | 'payments' | 'members'> = {
+  expense_create: 'expenses', expense_edit: 'expenses', expense_delete: 'expenses', fund_create: 'expenses',
+  close: 'payments', reopen: 'payments', payment_sent: 'payments', payment_confirmed: 'payments', payment_rejected: 'payments', payment_deleted: 'payments',
+  member_join: 'members', member_claim: 'members', member_approve: 'members', member_unclaim: 'members', member_merge: 'members',
+  member_leave: 'members', member_remove: 'members', admin_handover: 'members', placeholder_add: 'members', group_create: 'members', group_edit: 'members',
 }
 
 /** "2h ago", "Yesterday", "3 Sep". */
