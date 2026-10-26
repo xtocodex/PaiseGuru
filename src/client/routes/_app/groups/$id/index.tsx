@@ -49,20 +49,20 @@ function GroupDetail({ g }: { g: GroupView }) {
         </span>
       }
     >
-      {!active && <Card className="bg-marigold-soft text-sm">You have left this group. You can still look.</Card>}
+      {!active && <Card className="bg-marigold-soft text-body">You have left this group. You can still look.</Card>}
 
       <section className="rounded-2xl bg-brand p-4 text-on-brand">
-        <p className="text-[13px] opacity-80">Your balance</p>
-        <p className="mt-1 text-[22px] leading-tight font-semibold [&_.text-gets]:text-white [&_.text-pays]:text-white [&_.text-muted]:text-white">
+        <p className="text-caption opacity-80">Your balance</p>
+        <p className="mt-1 text-page leading-tight font-semibold [&_.text-gets]:text-white [&_.text-pays]:text-white [&_.text-muted]:text-white">
           <NetText paise={me?.netPaise ?? 0} />
         </p>
         {active && (
           <div className="mt-3.5 flex gap-2">
-            <Link to="/groups/$id/add" params={{ id: g.id }} className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-marigold text-sm font-semibold text-on-marigold">
+            <Link to="/groups/$id/add" params={{ id: g.id }} className="press inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-card text-body font-semibold text-brand-text">
               <Plus className="size-4" aria-hidden />
               Add expense
             </Link>
-            <Link to="/groups/$id/settle" params={{ id: g.id }} className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/15 text-sm font-semibold">
+            <Link to="/groups/$id/settle" params={{ id: g.id }} className="press inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-black/20 text-body font-semibold">
               <HandCoins className="size-4" aria-hidden />
               Settle up
               {/* Only your own payments: a count of everyone's reads as a to-do that isn't yours. */}
@@ -81,7 +81,7 @@ function GroupDetail({ g }: { g: GroupView }) {
               role="radio"
               aria-checked={x.id === s?.id}
               onClick={() => setSheetId(x.id)}
-              className={cx('press inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium', x.id === s?.id ? 'border-brand bg-brand text-on-brand' : 'border-line bg-card')}
+              className={cx('press inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-body font-medium', x.id === s?.id ? 'border-brand bg-brand text-on-brand' : 'border-line bg-card')}
             >
               {x.name.split(' ')[0]}
               {x.state === 'open' && <Tag>Open</Tag>}
@@ -93,17 +93,17 @@ function GroupDetail({ g }: { g: GroupView }) {
       {monthly && s && (
         <Card>
           <Link to="/sheets/$id" params={{ id: s.id }} className="press block">
-            <p className="flex items-center justify-between text-[13px] text-muted">
+            <p className="flex items-center justify-between text-caption text-muted">
               {s.name} · {s.state === 'open' ? 'open' : 'closed'}
               <ChevronRight className="size-5" aria-hidden />
             </p>
-            <Money paise={s.totalPaise} className="mt-1 block text-[32px] leading-tight font-bold tracking-tight" />
-            <p className="mt-1 text-[13px] text-muted">
+            <Money paise={s.totalPaise} className="mt-1 block text-hero leading-tight font-bold tracking-tight" />
+            <p className="mt-1 text-caption text-muted">
               {s.entryCount} {s.entryCount === 1 ? 'entry' : 'entries'}
             </p>
           </Link>
           {active && s.state === 'open' && (
-            <Link to="/sheets/$id/close" params={{ id: s.id }} className="press mt-3.5 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-line text-sm font-semibold text-brand-text">
+            <Link to="/sheets/$id/close" params={{ id: s.id }} className="press mt-3.5 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-line text-body font-semibold text-brand-text">
               <CheckCheck className="size-4" aria-hidden />
               Close {s.name.split(' ')[0]}
             </Link>
@@ -114,24 +114,24 @@ function GroupDetail({ g }: { g: GroupView }) {
       {g.funds.map((f) => (
         <Card key={f.id}>
           <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-semibold">{f.name}</h2>
+            <h2 className="text-body font-semibold">{f.name}</h2>
             <Wallet className="size-5 text-faint" aria-hidden />
           </div>
           <dl className="mt-2.5 grid grid-cols-3 gap-2">
             <div>
-              <dt className="text-[13px] text-muted">Money in</dt>
+              <dt className="text-caption text-muted">Money in</dt>
               <dd><Money paise={f.inPaise} className="font-semibold" /></dd>
             </div>
             <div>
-              <dt className="text-[13px] text-muted">Used</dt>
+              <dt className="text-caption text-muted">Used</dt>
               <dd><Money paise={f.usedPaise} className="font-semibold" /></dd>
             </div>
             <div className="text-right">
-              <dt className="text-[13px] text-muted">Left now</dt>
+              <dt className="text-caption text-muted">Left now</dt>
               <dd><Money paise={f.balancePaise} className={cx('font-bold', f.balancePaise < 0 ? 'text-pays' : 'text-gets')} /></dd>
             </div>
           </dl>
-          <p className="mt-2 text-[13px] text-muted">
+          <p className="mt-2 text-caption text-muted">
             {f.holderMemberId ? `Held by ${names[f.holderMemberId]}. ` : ''}Never divided between members.
           </p>
         </Card>

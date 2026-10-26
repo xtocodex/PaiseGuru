@@ -49,12 +49,12 @@ function Settle({ g, payments }: { g: GroupView; payments: { id: string; from: s
           <span className="grid size-14 place-items-center rounded-full bg-gets-soft text-gets">
             <CircleCheck className="size-8" aria-hidden />
           </span>
-          <p className="text-lg font-semibold">Everyone is settled</p>
-          <p className="text-sm text-muted">Nobody owes anything in this group.</p>
+          <p className="text-title font-semibold">Everyone is settled</p>
+          <p className="text-body text-muted">Nobody owes anything in this group.</p>
         </Card>
       ) : (
         <>
-          <p className="text-sm text-muted">
+          <p className="text-body text-muted">
             {g.plan.length === 1 ? 'One payment settles' : `${g.plan.length} payments settle`} everyone. Pay any of them; the others stay the same.
           </p>
           {g.plan.map((t) => (
@@ -111,7 +111,7 @@ function Settle({ g, payments }: { g: GroupView; payments: { id: string; from: s
                         )}
                       </span>
                     }
-                    right={<Money paise={p.amountPaise} className="text-[15px] font-semibold" />}
+                    right={<Money paise={p.amountPaise} className="text-body font-semibold" />}
                   />
                 )
               })}

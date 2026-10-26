@@ -35,7 +35,7 @@ export function message(o: { to: string; subject: string; lines: string[]; butto
     text: [...o.lines, '', `${o.button}: ${o.url}`, '', footer, '', '— PaiseGuru, a product of xtocodex'].join('\n'),
     html: `<div style="font-family:system-ui,sans-serif;font-size:16px;line-height:1.5;color:#1c1917;max-width:480px">
 ${o.lines.map((l) => `<p>${esc(l)}</p>`).join('\n')}
-<p><a href="${esc(o.url)}" style="display:inline-block;background:#23306e;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:600">${esc(o.button)}</a></p>
+<p><a href="${esc(o.url)}" style="display:inline-block;background:#2447d6;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:600">${esc(o.button)}</a></p>
 <p style="font-size:13px;color:#78716c">${esc(footer)}<br>— PaiseGuru, a product of xtocodex</p>
 </div>`,
   }

@@ -37,7 +37,7 @@ function Month({ s }: { s: SheetView }) {
 
   const cats = r.ok ? Object.entries(r.categories).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]) : []
   const catTotal = cats.reduce((t, [, v]) => t + v, 0)
-  const catColors = ['bg-brand', 'bg-marigold', 'bg-gets', 'bg-field']
+  const catColors = ['bg-brand', 'bg-brand-2', 'bg-cat-3', 'bg-field'] // never gets/pays: those mean money owed
 
   return (
     <Page
@@ -49,23 +49,23 @@ function Month({ s }: { s: SheetView }) {
       <Card>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[13px] text-muted">{open ? 'Total so far' : 'Total'}</p>
-            {r.ok ? <Money paise={r.totalPaise} className="text-[32px] font-bold tracking-tight" /> : <p className="mt-1 text-sm text-pays">{r.message}</p>}
+            <p className="text-caption text-muted">{open ? 'Total so far' : 'Total'}</p>
+            {r.ok ? <Money paise={r.totalPaise} className="text-hero font-bold tracking-tight" /> : <p className="mt-1 text-body text-pays">{r.message}</p>}
           </div>
           <StateTag state={s.sheet.state} />
         </div>
         {r.ok && r.dividablePaise !== r.totalPaise && (
-          <p className="mt-1 text-[13px] text-muted">
+          <p className="mt-1 text-caption text-muted">
             <Money paise={r.dividablePaise} /> divided · the rest was split already or paid from a fund
           </p>
         )}
         {open && active && (
           <div className="mt-3.5 flex gap-2">
-            <Link to="/groups/$id/add" params={{ id: s.group.id }} className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-marigold text-sm font-semibold text-on-marigold">
+            <Link to="/groups/$id/add" params={{ id: s.group.id }} className="press inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand text-body font-semibold text-on-brand">
               <Plus className="size-4" aria-hidden />
               Add expense
             </Link>
-            <Link to="/sheets/$id/close" params={{ id: s.sheet.id }} className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line text-sm font-semibold text-brand-text">
+            <Link to="/sheets/$id/close" params={{ id: s.sheet.id }} className="press inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line text-body font-semibold text-brand-text">
               <CheckCheck className="size-4" aria-hidden />
               Close month
             </Link>
@@ -74,12 +74,12 @@ function Month({ s }: { s: SheetView }) {
         {!open && active && (
           <div className="mt-3.5 flex gap-2">
             {s.share && (
-              <a href={s.share.waLink} target="_blank" rel="noreferrer" className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gets text-sm font-semibold text-on-gets">
+              <a href={s.share.waLink} target="_blank" rel="noreferrer" className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gets text-body font-semibold text-on-gets">
                 <MessageCircle className="size-4" aria-hidden />
                 Share result
               </a>
             )}
-            <Link to="/groups/$id/settle" params={{ id: s.group.id }} className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line text-sm font-semibold text-brand-text">
+            <Link to="/groups/$id/settle" params={{ id: s.group.id }} className="press inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line text-body font-semibold text-brand-text">
               <HandCoins className="size-4" aria-hidden />
               Settle up
             </Link>
@@ -101,13 +101,13 @@ function Month({ s }: { s: SheetView }) {
         <>
           {cats.length > 0 && (
             <Card>
-              <p className="text-[13px] text-muted">By category</p>
+              <p className="text-caption text-muted">By category</p>
               <div className="my-2.5 flex h-2.5 overflow-hidden rounded-full bg-line" aria-hidden>
                 {cats.slice(0, 4).map(([c, v], i) => (
                   <i key={c} className={catColors[i]} style={{ width: `${(v / catTotal) * 100}%` }} />
                 ))}
               </div>
-              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-muted">
                 {cats.slice(0, 4).map(([c, v], i) => (
                   <li key={c} className="flex items-center gap-1.5">
                     <i className={cx('size-2.5 rounded-full', catColors[i])} aria-hidden />
@@ -122,14 +122,14 @@ function Month({ s }: { s: SheetView }) {
           {r.ok &&
             Object.entries(r.funds).map(([fid, f]) => (
               <Card key={fid}>
-                <h2 className="text-[15px] font-semibold">{s.fundNames[fid] ?? 'Fund'} this month</h2>
+                <h2 className="text-body font-semibold">{s.fundNames[fid] ?? 'Fund'} this month</h2>
                 <dl className="mt-2 grid grid-cols-2 gap-2">
                   <div>
-                    <dt className="text-[13px] text-muted">Money in</dt>
+                    <dt className="text-caption text-muted">Money in</dt>
                     <dd><Money paise={f.inPaise} className="font-semibold" /></dd>
                   </div>
                   <div className="text-right">
-                    <dt className="text-[13px] text-muted">Used for bills</dt>
+                    <dt className="text-caption text-muted">Used for bills</dt>
                     <dd><Money paise={f.usedPaise} className="font-semibold" /></dd>
                   </div>
                 </dl>
@@ -161,7 +161,7 @@ function Month({ s }: { s: SheetView }) {
                       }
                       subtitle={`Paid ${formatRupees(m.paidPaise)} · share ${formatRupees(m.obligationPaise)}`}
                       right={
-                        <span className={cx('num text-[15px] font-semibold', month > 0 ? 'text-gets' : month < 0 ? 'text-pays' : 'text-muted')}>
+                        <span className={cx('num text-body font-semibold', month > 0 ? 'text-gets' : month < 0 ? 'text-pays' : 'text-muted')}>
                           {month > 0 ? `gets ${formatRupees(month)}` : month < 0 ? `pays ${formatRupees(-month)}` : 'even'}
                         </span>
                       }
@@ -170,10 +170,10 @@ function Month({ s }: { s: SheetView }) {
                 })}
               </Rows>
             </Card>
-            <p className="text-[13px] text-muted">{open ? 'If the month were closed today. ' : ''}Bills split on their own are not in these shares; see Settle up for everyone's balance.</p>
+            <p className="text-caption text-muted">{open ? 'If the month were closed today. ' : ''}Bills split on their own are not in these shares; see Settle up for everyone's balance.</p>
           </>
         ) : (
-          <Card className="text-sm text-pays">{r.message}</Card>
+          <Card className="text-body text-pays">{r.message}</Card>
         ))}
 
       {!open && s.me.role === 'admin' && active && (
@@ -198,10 +198,10 @@ function ShareSheet({ s, open, onClose }: { s: SheetView; open: boolean; onClose
   const statement = s.statement
   return (
     <Sheet open={open} onClose={onClose} title={`Share ${s.sheet.name.split(' ')[0]}`}>
-      <p className="text-sm text-muted">A read-only page with every entry and how it was divided. Anyone with the link can see it (no login); UPI IDs are never shown.</p>
+      <p className="text-body text-muted">A read-only page with every entry and how it was divided. Anyone with the link can see it (no login); UPI IDs are never shown.</p>
       {statement ? (
         <>
-          <p className="rounded-xl bg-paper p-3 text-sm break-all">{statement.link}</p>
+          <p className="rounded-xl bg-paper p-3 text-body break-all">{statement.link}</p>
           <div className="grid grid-cols-2 gap-2">
             <Button variant="secondary" onClick={() => navigator.clipboard.writeText(statement.link)}>
               Copy link

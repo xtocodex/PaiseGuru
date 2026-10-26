@@ -43,7 +43,7 @@ function AddExpense() {
       }
     >
       {saved && (
-        <p role="status" className="rounded-xl bg-gets-soft p-3 text-sm font-medium text-gets">
+        <p role="status" className="rounded-xl bg-gets-soft p-3 text-body font-medium text-gets">
           {saved}
         </p>
       )}

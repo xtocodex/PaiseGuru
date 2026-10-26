@@ -29,8 +29,8 @@ export function Page(props: {
             <IconButton label={props.close ? 'Close' : 'Back'} icon={props.close ? X : ChevronLeft} onClick={goBack} />
           )}
           <div className={cx('min-w-0 flex-1', props.back === undefined && !props.close && 'pl-2')}>
-            <h1 className="truncate text-[22px] font-bold leading-tight tracking-tight">{props.title}</h1>
-            {props.subtitle && <p className="truncate text-[13px] font-medium text-muted">{props.subtitle}</p>}
+            <h1 className="truncate text-page font-bold leading-tight tracking-tight">{props.title}</h1>
+            {props.subtitle && <p className="truncate text-caption font-medium text-muted">{props.subtitle}</p>}
           </div>
           {props.action}
         </div>
@@ -60,8 +60,8 @@ export function Card({ children, className, flush }: { children: ReactNode; clas
 
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="-mb-1 flex items-center justify-between">
-      <h2 className="text-[15px] font-semibold">{children}</h2>
+    <div className="mt-3 -mb-2 flex items-center justify-between">
+      <h2 className="text-title font-semibold">{children}</h2>
       {action}
     </div>
   )
@@ -73,7 +73,7 @@ export function Money({ paise, className, sign }: { paise: number; className?: s
 
 // ── buttons ──
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'upi' | 'marigold'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'upi'
 const variants: Record<Variant, string> = {
   primary: 'bg-brand text-on-brand disabled:opacity-50',
   secondary: 'border border-line bg-card text-brand-text disabled:opacity-50',
@@ -81,9 +81,8 @@ const variants: Record<Variant, string> = {
   danger: 'border border-line bg-card text-pays',
   destructive: 'bg-pays text-paper disabled:opacity-50',
   upi: 'bg-gets text-on-gets',
-  marigold: 'bg-marigold text-on-marigold',
 }
-const sizes = { md: 'h-[52px] rounded-[14px] px-5 text-base gap-2', sm: 'h-11 rounded-xl px-3.5 text-sm gap-1.5' }
+const sizes = { md: 'h-[52px] rounded-[14px] px-5 text-base gap-2', sm: 'h-11 rounded-xl px-3.5 text-body gap-1.5' }
 
 export function Button({
   variant = 'primary',
@@ -122,7 +121,7 @@ export function ButtonLink(props: { to: string; params?: any; search?: any; chil
  * it is a named group, so the label never becomes the name of the first control inside it.
  */
 export function Field({ label, hint, error, group, children }: { label: string; hint?: ReactNode; error?: string | null; group?: boolean; children: ReactNode }) {
-  const title = <span className="text-[13px] font-semibold text-muted">{label}</span>
+  const title = <span className="text-caption font-semibold text-muted">{label}</span>
   return (
     <div className="flex flex-col gap-1.5">
       {group ? (
@@ -136,9 +135,9 @@ export function Field({ label, hint, error, group, children }: { label: string; 
           {children}
         </label>
       )}
-      {hint && !error && <p className="text-[13px] leading-snug text-muted">{hint}</p>}
+      {hint && !error && <p className="text-caption leading-snug text-muted">{hint}</p>}
       {error && (
-        <p role="alert" className="text-sm text-pays">
+        <p role="alert" className="text-body text-pays">
           {error}
         </p>
       )}
@@ -175,7 +174,7 @@ export function Chips<T extends string>(props: {
             aria-checked={on}
             onClick={() => props.onChange(o.value)}
             className={cx(
-              'press inline-flex h-10 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium',
+              'press inline-flex h-10 items-center gap-1.5 rounded-full border px-3.5 text-body font-medium',
               on ? 'border-brand bg-brand text-on-brand' : 'border-line bg-card',
             )}
           >
@@ -200,7 +199,7 @@ export function Segmented<T extends string>(props: { label: string; options: { v
             role="radio"
             aria-checked={on}
             onClick={() => props.onChange(o.value)}
-            className={cx('h-10 rounded-[9px] text-sm', on ? 'bg-card font-semibold shadow-sm' : 'font-medium text-muted')}
+            className={cx('h-10 rounded-[9px] text-body', on ? 'bg-card font-semibold shadow-sm' : 'font-medium text-muted')}
           >
             {o.label}
           </button>
@@ -221,7 +220,7 @@ const tones: Record<Tone, string> = {
   neutral: 'bg-line/70 text-muted',
 }
 export function Tag({ children, tone = 'brand' }: { children: ReactNode; tone?: Tone }) {
-  return <span className={cx('inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold leading-none', tones[tone])}>{children}</span>
+  return <span className={cx('inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-caption font-semibold leading-none', tones[tone])}>{children}</span>
 }
 
 export const STATE_LABEL = { open: 'Open', closed: 'Closed' } as const
@@ -261,8 +260,8 @@ export function Avatar({ name, me, size = 36, muted }: { name: string; me?: bool
   )
 }
 
-export function IconTile({ icon: Icon, tone = 'brand' }: { icon: LucideIcon; tone?: 'brand' | 'gets' | 'marigold' }) {
-  const t = { brand: 'bg-brand-soft text-brand-text', gets: 'bg-gets-soft text-gets', marigold: 'bg-marigold-soft text-marigold-text' }[tone]
+export function IconTile({ icon: Icon, tone = 'brand' }: { icon: LucideIcon; tone?: 'brand' | 'sky' | 'gets' | 'marigold' }) {
+  const t = { brand: 'bg-brand-soft text-brand-text', sky: 'bg-sky-soft text-sky-text', gets: 'bg-gets-soft text-gets', marigold: 'bg-marigold-soft text-marigold-text' }[tone]
   return (
     <span aria-hidden className={cx('grid size-9 shrink-0 place-items-center rounded-xl', t)}>
       <Icon className="size-[18px]" />
@@ -279,8 +278,8 @@ export function Row(props: { left?: ReactNode; title: ReactNode; subtitle?: Reac
     <>
       {props.left}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-medium">{props.title}</span>
-        {props.subtitle && <span className="block text-[13px] leading-snug text-muted">{props.subtitle}</span>}
+        <span className="block truncate text-body font-medium">{props.title}</span>
+        {props.subtitle && <span className="block text-caption leading-snug text-muted">{props.subtitle}</span>}
       </span>
       {props.chevron && <ChevronRight className="size-5 text-faint" aria-hidden />}
     </>
@@ -308,7 +307,7 @@ export const Rows = ({ children }: { children: ReactNode }) => <div className="d
 export function ErrorBox({ error }: { error: unknown }) {
   if (!error) return null
   return (
-    <p role="alert" className="rounded-xl bg-pays-soft p-3 text-sm text-pays">
+    <p role="alert" className="rounded-xl bg-pays-soft p-3 text-body text-pays">
       {error instanceof Error ? error.message : 'Something went wrong.'}
     </p>
   )
@@ -330,7 +329,7 @@ export function Empty({ icon: Icon, title, text, action }: { icon: LucideIcon; t
     <div className="flex flex-col items-center rounded-2xl border border-dashed border-field px-6 py-8 text-center">
       <IconTile icon={Icon} />
       <p className="mt-3 font-semibold">{title}</p>
-      <p className="mt-1 mb-4 text-sm text-muted">{text}</p>
+      <p className="mt-1 mb-4 text-body text-muted">{text}</p>
       {action}
     </div>
   )
@@ -341,7 +340,7 @@ export const FOUNDER_URL = 'https://gopalmohapatra.in'
 /** Product credit: PaiseGuru is built by xtocodex. */
 export function MadeBy({ className }: { className?: string }) {
   return (
-    <p className={cx('text-center text-xs text-faint', className)}>
+    <p className={cx('text-center text-caption text-faint', className)}>
       A product of <span className="font-semibold text-muted">xtocodex</span> · Founder{' '}
       <a href={FOUNDER_URL} target="_blank" rel="noreferrer" className="font-semibold text-muted underline-offset-2 hover:underline">
         Gopal Mohapatra
@@ -385,7 +384,7 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
       >
         <div className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-field" aria-hidden />
         <div className="flex items-center justify-between">
-          <h2 className="text-[17px] font-semibold">{title}</h2>
+          <h2 className="text-title font-semibold">{title}</h2>
           <IconButton icon={X} label="Close" onClick={onClose} className="-mr-2" />
         </div>
         {children}
@@ -433,7 +432,7 @@ export function Overlays() {
     <>
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-[60] mx-auto flex max-w-md justify-center px-4">
         {t && (
-          <div key={t.id} className="toast-enter pointer-events-auto flex min-h-12 w-full items-center gap-2 rounded-2xl bg-text py-1 pr-1 pl-4 text-[15px] text-paper shadow-[0_8px_24px_-8px_rgb(16_19_28/0.45)]">
+          <div key={t.id} className="toast-enter pointer-events-auto flex min-h-12 w-full items-center gap-2 rounded-2xl bg-text py-1 pr-1 pl-4 text-body text-paper shadow-[0_8px_24px_-8px_rgb(16_19_28/0.45)]">
             <span className="flex-1 py-2">{t.text}</span>
             {t.action && (
               <button
@@ -452,7 +451,7 @@ export function Overlays() {
       </div>
       {a && (
         <Sheet open onClose={() => answer(false)} title={a.title}>
-          {a.text && <p className="-mt-2 text-[15px] leading-snug text-muted">{a.text}</p>}
+          {a.text && <p className="-mt-2 text-body leading-snug text-muted">{a.text}</p>}
           <div className="flex flex-col gap-2">
             <Button variant={a.danger ? 'destructive' : 'primary'} onClick={() => answer(true)}>
               {a.confirm}

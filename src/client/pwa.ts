@@ -66,4 +66,9 @@ export function setTheme(t: Theme) {
   } catch {}
   if (t === 'system') delete document.documentElement.dataset.theme
   else document.documentElement.dataset.theme = t
+  // Status bar colour: the chosen appearance, or each meta's own media query for "system".
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => {
+    const dark = t === 'dark' || (t === 'system' && m.media.includes('dark'))
+    m.content = dark ? '#0b1020' : '#f3f5fa'
+  })
 }

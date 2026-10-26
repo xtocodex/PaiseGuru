@@ -86,8 +86,8 @@ function Login() {
         <span className="grid size-16 place-items-center rounded-[20px] bg-brand text-on-brand" aria-hidden>
           <NotebookPen className="size-8" />
         </span>
-        <h1 className="mt-5 text-[32px] font-bold tracking-tight text-brand-text">PaiseGuru</h1>
-        <p className="mt-2 text-[17px] leading-snug text-muted">Split bills with friends, flatmates, trips and family. Settle in the fewest UPI payments.</p>
+        <h1 className="mt-5 text-hero font-bold tracking-tight text-brand-text">PaiseGuru</h1>
+        <p className="mt-2 text-title leading-snug text-muted">Split bills with friends, flatmates, trips and family. Settle in the fewest UPI payments.</p>
       </div>
 
       {sentTo ? (
@@ -95,8 +95,8 @@ function Login() {
           <span className="grid size-14 place-items-center rounded-full bg-gets-soft text-gets" aria-hidden>
             <MailCheck className="size-7" />
           </span>
-          <h2 className="text-[22px] font-bold tracking-tight">Check your email</h2>
-          <p className="text-[15px] leading-snug text-muted">
+          <h2 className="text-page font-bold tracking-tight">Check your email</h2>
+          <p className="text-body leading-snug text-muted">
             We sent a link to <span className="font-semibold text-text">{sentTo}</span>. Open it on this phone to finish creating your account. It can take a minute; check spam too.
           </p>
           <Button variant="secondary" onClick={() => (setSentTo(null), switchTo('in'))}>
@@ -111,7 +111,7 @@ function Login() {
               <GoogleG />
               Continue with Google
             </Button>
-            <p className="text-center text-[13px] text-faint">or with email</p>
+            <p className="text-center text-caption text-faint">or with email</p>
           </>
         )}
         {mode === 'up' && (
@@ -133,7 +133,7 @@ function Login() {
           </Field>
         )}
         {notice && (
-          <p role="status" className="rounded-xl bg-gets-soft p-3 text-sm text-gets">
+          <p role="status" className="rounded-xl bg-gets-soft p-3 text-body text-gets">
             {notice}
           </p>
         )}
@@ -151,7 +151,7 @@ function Login() {
         </Button>
       </form>
       )}
-      <p className="py-6 text-center text-xs text-faint">
+      <p className="py-6 text-center text-caption text-faint">
         Free. No limits on how many expenses you add. ·{' '}
         <a href="/privacy" className="-my-3 inline-block py-3 underline underline-offset-2">
           Privacy

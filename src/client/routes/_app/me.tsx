@@ -39,8 +39,8 @@ function Me() {
         <div className="flex items-center gap-3.5">
           <Avatar name={u.name} me size={56} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-lg font-semibold">{u.name}</p>
-            <p className="truncate text-[13px] text-muted">{u.email}</p>
+            <p className="truncate text-title font-semibold">{u.name}</p>
+            <p className="truncate text-caption text-muted">{u.email}</p>
           </div>
           <IconButton icon={Pencil} label="Edit name" onClick={() => setPanel('name')} />
         </div>
@@ -68,16 +68,16 @@ function Me() {
       </Button>
 
       <Card className="text-center">
-        <p className="text-[13px] font-semibold text-muted">About</p>
-        <p className="mt-1 text-xl font-bold tracking-tight text-brand-text">PaiseGuru</p>
-        <p className="text-[13px] text-muted">Split expenses as you go or once a month, settle in the fewest UPI payments.</p>
+        <p className="text-caption font-semibold text-muted">About</p>
+        <p className="mt-1 text-heading font-bold tracking-tight text-brand-text">PaiseGuru</p>
+        <p className="text-caption text-muted">Split expenses as you go or once a month, settle in the fewest UPI payments.</p>
         <MadeBy className="mt-3" />
-        <a href="/privacy" className="mt-2 inline-block text-[13px] font-semibold text-brand-text underline-offset-2 hover:underline">
+        <a href="/privacy" className="mt-2 inline-block text-caption font-semibold text-brand-text underline-offset-2 hover:underline">
           Privacy
         </a>
       </Card>
 
-      <button type="button" className="mx-auto min-h-11 px-4 text-[13px] text-muted underline-offset-2 hover:underline" onClick={() => setPanel('delete')}>
+      <button type="button" className="mx-auto min-h-11 px-4 text-caption text-muted underline-offset-2 hover:underline" onClick={() => setPanel('delete')}>
         Delete my account
       </button>
 
@@ -179,7 +179,7 @@ function PasswordSheet({ onClose }: { onClose: () => void }) {
     <Sheet open onClose={onClose} title="Change password">
       {done ? (
         <>
-          <p className="rounded-xl bg-gets-soft p-3 text-sm text-gets">Password changed. Other phones signed in to this account are signed out.</p>
+          <p className="rounded-xl bg-gets-soft p-3 text-body text-gets">Password changed. Other phones signed in to this account are signed out.</p>
           <Button onClick={onClose}>Done</Button>
         </>
       ) : (
@@ -213,7 +213,7 @@ function DeleteSheet({ onClose, onDeleted }: { onClose: () => void; onDeleted: (
   const remove = useMutation({ mutationFn: () => call(api.me.$delete()), onSuccess: onDeleted })
   return (
     <Sheet open onClose={onClose} title="Delete my account">
-      <p className="text-sm text-muted">
+      <p className="text-body text-muted">
         Your name, sign-in and UPI ID are deleted. Amounts you added stay in shared groups under "Deleted user", so nobody else's numbers change. This can't be undone.
       </p>
       <Field label='Type "DELETE" to confirm'>

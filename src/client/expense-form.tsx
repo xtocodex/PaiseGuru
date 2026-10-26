@@ -165,7 +165,7 @@ export function ExpenseForm(props: {
 
       <div className="flex flex-col items-center gap-1">
         <label className="flex items-baseline justify-center gap-1" aria-label="Amount in rupees">
-          <span className="text-3xl font-semibold text-muted">₹</span>
+          <span className="text-page font-semibold text-muted">₹</span>
           <input
             name="amount"
             inputMode="decimal"
@@ -175,7 +175,7 @@ export function ExpenseForm(props: {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             style={{ width: `${Math.max(amount.length, 1) + 0.6}ch` }}
-            className="num max-w-65 min-w-[2ch] bg-transparent text-left text-[44px] font-bold tracking-tight outline-none placeholder:text-field"
+            className="num max-w-65 min-w-[2ch] bg-transparent text-left text-hero font-bold tracking-tight outline-none placeholder:text-field"
           />
         </label>
         <input
@@ -191,10 +191,10 @@ export function ExpenseForm(props: {
       {kind === 'fund_in' ? (
         <Field label="Money into" group>
           <Chips label="Money into" value={fundId} onChange={(v) => setPayer(`${FUND}${v}`)} options={props.funds.map((f) => ({ value: f.id, label: f.name }))} />
-          <p className="text-[13px] text-muted">Not divided and changes nobody's balance. Bills paid from it show here too.</p>
+          <p className="text-caption text-muted">Not divided and changes nobody's balance. Bills paid from it show here too.</p>
         </Field>
       ) : (
-        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-[15px]">
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-body">
           <span className="text-muted">{kind === 'refund' ? 'Got back by' : 'Paid by'}</span>
           <PillButton onClick={() => setOpen('payer')}>{payerLabel}</PillButton>
           {!fromFund && (
@@ -206,7 +206,7 @@ export function ExpenseForm(props: {
         </div>
       )}
       {!fromFund && kind !== 'fund_in' && (
-        <p className="-mt-3 text-center text-[13px] text-muted">
+        <p className="-mt-3 text-center text-caption text-muted">
           {mode === 'sheet'
             ? 'Divided between everyone when the month is closed.'
             : preview && !preview.ok
@@ -218,7 +218,7 @@ export function ExpenseForm(props: {
                   : ''}
         </p>
       )}
-      {fromFund && <p className="-mt-3 text-center text-[13px] text-muted">Paid from the fund. Not divided.</p>}
+      {fromFund && <p className="-mt-3 text-center text-caption text-muted">Paid from the fund. Not divided.</p>}
 
       {kind !== 'fund_in' && (
         <Field label="Category" group>
@@ -246,7 +246,7 @@ export function ExpenseForm(props: {
       </Field>
 
       {formError && (
-        <p role="alert" className="rounded-xl bg-pays-soft p-3 text-sm text-pays">
+        <p role="alert" className="rounded-xl bg-pays-soft p-3 text-body text-pays">
           {formError}
         </p>
       )}
@@ -273,7 +273,7 @@ export function ExpenseForm(props: {
             {members.map((m) => (
               <AmountRow key={m.id} label={name(m.id)} id={m.id} value={multi[m.id] ?? ''} onChange={(t) => setMulti({ ...multi, [m.id]: t })} />
             ))}
-            <p className="text-[13px] text-muted">
+            <p className="text-caption text-muted">
               {formatRupees(Object.values(multi).reduce((s, t) => s + (parseRupees(t) ?? 0), 0))} of {formatRupees(amountPaise)}
             </p>
             <div className="flex gap-2">
@@ -301,7 +301,7 @@ export function ExpenseForm(props: {
           />
         )}
         {mode === 'sheet' ? (
-          <p className="text-sm text-muted">Everyone shares it when the month is closed. Fixed amounts, extras and skips are set then.</p>
+          <p className="text-body text-muted">Everyone shares it when the month is closed. Fixed amounts, extras and skips are set then.</p>
         ) : (
           <>
             <Segmented
@@ -316,7 +316,7 @@ export function ExpenseForm(props: {
                 { value: 'adjust', label: '±' },
               ]}
             />
-            <p className="-mt-2 text-[13px] text-muted">
+            <p className="-mt-2 text-caption text-muted">
               {
                 {
                   equal: 'Tick who shares it. Everyone ticked pays the same.',
@@ -344,7 +344,7 @@ export function ExpenseForm(props: {
                       {on && <Check className="size-4" aria-hidden />}
                     </button>
                     <Avatar name={m.name} me={m.id === meId} size={32} muted={!on} />
-                    <span className="min-w-0 flex-1 truncate text-[15px]">{name(m.id)}</span>
+                    <span className="min-w-0 flex-1 truncate text-body">{name(m.id)}</span>
                     {on && mode === 'exact' && <SmallInput label={`${m.name} owes`} value={exact[m.id] ?? ''} onChange={(t) => setExact({ ...exact, [m.id]: t })} prefix="₹" />}
                     {on && mode === 'shares' && <SmallInput label={`${m.name} shares`} value={shares[m.id] ?? '1'} onChange={(t) => setShares({ ...shares, [m.id]: t })} />}
                     {on && mode === 'percent' && <SmallInput label={`${m.name} percent`} value={percent[m.id] ?? ''} onChange={(t) => setPercent({ ...percent, [m.id]: t })} suffix="%" />}
@@ -365,13 +365,13 @@ export function ExpenseForm(props: {
                         )}
                       </span>
                     )}
-                    {on && owed !== undefined && mode !== 'exact' && <span className="num w-20 shrink-0 text-right text-sm text-muted">{formatRupees(owed)}</span>}
+                    {on && owed !== undefined && mode !== 'exact' && <span className="num w-20 shrink-0 text-right text-body text-muted">{formatRupees(owed)}</span>}
                   </div>
                 )
               })}
             </div>
             {preview && !preview.ok && (
-              <p role="alert" className="text-sm text-pays">
+              <p role="alert" className="text-body text-pays">
                 {preview.message}
               </p>
             )}
@@ -397,9 +397,9 @@ function SmallInput({ label, value, onChange, prefix, suffix }: { label: string;
   return (
     <label className="flex h-10 w-24 shrink-0 items-center gap-0.5 rounded-lg border border-field bg-card px-2 focus-within:border-brand-text">
       <span className="sr-only">{label}</span>
-      {prefix && <span className="text-sm text-muted">{prefix}</span>}
+      {prefix && <span className="text-body text-muted">{prefix}</span>}
       <input inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} className="num w-full min-w-0 bg-transparent text-right text-base outline-none" />
-      {suffix && <span className="text-sm text-muted">{suffix}</span>}
+      {suffix && <span className="text-body text-muted">{suffix}</span>}
     </label>
   )
 }

@@ -4,10 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>PaiseGuru</title>
-    <meta name="description" content="PaiseGuru: add shared family bills all month, divide them once, settle in the fewest UPI payments. A product of xtocodex." />
+    <meta name="description" content="Split bills with friends, flatmates, trips and family. Settle in the fewest UPI payments. A product of xtocodex." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PaiseGuru" />
+    <meta property="og:title" content="PaiseGuru: split bills, settle in the fewest UPI payments" />
+    <meta property="og:description" content="Split bills with friends, flatmates, trips and family. Free, no limits." />
+    <meta property="og:url" content="https://paiseguru.xtocodex.in/" />
     <meta name="author" content="xtocodex · Gopal Mohapatra (gopalmohapatra.in)" />
-    <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f1320" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3f5fa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="PaiseGuru" />
@@ -20,7 +25,13 @@
       // Apply the saved appearance before the first paint (no flash). "system" follows the phone.
       try {
         var t = localStorage.getItem('theme')
-        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.dataset.theme = t
+          // The status bar follows the chosen appearance, not only the phone's (pwa.ts setTheme does the same).
+          document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+            m.content = t === 'dark' ? '#0b1020' : '#f3f5fa'
+          })
+        }
       } catch (e) {}
     </script>
   </head>

@@ -39,12 +39,12 @@ function Join() {
     <Page title={`Join ${p.name}`} close back="/">
       <div className="flex flex-col items-center gap-2 py-4 text-center">
         <IconTile icon={Users} />
-        <p className="text-sm text-muted">You've been invited to share this group's expenses and settle up in the fewest UPI payments.</p>
+        <p className="text-body text-muted">You've been invited to share this group's expenses and settle up in the fewest UPI payments.</p>
       </div>
       {p.placeholders.length > 0 && (
         <>
-          <h2 className="text-[15px] font-semibold">Which one is you?</h2>
-          <p className="-mt-2 text-[13px] text-muted">If someone already added you by name, pick it so your past expenses stay with you.</p>
+          <h2 className="text-body font-semibold">Which one is you?</h2>
+          <p className="-mt-2 text-caption text-muted">If someone already added you by name, pick it so your past expenses stay with you.</p>
           <Card flush>
             <Rows>
               {p.placeholders.map((m) => (

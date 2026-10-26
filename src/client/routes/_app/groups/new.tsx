@@ -58,7 +58,7 @@ function NewGroup() {
         </Field>
 
         <div role="radiogroup" aria-label="How do you settle?" className="flex flex-col gap-2">
-          <p className="text-[13px] font-semibold text-muted">How do you settle?</p>
+          <p className="text-caption font-semibold text-muted">How do you settle?</p>
           {MODES.map((m) => {
             const on = settleMode === m.value
             return (
@@ -70,19 +70,19 @@ function NewGroup() {
                 onClick={() => setSettleMode(m.value)}
                 className={cx('press flex items-start gap-3 rounded-2xl border-2 bg-card p-3.5 text-left', on ? 'border-brand' : 'border-line')}
               >
-                <IconTile icon={m.icon} tone={on ? 'brand' : 'marigold'} />
+                <IconTile icon={m.icon} tone={m.value === 'monthly' ? 'brand' : 'sky'} />
                 <span>
                   <span className="block font-semibold">{m.title}</span>
-                  <span className="block text-[13px] leading-snug text-muted">{m.text}</span>
+                  <span className="block text-caption leading-snug text-muted">{m.text}</span>
                 </span>
               </button>
             )
           })}
-          <p className="text-[13px] text-muted">You can change this later in the group settings.</p>
+          <p className="text-caption text-muted">You can change this later in the group settings.</p>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <p className="text-[13px] font-semibold text-muted">Members</p>
+          <p className="text-caption font-semibold text-muted">Members</p>
           <Card flush>
             <Rows>
               <Row left={<Avatar name={user.name} me />} title={`${user.name} (you)`} subtitle="Admin" />
@@ -104,7 +104,7 @@ function NewGroup() {
               </div>
             </Rows>
           </Card>
-          <p className="text-[13px] text-muted">They don't need the app. You can add expenses for them, and invite them later.</p>
+          <p className="text-caption text-muted">They don't need the app. You can add expenses for them, and invite them later.</p>
         </div>
 
         {settleMode === 'monthly' && (

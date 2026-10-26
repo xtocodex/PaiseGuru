@@ -28,12 +28,12 @@ function Home() {
       {data.groups.length > 0 && (
         <section className="grid grid-cols-2 gap-3">
           <Card>
-            <p className="text-[13px] text-muted">You owe</p>
-            <Money paise={data.owePaise} className={cx('text-[26px] font-bold tracking-tight', data.owePaise ? 'text-pays' : 'text-faint')} />
+            <p className="text-caption text-muted">You owe</p>
+            <Money paise={data.owePaise} className={cx('text-page font-bold tracking-tight', data.owePaise ? 'text-pays' : 'text-faint')} />
           </Card>
           <Card>
-            <p className="text-[13px] text-muted">You are owed</p>
-            <Money paise={data.owedPaise} className={cx('text-[26px] font-bold tracking-tight', data.owedPaise ? 'text-gets' : 'text-faint')} />
+            <p className="text-caption text-muted">You are owed</p>
+            <Money paise={data.owedPaise} className={cx('text-page font-bold tracking-tight', data.owedPaise ? 'text-gets' : 'text-faint')} />
           </Card>
         </section>
       )}
@@ -69,13 +69,13 @@ function Home() {
       {data.pending.map((g) => (
         <Card key={g.id}>
           <p className="font-semibold">{g.name}</p>
-          <p className="mt-1 text-sm text-muted">Waiting for the admin to approve you.</p>
+          <p className="mt-1 text-body text-muted">Waiting for the admin to approve you.</p>
         </Card>
       ))}
 
       {data.groups.length > 0 && (
         <>
-          <SectionTitle action={<Link to="/groups" className="text-sm font-semibold text-brand-text">All groups</Link>}>Your groups</SectionTitle>
+          <SectionTitle action={<Link to="/groups" className="text-body font-semibold text-brand-text">All groups</Link>}>Your groups</SectionTitle>
           <Card flush>
             <Rows>
               {data.groups.map((g) => (
@@ -83,7 +83,7 @@ function Home() {
                   key={g.id}
                   to="/groups/$id"
                   params={{ id: g.id }}
-                  left={<IconTile icon={g.settleMode === 'monthly' ? CalendarDays : Users} tone={g.settleMode === 'monthly' ? 'brand' : 'marigold'} />}
+                  left={<IconTile icon={g.settleMode === 'monthly' ? CalendarDays : Users} tone={g.settleMode === 'monthly' ? 'brand' : 'sky'} />}
                   title={g.name}
                   subtitle={<NetText paise={g.netPaise} />}
                   chevron

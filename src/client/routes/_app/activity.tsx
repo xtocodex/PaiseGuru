@@ -47,7 +47,7 @@ function ActivityPage() {
       {items.length === 0 && <Empty icon={Activity} title="Nothing here yet" text="Expenses, payments and member changes in your groups show up here." />}
       {[...groups].map(([day, list]) => (
         <section key={day} className="flex flex-col gap-2">
-          <h2 className="text-[13px] font-semibold text-muted">{dayLabel(day)}</h2>
+          <h2 className="text-caption font-semibold text-muted">{dayLabel(day)}</h2>
           <Card flush>
             <Rows>
               {list.map((n) => (
