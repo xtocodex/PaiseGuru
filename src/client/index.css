@@ -4,9 +4,25 @@
 @import '@fontsource/ibm-plex-sans/600.css';
 @import '@fontsource/ibm-plex-sans/700.css';
 
-/* Design tokens (docs/designs/v2). Components use only these names; dark values live below. */
+/* Design tokens. Colours follow the PaiseGuru logo (royal blue, navy ink, sky); components use only
+   these names; dark values live below. */
 @theme inline {
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  /* Type scale (rem, so it follows the phone's text size). Inputs use text-base (16px): iOS zooms below it. */
+  --text-tab: 0.6875rem;
+  --text-tab--line-height: 1.2;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.4;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.45;
+  --text-title: 1.0625rem;
+  --text-title--line-height: 1.35;
+  --text-heading: 1.25rem;
+  --text-heading--line-height: 1.3;
+  --text-page: 1.625rem;
+  --text-page--line-height: 1.2;
+  --text-hero: 2.5rem;
+  --text-hero--line-height: 1.1;
   --color-paper: var(--paper);
   --color-card: var(--card);
   --color-line: var(--line);
@@ -17,6 +33,10 @@
   --color-on-brand: var(--on-brand);
   --color-brand-text: var(--brand-text);
   --color-brand-soft: var(--brand-soft);
+  --color-brand-2: var(--brand-2);
+  --color-sky-soft: var(--sky-soft);
+  --color-sky-text: var(--sky-text);
+  --color-cat-3: var(--cat-3);
   --color-gets: var(--gets);
   --color-gets-soft: var(--gets-soft);
   --color-on-gets: var(--on-gets);
@@ -31,17 +51,21 @@
 }
 
 :root {
-  --paper: #f4f5f7;
+  --paper: #f3f5fa;
   --card: #ffffff;
-  --line: #e3e6ec;
-  --field: #cfd4de;
-  --text: #1a1f2e;
-  --muted: #5d6477;
-  --faint: #636a7c;
-  --brand: #23306e;
+  --line: #e1e6ef;
+  --field: #858ea3;
+  --text: #121a33;
+  --muted: #535d75;
+  --faint: #687089;
+  --brand: #2447d6;
   --on-brand: #ffffff;
-  --brand-text: #23306e;
-  --brand-soft: #e6e9f5;
+  --brand-text: #1e3fb8;
+  --brand-soft: #e8edfe;
+  --brand-2: #1e8fff;
+  --sky-soft: #e0f2fe;
+  --sky-text: #075985;
+  --cat-3: #7c4dcc;
   --gets: #0e7a5c;
   --gets-soft: #e3f3ec;
   --on-gets: #ffffff;
@@ -56,16 +80,20 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --paper: #0f1320;
-    --card: #171c2b;
-    --line: #262c3d;
-    --field: #3a4156;
-    --text: #e8ebf3;
-    --muted: #a6adbf;
-    --faint: #9aa1b4;
-    --brand: #4a5bd0;
-    --brand-text: #aab5ff;
-    --brand-soft: #222a4a;
+    --paper: #0b1020;
+    --card: #141a2d;
+    --line: #232b44;
+    --field: #646e8f;
+    --text: #e8ecf6;
+    --muted: #a6aec4;
+    --faint: #9099b2;
+    --brand: #2a5ce6;
+    --brand-text: #8fb4ff;
+    --brand-soft: #182552;
+    --brand-2: #3b9dff;
+    --sky-soft: #0c2a40;
+    --sky-text: #7dd3fc;
+    --cat-3: #a78bfa;
     --gets: #3fcf9a;
     --gets-soft: #12302a;
     --on-gets: #0f1320;
@@ -79,16 +107,20 @@
 }
 
 :root[data-theme='dark'] {
-  --paper: #0f1320;
-  --card: #171c2b;
-  --line: #262c3d;
-  --field: #3a4156;
-  --text: #e8ebf3;
-  --muted: #a6adbf;
-  --faint: #9aa1b4;
-  --brand: #4a5bd0;
-  --brand-text: #aab5ff;
-  --brand-soft: #222a4a;
+  --paper: #0b1020;
+  --card: #141a2d;
+  --line: #232b44;
+  --field: #646e8f;
+  --text: #e8ecf6;
+  --muted: #a6aec4;
+  --faint: #9099b2;
+  --brand: #2a5ce6;
+  --brand-text: #8fb4ff;
+  --brand-soft: #182552;
+  --brand-2: #3b9dff;
+  --sky-soft: #0c2a40;
+  --sky-text: #7dd3fc;
+  --cat-3: #a78bfa;
   --gets: #3fcf9a;
   --gets-soft: #12302a;
   --on-gets: #0f1320;

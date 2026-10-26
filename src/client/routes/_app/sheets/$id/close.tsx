@@ -53,8 +53,8 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
           <span className="grid size-16 place-items-center rounded-full bg-gets-soft text-gets">
             <CircleCheck className="size-9" aria-hidden />
           </span>
-          <p className="text-xl font-bold">{s.sheet.name} is closed</p>
-          <p className="max-w-xs text-sm text-muted">Everyone's share is now in the group's balances. Send them the result; the link shows every entry and how it was divided.</p>
+          <p className="text-heading font-bold">{s.sheet.name} is closed</p>
+          <p className="max-w-xs text-body text-muted">Everyone's share is now in the group's balances. Send them the result; the link shows every entry and how it was divided.</p>
         </div>
         <div className="mt-auto flex flex-col gap-2">
           {close.data.share && (
@@ -106,10 +106,10 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
       >
         {steps}
         <Card>
-          <p className="text-[13px] text-muted">To divide between {s.participants.filter((p) => p.exception !== 'skip').length} members</p>
-          {r.ok ? <Money paise={r.dividablePaise} className="text-[40px] leading-tight font-bold tracking-tight" /> : <p role="alert" className="mt-1 font-medium text-pays">{r.message}</p>}
+          <p className="text-caption text-muted">To divide between {s.participants.filter((p) => p.exception !== 'skip').length} members</p>
+          {r.ok ? <Money paise={r.dividablePaise} className="text-hero leading-tight font-bold tracking-tight" /> : <p role="alert" className="mt-1 font-medium text-pays">{r.message}</p>}
           {r.ok && r.dividablePaise !== r.totalPaise && (
-            <p className="mt-1 text-[13px] text-muted">
+            <p className="mt-1 text-caption text-muted">
               Plus <Money paise={r.totalPaise - r.dividablePaise} /> already split or paid from a fund, not divided here
             </p>
           )}
@@ -139,7 +139,7 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
                   }
                   right={
                     <span className="flex items-center gap-1">
-                      {m ? <Money paise={m.obligationPaise} className="text-[15px] font-semibold" /> : <span className="text-faint">–</span>}
+                      {m ? <Money paise={m.obligationPaise} className="text-body font-semibold" /> : <span className="text-faint">–</span>}
                       <Button size="sm" variant="ghost" disabled={apply.isPending} onClick={() => apply.mutate([{ memberId: p.memberId, exception: skipped ? 'none' : 'skip', exceptionPaise: 0 }])}>
                         {skipped ? 'Include' : 'Skip'}
                       </Button>
@@ -171,7 +171,7 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
               Close month and share
             </Button>
           </div>
-          <p className="text-center text-[13px] text-muted">Bills added after closing go into next month.</p>
+          <p className="text-center text-caption text-muted">Bills added after closing go into next month.</p>
         </div>
       }
     >
@@ -189,7 +189,7 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
                     title={name(m.memberId)}
                     subtitle={`Paid ${formatRupees(m.paidPaise)} · share ${formatRupees(m.obligationPaise)}`}
                     right={
-                      <span className={cx('num text-[15px] font-semibold', month > 0 ? 'text-gets' : month < 0 ? 'text-pays' : 'text-muted')}>
+                      <span className={cx('num text-body font-semibold', month > 0 ? 'text-gets' : month < 0 ? 'text-pays' : 'text-muted')}>
                         {month > 0 ? `gets ${formatRupees(month)}` : month < 0 ? `pays ${formatRupees(-month)}` : 'even'}
                       </span>
                     }
@@ -198,7 +198,7 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
               })}
             </Rows>
           </Card>
-          <p className="text-[13px] text-muted">After closing, Settle up shows the fewest payments that settle everyone, together with anything else owed in the group.</p>
+          <p className="text-caption text-muted">After closing, Settle up shows the fewest payments that settle everyone, together with anything else owed in the group.</p>
         </>
       )}
     </Page>
@@ -226,7 +226,7 @@ function PaysMore({ s, pending, onApply }: { s: SheetView; pending: boolean; onA
 
   return (
     <section className="rounded-2xl border-2 border-marigold bg-card p-4">
-      <h2 className="text-[15px] font-semibold">Does someone pay more this month?</h2>
+      <h2 className="text-body font-semibold">Does someone pay more this month?</h2>
       <div className="mt-3 flex flex-col gap-3">
         <Chips label="Who pays more" value={who} onChange={setWho} options={[...people.map((p) => ({ value: p.memberId, label: p.name })), { value: 'none', label: 'No one' }]} />
         {who !== 'none' && (
@@ -244,7 +244,7 @@ function PaysMore({ s, pending, onApply }: { s: SheetView; pending: boolean; onA
               <span className="sr-only">Amount (₹)</span>
               <Input inputMode="decimal" placeholder="Amount in ₹" value={amount} onChange={(e) => setAmount(e.target.value)} className="num font-semibold" />
             </label>
-            <p className="text-[13px] leading-snug text-muted">
+            <p className="text-caption leading-snug text-muted">
               {kind === 'fixed'
                 ? `${pickedName} pays exactly ${paise ? formatRupees(paise) : 'this amount'}. Everyone else splits the rest equally.`
                 : `Everyone shares ${r.ok && paise ? formatRupees(Math.max(0, r.dividablePaise - paise)) : 'the rest'} equally; ${pickedName} adds ${paise ? formatRupees(paise) : 'this amount'} on top.`}
@@ -252,7 +252,7 @@ function PaysMore({ s, pending, onApply }: { s: SheetView; pending: boolean; onA
           </>
         )}
         {error && (
-          <p role="alert" className="text-sm text-pays">
+          <p role="alert" className="text-body text-pays">
             {error}
           </p>
         )}

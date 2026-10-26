@@ -27,7 +27,7 @@ function ResetPassword() {
 
   return (
     <div className="pt-safe pb-safe flex min-h-dvh flex-col gap-4 px-6">
-      <h1 className="mt-[10vh] text-[28px] font-bold tracking-tight text-brand-text">Choose a new password</h1>
+      <h1 className="mt-[10vh] text-page font-bold tracking-tight text-brand-text">Choose a new password</h1>
       {!token || linkError ? (
         <>
           <ErrorBox error={new Error('This link has expired or was already used. Ask for a new one from the sign-in page.')} />
@@ -35,7 +35,7 @@ function ResetPassword() {
         </>
       ) : (
         <form action={submit} className="flex flex-col gap-4">
-          <p className="text-[15px] text-muted">You will be signed out on your other devices.</p>
+          <p className="text-body text-muted">You will be signed out on your other devices.</p>
           <Field label="New password" hint="At least 8 characters.">
             <Input name="password" type="password" required minLength={8} maxLength={128} autoComplete="new-password" />
           </Field>

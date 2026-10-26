@@ -27,14 +27,14 @@ function detail(e: Item, names: Record<string, string>, fundNames: Record<string
 export function ExpenseList(props: { expenses: Item[]; names: Record<string, string>; fundNames: Record<string, string>; meId: string; groupId: string; empty: string }) {
   const byDay = new Map<string, Item[]>()
   for (const e of props.expenses) byDay.set(e.date, [...(byDay.get(e.date) ?? []), e])
-  if (!props.expenses.length) return <p className="py-6 text-center text-sm text-muted">{props.empty}</p>
+  if (!props.expenses.length) return <p className="py-6 text-center text-body text-muted">{props.empty}</p>
   return (
     <>
       {[...byDay]
         .sort((a, b) => b[0].localeCompare(a[0]))
         .map(([day, list]) => (
           <section key={day} className="flex flex-col gap-2">
-            <h2 className="text-[13px] font-semibold text-muted">{dayLabel(day)}</h2>
+            <h2 className="text-caption font-semibold text-muted">{dayLabel(day)}</h2>
             <Card flush>
               <Rows>
                 {list.map((e) => {
@@ -48,7 +48,7 @@ export function ExpenseList(props: { expenses: Item[]; names: Record<string, str
                       left={<IconTile icon={expenseIcon(e)} tone={e.kind === 'fund_in' ? 'gets' : 'brand'} />}
                       title={e.note || (e.kind === 'fund_in' ? 'Money in' : e.kind === 'refund' ? 'Refund' : (e.category ?? 'Expense'))}
                       subtitle={e.late ? `Late: dated ${shortDate(e.date)} · ${sub}` : sub}
-                      right={<Money paise={e.amountPaise} sign={e.kind === 'fund_in'} className={cx('text-[15px] font-semibold', e.kind !== 'expense' && 'text-gets')} />}
+                      right={<Money paise={e.amountPaise} sign={e.kind === 'fund_in'} className={cx('text-body font-semibold', e.kind !== 'expense' && 'text-gets')} />}
                     />
                   )
                 })}

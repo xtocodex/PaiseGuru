@@ -48,19 +48,21 @@ export function PaymentSlip(props: {
 
   return (
     <section className="overflow-hidden rounded-2xl border border-line bg-card">
-      <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-3">
-        <span className="flex items-center gap-1.5" aria-hidden>
-          <Avatar name={names[t.from] ?? '?'} me={iPay} size={34} />
-          <ArrowRight className="size-4 text-faint" />
-          <Avatar name={names[t.to] ?? '?'} me={iGet} size={34} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="line-clamp-2 block text-[15px] leading-snug font-semibold">
-            {from} {iPay ? 'pay' : 'pays'} {to}
+      <div className="flex flex-col gap-2 px-4 pt-3.5 pb-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="flex shrink-0 items-center gap-1" aria-hidden>
+            <Avatar name={names[t.from] ?? '?'} me={iPay} size={32} />
+            <ArrowRight className="size-4 text-faint" />
+            <Avatar name={names[t.to] ?? '?'} me={iGet} size={32} />
           </span>
-          {props.subtitle && <span className="block text-[13px] leading-snug text-muted">{props.subtitle}</span>}
-        </span>
-        <span className={cx('num shrink-0 text-xl font-bold', iPay ? 'text-pays' : iGet ? 'text-gets' : '')}>{formatRupees(t.amountPaise)}</span>
+          <span className={cx('num text-heading font-bold', iPay ? 'text-pays' : iGet ? 'text-gets' : '')}>{formatRupees(t.amountPaise)}</span>
+        </div>
+        <div>
+          <p className="text-title font-semibold">
+            {from} {iPay ? 'pay' : 'pays'} {to}
+          </p>
+          {props.subtitle && <p className="text-caption text-muted">{props.subtitle}</p>}
+        </div>
       </div>
       {(props.canRecord || iGet) && (
         <>
@@ -70,7 +72,7 @@ export function PaymentSlip(props: {
           </div>
           <div className="flex flex-wrap items-center gap-2 px-4 pt-2.5 pb-3.5">
             {iPay && query && !IOS && (
-              <a href={`upi://pay?${query}`} className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gets px-3.5 text-sm font-semibold text-on-gets">
+              <a href={`upi://pay?${query}`} className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gets px-3.5 text-body font-semibold text-on-gets">
                 <Zap className="size-4" aria-hidden />
                 Pay
               </a>
@@ -79,7 +81,7 @@ export function PaymentSlip(props: {
               query &&
               IOS &&
               IOS_APPS.map((a) => (
-                <a key={a.label} href={`${a.scheme}?${query}`} className="press inline-flex h-10 flex-1 items-center justify-center rounded-xl bg-gets px-2 text-sm font-semibold text-on-gets">
+                <a key={a.label} href={`${a.scheme}?${query}`} className="press inline-flex h-10 flex-1 items-center justify-center rounded-xl bg-gets px-2 text-body font-semibold text-on-gets">
                   {a.label}
                 </a>
               ))}
@@ -93,9 +95,9 @@ export function PaymentSlip(props: {
                 </Button>
               </>
             )}
-            {iPay && !props.upiId && <span className="w-full text-[13px] text-muted">{names[t.to]} has no UPI ID in PaiseGuru yet. Pay the way you usually do, then mark it as sent.</span>}
+            {iPay && !props.upiId && <span className="w-full text-caption text-muted">{names[t.to]} has no UPI ID in PaiseGuru yet. Pay the way you usually do, then mark it as sent.</span>}
             {iGet && (
-              <a href={remind} target="_blank" rel="noreferrer" className="press inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-line px-3.5 text-sm font-semibold text-brand-text">
+              <a href={remind} target="_blank" rel="noreferrer" className="press inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-line px-3.5 text-body font-semibold text-brand-text">
                 <MessageCircle className="size-4" aria-hidden />
                 Remind
               </a>
@@ -125,10 +127,10 @@ function QrSheet({ link, upiId, amountPaise, onClose }: { link: string; upiId: s
     <Sheet open onClose={onClose} title="Scan to pay">
       <div className="flex flex-col items-center gap-3">
         {src ? <img src={src} alt={`UPI QR code to pay ${formatRupees(amountPaise)} to ${upiId}`} className="size-64 rounded-xl bg-white p-2" /> : <div className="size-64 animate-pulse rounded-xl bg-line" />}
-        <p className="num text-lg font-semibold">{formatRupees(amountPaise)}</p>
-        <p className="text-sm text-muted">{upiId}</p>
+        <p className="num text-title font-semibold">{formatRupees(amountPaise)}</p>
+        <p className="text-body text-muted">{upiId}</p>
         {src && (
-          <a href={src} download="paiseguru-upi.png" className="press inline-flex h-10 items-center rounded-xl border border-line px-4 text-sm font-semibold text-brand-text">
+          <a href={src} download="paiseguru-upi.png" className="press inline-flex h-10 items-center rounded-xl border border-line px-4 text-body font-semibold text-brand-text">
             Save QR image
           </a>
         )}
@@ -159,7 +161,7 @@ function RecordSheet({ t, label, note, groupId, onClose }: { t: Suggestion; labe
   })
   return (
     <Sheet open onClose={onClose} title="Record a payment">
-      <p className="text-sm text-muted">{label}. It counts now; the person who got it can confirm it.</p>
+      <p className="text-body text-muted">{label}. It counts now; the person who got it can confirm it.</p>
       <form
         className="flex flex-col gap-4"
         onSubmit={(e) => {
@@ -171,7 +173,7 @@ function RecordSheet({ t, label, note, groupId, onClose }: { t: Suggestion; labe
         }}
       >
         <Field label="Amount (₹)" hint="Paid less? Enter what was paid; the rest stays to pay." error={error}>
-          <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} className="num text-lg font-semibold" />
+          <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} className="num text-title font-semibold" />
         </Field>
         <Segmented
           label="Paid with"
@@ -210,10 +212,10 @@ export function ConfirmSlip(props: { p: { id: string; fromName: string; amountPa
   const { p } = props
   return (
     <section className="rounded-2xl border border-line bg-card p-4">
-      <p className="text-[15px] font-semibold">
+      <p className="text-body font-semibold">
         {p.fromName} says they paid you <span className="num">{formatRupees(p.amountPaise)}</span>
       </p>
-      <p className="text-[13px] text-muted">
+      <p className="text-caption text-muted">
         {[props.subtitle, { upi: 'UPI', cash: 'Cash', other: 'Other' }[p.via], p.utr && `Ref ${p.utr}`].filter(Boolean).join(' · ')}
       </p>
       <div className="mt-3 flex gap-3">

@@ -20,10 +20,10 @@ export function InstallBanner() {
       <div className="flex items-center gap-3 rounded-2xl bg-brand p-3.5 text-on-brand">
         <Smartphone className="size-6 shrink-0" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-semibold">Add PaiseGuru to your home screen</p>
+          <p className="text-body font-semibold">Add PaiseGuru to your home screen</p>
           <button
             type="button"
-            className="text-[13px] opacity-80 underline-offset-2 hover:underline"
+            className="text-caption opacity-80 underline-offset-2 hover:underline"
             onClick={() => {
               setDismissed(true)
               try {
@@ -46,7 +46,7 @@ export function InstallBanner() {
 export function InstallHelp({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Sheet open={open} onClose={onClose} title="Install on iPhone">
-      <ol className="flex flex-col gap-3 text-[15px]">
+      <ol className="flex flex-col gap-3 text-body">
         <li className="flex items-center gap-3">
           <Tag>1</Tag> Tap the <Share className="inline size-5" aria-label="Share" /> Share button in Safari
         </li>

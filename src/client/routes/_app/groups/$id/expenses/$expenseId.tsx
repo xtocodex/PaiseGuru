@@ -67,7 +67,7 @@ function EditExpense() {
         )
       }
     >
-      {closed && <p className="rounded-xl bg-marigold-soft p-3 text-sm text-marigold-text">This month is closed, so its expenses can't change. The admin can reopen it.</p>}
+      {closed && <p className="rounded-xl bg-marigold-soft p-3 text-body text-marigold-text">This month is closed, so its expenses can't change. The admin can reopen it.</p>}
       <fieldset disabled={!editable} className="contents">
         <ExpenseForm
           members={members.map((m) => ({ id: m.id, name: m.name, defaultWeight: m.defaultWeight }))}

@@ -17,10 +17,10 @@ function Groups() {
         <Link key={g.id} to="/groups/$id" params={{ id: g.id }} className="press block">
           <Card>
             <div className="flex items-center gap-3">
-              <IconTile icon={g.settleMode === 'monthly' ? CalendarDays : Users} tone={g.settleMode === 'monthly' ? 'brand' : 'marigold'} />
+              <IconTile icon={g.settleMode === 'monthly' ? CalendarDays : Users} tone={g.settleMode === 'monthly' ? 'brand' : 'sky'} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[17px] font-semibold">{g.name}</p>
-                <p className="truncate text-[13px] text-muted">
+                <p className="truncate text-title font-semibold">{g.name}</p>
+                <p className="truncate text-caption text-muted">
                   {[
                     g.settleMode === 'monthly' ? 'Monthly' : 'Split as you go',
                     g.memberCount && `${g.memberCount} members`,
@@ -34,7 +34,7 @@ function Groups() {
               <ChevronRight className="size-5 text-faint" aria-hidden />
             </div>
             {g.status === 'active' && (
-              <p className="mt-3 border-t border-line pt-3 text-[15px]">
+              <p className="mt-3 border-t border-line pt-3 text-body">
                 <NetText paise={g.myNetPaise} />
               </p>
             )}

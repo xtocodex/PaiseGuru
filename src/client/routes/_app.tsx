@@ -35,7 +35,7 @@ function Tab({ to, icon: Icon, label, exact }: { to: string; icon: LucideIcon; l
     <Link
       to={to as any}
       activeOptions={{ exact }}
-      className="press flex min-h-12 flex-col items-center justify-start gap-0.5 pt-1 text-[11px] font-medium text-faint data-[status=active]:font-semibold data-[status=active]:text-brand-text"
+      className="press flex min-h-12 flex-col items-center justify-start gap-0.5 pt-1 text-tab font-medium text-faint data-[status=active]:font-semibold data-[status=active]:text-brand-text"
     >
       <Icon className="size-6" aria-hidden />
       {label}
@@ -50,7 +50,7 @@ function TabBar() {
         <Tab to="/" icon={House} label="Home" exact />
         <Tab to="/groups" icon={Users} label="Groups" />
         <Link to="/add" aria-label="Add an expense" className="press -mt-7 flex justify-center">
-          <span className={cx('grid size-[58px] place-items-center rounded-[20px] border-4 border-paper bg-marigold text-on-marigold shadow-[0_6px_14px_-6px_rgb(16_19_28/0.35)]')}>
+          <span className={cx('grid size-[58px] place-items-center rounded-[20px] border-4 border-paper bg-linear-to-br from-brand to-brand-2 text-on-brand shadow-[0_8px_16px_-6px_rgb(36_71_214/0.45)]')}>
             <Plus className="size-7" aria-hidden />
           </span>
         </Link>

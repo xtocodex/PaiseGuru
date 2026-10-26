@@ -86,9 +86,9 @@ function Settings({ g }: { g: GroupView }) {
 
       <SectionTitle>Funds</SectionTitle>
       <Card>
-        <p className="text-sm text-muted">Money held for the group, like a parent's pension or a trip kitty. Add money in, pay bills from it, see what is left. It never changes anyone's balance.</p>
+        <p className="text-body text-muted">Money held for the group, like a parent's pension or a trip kitty. Add money in, pay bills from it, see what is left. It never changes anyone's balance.</p>
         {g.funds.length > 0 && (
-          <ul className="mt-2 flex flex-col gap-1 text-[15px]">
+          <ul className="mt-2 flex flex-col gap-1 text-body">
             {g.funds.map((f) => (
               <li key={f.id} className="flex items-center gap-2">
                 <Wallet className="size-4 text-faint" aria-hidden />
@@ -167,10 +167,10 @@ function InviteSheet({ g, open, onClose }: { g: GroupView; open: boolean; onClos
   const text = `Join "${g.name}" on PaiseGuru to split our expenses: ${link}`
   return (
     <Sheet open={open} onClose={onClose} title="Invite people">
-      <p className="text-sm text-muted">Send this link. People sign up, pick their name if you added it, and {g.joinApproval ? 'you approve them' : 'join straight in'}.</p>
+      <p className="text-body text-muted">Send this link. People sign up, pick their name if you added it, and {g.joinApproval ? 'you approve them' : 'join straight in'}.</p>
       {link ? (
         <>
-          <p className="rounded-xl bg-paper p-3 text-sm break-all">{link}</p>
+          <p className="rounded-xl bg-paper p-3 text-body break-all">{link}</p>
           <div className="grid grid-cols-2 gap-2">
             <Button variant="secondary" onClick={() => navigator.clipboard.writeText(link)}>
               Copy link
@@ -240,7 +240,7 @@ function InviteByEmail({ g, m }: { g: GroupView; m: Member }) {
         </Button>
       </div>
       {send.isSuccess && (
-        <p role="status" className="text-sm text-gets">
+        <p role="status" className="text-body text-gets">
           Invite sent to {email.trim().toLowerCase()}.
         </p>
       )}
