@@ -7,10 +7,10 @@ import { api, call } from '../../api.ts'
 import { authClient } from '../../auth.ts'
 import { InstallHelp } from '../../install.tsx'
 import { getTheme, setTheme, useInstall, type Theme } from '../../pwa.ts'
-import { meQuery } from '../../queries.ts'
+import { meQuery, preload } from '../../queries.ts'
 import { Avatar, Button, Card, ErrorBox, Field, IconButton, IconTile, Input, Loading, MadeBy, Page, Row, Rows, Segmented, Sheet } from '../../ui.tsx'
 
-export const Route = createFileRoute('/_app/me')({ component: Me })
+export const Route = createFileRoute('/_app/me')({ loader: ({ context: { queryClient } }) => preload(queryClient, meQuery()), component: Me })
 
 type Panel = 'name' | 'upi' | 'password' | 'appearance' | 'install' | 'delete' | null
 

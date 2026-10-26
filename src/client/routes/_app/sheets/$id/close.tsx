@@ -4,10 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CircleCheck, HandCoins, Lock, MessageCircle } from 'lucide-react'
 import { formatRupees, parseRupees } from '../../../../../domain/money.ts'
 import { api, call, type SheetView } from '../../../../api.ts'
-import { sheetQuery } from '../../../../queries.ts'
+import { preload, sheetQuery } from '../../../../queries.ts'
 import { Avatar, Button, ButtonLink, Card, Chips, ErrorBox, Input, Loading, Money, Page, Row, Rows, Segmented, Tag, cx } from '../../../../ui.tsx'
 
-export const Route = createFileRoute('/_app/sheets/$id/close')({ component: ClosePage })
+export const Route = createFileRoute('/_app/sheets/$id/close')({ loader: ({ context: { queryClient }, params }) => preload(queryClient, sheetQuery(params.id)), component: ClosePage })
 
 type Exception = 'none' | 'fixed' | 'extra' | 'skip'
 type Change = { memberId: string; exception: Exception; exceptionPaise: number }

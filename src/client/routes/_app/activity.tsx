@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Activity } from 'lucide-react'
 import { ACTIVITY_GROUP, activityText, timeAgo } from '../../activity-text.ts'
 import type { ActivityView } from '../../api.ts'
-import { activityQuery } from '../../queries.ts'
+import { activityQuery, preload } from '../../queries.ts'
 import { Avatar, Card, Chips, Empty, ErrorBox, Loading, Page, Row, Rows } from '../../ui.tsx'
 
-export const Route = createFileRoute('/_app/activity')({ component: ActivityPage })
+export const Route = createFileRoute('/_app/activity')({ loader: ({ context: { queryClient } }) => preload(queryClient, activityQuery()), component: ActivityPage })
 
 type Filter = 'all' | 'expenses' | 'payments' | 'members'
 type Item = ActivityView['items'][number]

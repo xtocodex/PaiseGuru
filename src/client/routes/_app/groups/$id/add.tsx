@@ -4,10 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check } from 'lucide-react'
 import { api, call } from '../../../../api.ts'
 import { ExpenseForm, type ExpenseValues } from '../../../../expense-form.tsx'
-import { groupQuery } from '../../../../queries.ts'
+import { groupQuery, preload } from '../../../../queries.ts'
 import { Button, ErrorBox, Loading, Page } from '../../../../ui.tsx'
 
-export const Route = createFileRoute('/_app/groups/$id/add')({ component: AddExpense })
+export const Route = createFileRoute('/_app/groups/$id/add')({ loader: ({ context: { queryClient }, params }) => preload(queryClient, groupQuery(params.id)), component: AddExpense })
 
 function AddExpense() {
   const { id } = Route.useParams()

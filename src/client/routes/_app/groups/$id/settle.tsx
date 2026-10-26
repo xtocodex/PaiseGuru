@@ -1,14 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CircleCheck } from 'lucide-react'
 import { istDate, shortDate } from '../../../../../domain/group.ts'
 import { formatRupees } from '../../../../../domain/money.ts'
 import { api, call, type GroupView } from '../../../../api.ts'
 import { PaymentSlip } from '../../../../payment-slip.tsx'
-import { groupQuery, paymentsQuery } from '../../../../queries.ts'
+import { groupQuery, paymentsQuery, preload } from '../../../../queries.ts'
 import { Avatar, Button, Card, ErrorBox, Loading, Money, Page, Row, Rows, SectionTitle, Tag, askConfirm, haptic, toast } from '../../../../ui.tsx'
 
-export const Route = createFileRoute('/_app/groups/$id/settle')({ component: SettlePage })
+export const Route = createFileRoute('/_app/groups/$id/settle')({ loader: ({ context: { queryClient }, params }) => preload(queryClient, groupQuery(params.id), paymentsQuery(params.id)), component: SettlePage })
 
 function SettlePage() {
   const { id } = Route.useParams()
@@ -17,6 +16,18 @@ function SettlePage() {
   if (g.isPending) return <Loading />
   if (!g.data || g.data.pending) return <Page title="Settle up" back={`/groups/${id}`}><ErrorBox error={g.error} /></Page>
   return <Settle g={g.data} payments={payments.data?.payments ?? []} />
+}
+
+/** The logo's upward sweep circling a tick: drawn once when a group has nothing left to settle. */
+function SettledMark() {
+  return (
+    <svg viewBox="0 0 72 72" className="size-20" aria-hidden fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="36" cy="36" r="27" className="fill-gets-soft" />
+      <path d="M12 46 C 18 62, 46 66, 58 46 S 60 14, 40 9" className="settled-sweep stroke-brand-2" strokeWidth="4" style={{ ['--len' as string]: 120 }} />
+      <path d="M40 9 l7 -1 m-7 1 l3 6" className="settled-tick stroke-brand-2" strokeWidth="4" style={{ ['--len' as string]: 14 }} />
+      <path d="M25 37 l8 8 l15 -17" className="settled-tick stroke-gets" strokeWidth="5" style={{ ['--len' as string]: 36 }} />
+    </svg>
+  )
 }
 
 /** Why this payment: it moves money from someone who owes to someone who is owed, never more than either. */
@@ -46,11 +57,9 @@ function Settle({ g, payments }: { g: GroupView; payments: { id: string; from: s
     <Page title="Settle up" subtitle={g.name} back={`/groups/${g.id}`}>
       {g.plan.length === 0 ? (
         <Card className="flex flex-col items-center gap-2 py-8 text-center">
-          <span className="grid size-14 place-items-center rounded-full bg-gets-soft text-gets">
-            <CircleCheck className="size-8" aria-hidden />
-          </span>
-          <p className="text-title font-semibold">Everyone is settled</p>
-          <p className="text-body text-muted">Nobody owes anything in this group.</p>
+          <SettledMark />
+          <p className="text-heading font-semibold">{g.name} is settled</p>
+          <p className="text-body text-muted">Nobody owes anything. Hisaab clear.</p>
         </Card>
       ) : (
         <>

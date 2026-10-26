@@ -165,6 +165,14 @@
 }
 
 @layer base {
+  /* Controls behave like an app's: no text selection or link preview on a long press. */
+  button,
+  a,
+  [role='radio'] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
   :focus-visible {
     outline: 3px solid var(--brand-text);
     outline-offset: 2px;
@@ -188,6 +196,20 @@
 .scrim-enter {
   animation: fade-in 200ms ease-out;
 }
+/* The settled moment: the logo's sweep circles in, then the tick draws. */
+@keyframes draw {
+  from {
+    stroke-dashoffset: var(--len);
+  }
+}
+.settled-sweep {
+  stroke-dasharray: var(--len);
+  animation: draw 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.settled-tick {
+  stroke-dasharray: var(--len);
+  animation: draw 360ms cubic-bezier(0.16, 1, 0.3, 1) 380ms both;
+}
 @keyframes toast-up {
   from {
     opacity: 0;
@@ -197,19 +219,71 @@
 .toast-enter {
   animation: toast-up 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
 }
+/* Page transitions (types set in main.tsx). The tab bar and the page header have their own names, so
+   they stay put while the page body moves; exits run faster than entrances. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 160ms;
 }
+::view-transition-group(page-header),
+::view-transition-group(tabbar) {
+  animation-duration: 200ms;
+}
+@keyframes page-in-right {
+  from {
+    transform: translateX(22%);
+    opacity: 0;
+  }
+}
+@keyframes page-out-left {
+  to {
+    transform: translateX(-8%);
+    opacity: 0;
+  }
+}
+@keyframes page-in-left {
+  from {
+    transform: translateX(-8%);
+    opacity: 0;
+  }
+}
+@keyframes page-out-right {
+  to {
+    transform: translateX(22%);
+    opacity: 0;
+  }
+}
+html:active-view-transition-type(forward) {
+  &::view-transition-new(root) {
+    animation: page-in-right 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  &::view-transition-old(root) {
+    animation: page-out-left 200ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+}
+html:active-view-transition-type(back) {
+  &::view-transition-new(root) {
+    animation: page-in-left 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  &::view-transition-old(root) {
+    animation: page-out-right 200ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .sheet-enter,
   .scrim-enter,
-  .toast-enter {
+  .toast-enter,
+  .settled-sweep,
+  .settled-tick {
     animation: none;
   }
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
+  /* Reduced motion: pages fade instead of sliding. */
+  html::view-transition-old(root),
+  html::view-transition-new(root) {
+    animation: fade-in 120ms ease-out reverse both;
+  }
+  html::view-transition-new(root) {
+    animation-direction: normal;
   }
   .press:active {
     transform: none;

@@ -1,10 +1,10 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { CalendarDays, ChevronRight, Plus, Users } from 'lucide-react'
-import { groupsQuery } from '../../../queries.ts'
+import { groupsQuery, preload } from '../../../queries.ts'
 import { ButtonLink, Card, Empty, ErrorBox, IconButton, IconTile, Loading, NetText, Page } from '../../../ui.tsx'
 
-export const Route = createFileRoute('/_app/groups/')({ component: Groups })
+export const Route = createFileRoute('/_app/groups/')({ loader: ({ context: { queryClient } }) => preload(queryClient, groupsQuery()), component: Groups })
 
 function Groups() {
   const navigate = useNavigate()
