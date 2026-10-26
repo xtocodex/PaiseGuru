@@ -8,7 +8,7 @@ import { configQuery } from '../queries.ts'
 import { Button, ErrorBox, Field, Input } from '../ui.tsx'
 
 export const Route = createFileRoute('/login')({
-  validateSearch: z.object({ redirect: z.string().optional(), error: z.string().optional() }),
+  validateSearch: z.object({ redirect: z.string().optional(), error: z.string().optional(), reset: z.string().optional() }),
   component: Login,
 })
 
@@ -22,42 +22,50 @@ const safe = (path?: string) => {
   }
 }
 
-// Google sign-in for an email that already has a password account is refused (see server auth.ts).
+// Google joins an existing account only once its email is confirmed (see server auth.ts).
 const OAUTH_ERROR: Record<string, string> = {
-  account_not_linked: 'This email already has a PaiseGuru password. Sign in with your email and password.',
+  account_not_linked: 'This email has an account that is not confirmed yet. Open the link we emailed you, or sign in with your password.',
 }
 
 function Login() {
-  const { redirect, error: oauthError } = Route.useSearch()
+  const { redirect, error: oauthError, reset } = Route.useSearch()
   const config = useQuery(configQuery())
   const navigate = useNavigate()
   const [error, setError] = useState<Error | null>(oauthError ? new Error(OAUTH_ERROR[oauthError] ?? 'Google sign-in did not work. Try again.') : null)
-  const [mode, setMode] = useState<'in' | 'up'>('in')
+  const [notice, setNotice] = useState<string | null>(reset ? 'Password changed. Sign in with your new password.' : null)
+  const [mode, setMode] = useState<'in' | 'up' | 'forgot'>('in')
   const [show, setShow] = useState(false)
   const [busy, setBusy] = useState(false)
   const to = safe(redirect)
 
+  const switchTo = (m: typeof mode) => (setMode(m), setError(null), setNotice(null))
+
   async function submit(form: FormData) {
     setError(null)
+    setNotice(null)
     setBusy(true)
     const email = String(form.get('email')).trim().toLowerCase()
     const password = String(form.get('password'))
+    // The emailed link brings people back to where they were going (callbackURL).
     const res =
-      mode === 'up'
-        ? await authClient.signUp.email({ email, password, name: String(form.get('name')).trim() })
-        : await authClient.signIn.email({ email, password })
+      mode === 'forgot'
+        ? await authClient.requestPasswordReset({ email, redirectTo: '/reset-password' })
+        : mode === 'up'
+          ? await authClient.signUp.email({ email, password, name: String(form.get('name')).trim(), callbackURL: to })
+          : await authClient.signIn.email({ email, password, callbackURL: to })
     setBusy(false)
     if (res.error) {
+      if (res.error.code === 'EMAIL_NOT_VERIFIED') return setNotice(`Confirm your email first. We sent a new link to ${email}.`)
       const msg =
         res.error.status === 429
           ? 'Too many tries. Wait a minute and try again.'
           : mode === 'in'
             ? 'Wrong email or password.'
-            : res.error.code === 'USER_ALREADY_EXISTS' || res.error.status === 422
-              ? 'This email already has an account. Sign in instead.'
-              : (res.error.message ?? 'That did not work.')
+            : (res.error.message ?? 'That did not work.')
       return setError(new Error(msg))
     }
+    if (mode === 'forgot') return setNotice(`If ${email} has a PaiseGuru account, we sent it a link to choose a new password. Check spam too.`)
+    if (mode === 'up') return setNotice(`We sent a link to ${email}. Open it to finish creating your account. Check spam too.`)
     navigate({ to })
   }
 
@@ -88,20 +96,32 @@ function Login() {
         <Field label="Email">
           <Input name="email" type="email" required autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
         </Field>
-        <Field label="Password" hint={mode === 'up' ? 'At least 8 characters.' : undefined}>
-          <span className="relative flex items-center">
-            <Input name="password" type={show ? 'text' : 'password'} required minLength={8} autoComplete={mode === 'up' ? 'new-password' : 'current-password'} className="pr-12" />
-            <button type="button" aria-label={show ? 'Hide password' : 'Show password'} onClick={() => setShow(!show)} className="absolute right-1 grid size-11 place-items-center text-muted">
-              {show ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
-            </button>
-          </span>
-        </Field>
+        {mode !== 'forgot' && (
+          <Field label="Password" hint={mode === 'up' ? 'At least 8 characters.' : undefined}>
+            <span className="relative flex items-center">
+              <Input name="password" type={show ? 'text' : 'password'} required minLength={8} autoComplete={mode === 'up' ? 'new-password' : 'current-password'} className="pr-12" />
+              <button type="button" aria-label={show ? 'Hide password' : 'Show password'} onClick={() => setShow(!show)} className="absolute right-1 grid size-11 place-items-center text-muted">
+                {show ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
+              </button>
+            </span>
+          </Field>
+        )}
+        {notice && (
+          <p role="status" className="rounded-xl bg-gets-soft p-3 text-sm text-gets">
+            {notice}
+          </p>
+        )}
         <ErrorBox error={error} />
         <Button type="submit" disabled={busy}>
-          {mode === 'up' ? 'Create account' : 'Sign in'}
+          {mode === 'up' ? 'Create account' : mode === 'forgot' ? 'Send reset link' : 'Sign in'}
         </Button>
-        <Button type="button" variant="ghost" onClick={() => (setMode(mode === 'up' ? 'in' : 'up'), setError(null))}>
-          {mode === 'up' ? 'I have an account' : 'New here? Create an account'}
+        {mode === 'in' && (
+          <Button type="button" variant="ghost" onClick={() => switchTo('forgot')}>
+            Forgot password?
+          </Button>
+        )}
+        <Button type="button" variant="ghost" onClick={() => switchTo(mode === 'in' ? 'up' : 'in')}>
+          {mode === 'in' ? 'New here? Create an account' : 'Back to sign in'}
         </Button>
       </form>
       <p className="py-6 text-center text-xs text-faint">

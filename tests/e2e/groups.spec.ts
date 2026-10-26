@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
+import pg from 'pg'
 
 // The server uses the real IST date. Monthly tests back-fill last month (always closable) as the first month.
 const now = new Date(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date()) + 'T00:00:00Z')
@@ -10,13 +11,29 @@ const lastMonthDate = last.toISOString().slice(0, 10)
 const shots = process.env.SHOTS
 const shot = (page: Page, name: string) => (shots ? page.screenshot({ path: `${shots}/${name}.png`, fullPage: true }) : null)
 
+// The server runs in another process, so the e2e can't read its mail outbox: confirm the email in the
+// test database instead (the link itself is covered in src/server/group.test.ts).
+async function confirmEmail(email: string) {
+  const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL })
+  await client.connect()
+  await client.query('update "user" set email_verified = true where email = $1', [email])
+  await client.end()
+}
+
 async function signUp(page: Page, name: string) {
+  const email = `${name.toLowerCase()}-${randomUUID().slice(0, 8)}@e2e.local`
   await page.goto('/')
   await page.getByRole('button', { name: 'New here? Create an account' }).click()
   await page.getByLabel('Your name').fill(name)
-  await page.getByLabel('Email').fill(`${name.toLowerCase()}-${randomUUID().slice(0, 8)}@e2e.local`)
+  await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill('password-123')
   await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page.getByRole('status')).toContainText('Open it to finish creating your account')
+  await confirmEmail(email)
+  await page.getByRole('button', { name: 'Back to sign in' }).click()
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password', { exact: true }).fill('password-123')
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(page.getByRole('heading', { name })).toBeVisible()
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
 }

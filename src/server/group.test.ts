@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { and, eq } from 'drizzle-orm'
-import { R, anon, resetDb, setToday, signUp, uuid, type Client } from '../../tests/helpers.ts'
+import { R, anon, cookieOf, mailLink, resetDb, setToday, signUp, uuid, type Client } from '../../tests/helpers.ts'
+import { app } from './app.ts'
 import { db } from './core.ts'
 import { member } from './db.ts'
+import { outbox } from './mail.ts'
 
 beforeEach(resetDb)
 
@@ -83,14 +85,50 @@ describe('authz: a non-member gets 404 everywhere', () => {
   })
 })
 
-// protects=open sign-up with email + password; fails_when=sign-up is closed or a wrong password signs in;
-// no_claim=Google sign-in (needs real OAuth), account linking refusal (better-auth default, see auth.ts)
+// protects=open sign-up with a verified email, password reset by mail; fails_when=an unverified account
+// signs in, a wrong password signs in, a reset link is reusable or old sessions survive a reset;
+// no_claim=Google sign-in and account linking (needs real OAuth), mail delivery (Resend)
 describe('sign-up and sign-in', () => {
-  it('anyone signs up with email; sign-in needs the right password', async () => {
+  it('anyone signs up with email; sign-in needs the confirmed email and the right password', async () => {
     const created = await anon('POST', '/api/auth/sign-up/email', { name: 'Asha', email: 'asha@test.local', password: 'secret-123' })
     expect(created.status).toBe(200)
+    const unverified = await anon('POST', '/api/auth/sign-in/email', { email: 'asha@test.local', password: 'secret-123' })
+    expect(unverified.status).toBe(403)
+    expect(unverified.body.code).toBe('EMAIL_NOT_VERIFIED')
+    expect(outbox.filter((m) => m.to === 'asha@test.local')).toHaveLength(2) // sign-up, then again on sign-in
+
+    const verified = await app.request(mailLink('asha@test.local'))
+    expect(cookieOf(verified)).toContain('session_token')
     expect((await anon('POST', '/api/auth/sign-in/email', { email: 'asha@test.local', password: 'wrong-pass' })).status).toBe(401)
     expect((await anon('POST', '/api/auth/sign-in/email', { email: 'asha@test.local', password: 'secret-123' })).status).toBe(200)
+  })
+
+  it('signing up with a taken email looks the same, and mails the owner instead', async () => {
+    await signUp('Asha', 'asha@test.local')
+    const again = await anon('POST', '/api/auth/sign-up/email', { name: 'Fake', email: 'asha@test.local', password: 'other-123' })
+    expect(again.status).toBe(200)
+    expect(outbox.findLast((m) => m.to === 'asha@test.local')!.subject).toBe('You already have a PaiseGuru account')
+  })
+
+  it('a reset link sets a new password once and signs out other devices', async () => {
+    const asha = await signUp('Asha', 'asha@test.local')
+    expect((await anon('POST', '/api/auth/request-password-reset', { email: 'asha@test.local', redirectTo: '/reset-password' })).status).toBe(200)
+    // The link redirects to the app page with the token in the query.
+    const opened = await app.request(mailLink('asha@test.local'))
+    const token = new URL(opened.headers.get('location')!, 'http://x').searchParams.get('token')!
+    expect(token).toBeTruthy()
+
+    expect((await anon('POST', '/api/auth/reset-password', { token, newPassword: 'new-pass-123' })).status).toBe(200)
+    expect((await anon('POST', '/api/auth/reset-password', { token, newPassword: 'again-123' })).status).toBe(400)
+    expect((await asha.req('GET', '/api/me')).status).toBe(401)
+    expect((await anon('POST', '/api/auth/sign-in/email', { email: 'asha@test.local', password: 'password-123' })).status).toBe(401)
+    expect((await anon('POST', '/api/auth/sign-in/email', { email: 'asha@test.local', password: 'new-pass-123' })).status).toBe(200)
+  })
+
+  it('asking to reset an unknown email answers the same and sends nothing', async () => {
+    const before = outbox.length
+    expect((await anon('POST', '/api/auth/request-password-reset', { email: 'nobody@test.local', redirectTo: '/reset-password' })).status).toBe(200)
+    expect(outbox.length).toBe(before)
   })
 })
 
