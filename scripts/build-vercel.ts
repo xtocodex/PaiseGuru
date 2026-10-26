@@ -35,12 +35,13 @@ writeFileSync(
     routes: [
       // One address only: sign-in cookies are per host, so a Google sign-in started on the vercel.app
       // address would come back to the custom domain (BETTER_AUTH_URL) without its state cookie.
-      {
+      // The old gopalmohapatra.in host redirects too, so invite and statement links sent before the move still work.
+      ...['paiseguru.vercel.app', 'paiseguru.gopalmohapatra.in'].map((host) => ({
         src: '^/(.*)$',
-        has: [{ type: 'host', value: 'paiseguru.vercel.app' }],
+        has: [{ type: 'host', value: host }],
         status: 308,
-        headers: { Location: 'https://paiseguru.gopalmohapatra.in/$1' },
-      },
+        headers: { Location: 'https://paiseguru.xtocodex.in/$1' },
+      })),
       // The service worker must always be fresh so app updates reach installed phones.
       { src: '^/sw\\.js$', headers: { 'cache-control': 'no-cache' }, continue: true },
       { src: '^/assets/.+$', headers: { 'cache-control': 'public, max-age=31536000, immutable' }, continue: true },
