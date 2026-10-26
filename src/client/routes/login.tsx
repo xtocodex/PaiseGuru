@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Eye, EyeOff, MailCheck, NotebookPen } from 'lucide-react'
+import { Eye, EyeOff, MailCheck } from 'lucide-react'
 import { z } from 'zod'
 import { authClient } from '../auth.ts'
 import { configQuery } from '../queries.ts'
-import { Button, ErrorBox, Field, Input } from '../ui.tsx'
+import { Button, ErrorBox, Field, Input, Logo } from '../ui.tsx'
 
 export const Route = createFileRoute('/login')({
   validateSearch: z.object({ redirect: z.string().optional(), error: z.string().optional(), reset: z.string().optional() }),
@@ -83,10 +83,10 @@ function Login() {
   return (
     <div className="pt-safe pb-safe flex min-h-dvh flex-col px-6">
       <div className="mt-[10vh]">
-        <span className="grid size-16 place-items-center rounded-[20px] bg-brand text-on-brand" aria-hidden>
-          <NotebookPen className="size-8" />
-        </span>
-        <h1 className="mt-5 text-hero font-bold tracking-tight text-brand-text">PaiseGuru</h1>
+        <img src="/logo-mark.png" alt="" width={96} height={79} />
+        <h1 className="mt-5">
+          <Logo mark={false} size={92} />
+        </h1>
         <p className="mt-2 text-title leading-snug text-muted">Split bills with friends, flatmates, trips and family. Settle in the fewest UPI payments.</p>
       </div>
 

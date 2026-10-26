@@ -43,6 +43,10 @@ pnpm dev                # app on http://localhost:$DEV_PORT, API on :$PORT
 
 Secrets live in the GitHub `Production` environment: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `PROD_DATABASE_URL`. The old Next.js app is in tag `v1-legacy` and branch `legacy-v1`.
 
+## Brand
+
+The PaiseGuru logo lives in `brand/`: `logo-source.png` (the original), `logo-transparent.png`, `mark.png`, `wordmark.png` / `wordmark-dark.png` and `lockup-stacked.png`. The app's copies are in `public/` (icons, favicons, `logo-mark.png`, `wordmark*.png`, `og-image.png` for link previews, `email-logo.png` for the email header).
+
 ## Production
 
 - Hosting: Vercel project `paiseguru` (team xtocodexs-projects). The React app is served from Vercel's CDN; the Hono server runs as one Node function in Singapore (`sin1`). `scripts/build-vercel.ts` writes the ready-made deployment.

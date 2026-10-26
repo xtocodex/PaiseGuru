@@ -31,6 +31,7 @@
 - App redesign v2 live (2026-09-27): installable PWA (manifest, icons, service worker, offline shell), design system from docs/designs/v2, all screens rebuilt, Activity tab, change password, appearance.
 
 - Live on Vercel at https://paiseguru.gopalmohapatra.in (DNS A record at BigRock, 2026-09-27).
+- New PaiseGuru logo (2026-10-26): masters in `brand/` (source, transparent cut-out, mark, wordmark light/dark, stacked lockup); app icons, favicons, share image, sign-in and About logo, email header. The 16px favicon is a blur of the 3D mark; a flat simplified mark would fix it.
 - Branded emails (2026-10-26): one template (wordmark, heading, steps, button, support footer) for all mails; new welcome (names groups an invite already joined), password changed (reset or Me), Google sign-in added. Replies go to support@xtocodex.in.
 - Email invites (2026-10-26): any member adds a person with an email; they get a mail with the group's invite link and join as that name once they verify the email (link, or Google). 20 invite mails per person per day.
 - Account mail (2026-10-26): Resend on paiseguru.xtocodex.in; sign-up email verification (accounts before it marked verified, migration 0001), forgot password by email, Google links into the account with the same verified email.

@@ -8,7 +8,7 @@ import { authClient } from '../../auth.ts'
 import { InstallHelp } from '../../install.tsx'
 import { getTheme, setTheme, useInstall, type Theme } from '../../pwa.ts'
 import { meQuery, preload } from '../../queries.ts'
-import { Avatar, Button, Card, ErrorBox, Field, IconButton, IconTile, Input, Loading, MadeBy, Page, Row, Rows, Segmented, Sheet } from '../../ui.tsx'
+import { Avatar, Button, Card, ErrorBox, Field, IconButton, IconTile, Input, Loading, MadeBy, Page, Row, Rows, Segmented, Sheet, Logo } from '../../ui.tsx'
 
 export const Route = createFileRoute('/_app/me')({ loader: ({ context: { queryClient } }) => preload(queryClient, meQuery()), component: Me })
 
@@ -69,7 +69,9 @@ function Me() {
 
       <Card className="text-center">
         <p className="text-caption font-semibold text-muted">About</p>
-        <p className="mt-1 text-heading font-bold tracking-tight text-brand-text">PaiseGuru</p>
+        <p className="mt-2 flex justify-center">
+          <Logo size={40} />
+        </p>
         <p className="text-caption text-muted">Split expenses as you go or once a month, settle in the fewest UPI payments.</p>
         <MadeBy className="mt-3" />
         <a href="/privacy" className="mt-2 inline-block text-caption font-semibold text-brand-text underline-offset-2 hover:underline">

@@ -337,6 +337,16 @@ export function Empty({ icon: Icon, title, text, action }: { icon: LucideIcon; t
   )
 }
 
+/** The PaiseGuru logo: the P mark and/or the wordmark (the logo's own lettering, light or dark by theme). */
+export function Logo({ mark = true, word = true, size = 64 }: { mark?: boolean; word?: boolean; size?: number }) {
+  return (
+    <span role="img" aria-label="PaiseGuru" className="inline-flex items-center gap-3">
+      {mark && <img src="/logo-mark.png" alt="" width={size} height={Math.round(size * 0.82)} className="shrink-0" />}
+      {word && <span aria-hidden className="block bg-contain bg-left bg-no-repeat [background-image:var(--wordmark)]" style={{ width: size * 2.6, height: size * 0.46 }} />}
+    </span>
+  )
+}
+
 export const FOUNDER_URL = 'https://gopalmohapatra.in'
 
 /** Product credit: PaiseGuru is built by xtocodex. */
