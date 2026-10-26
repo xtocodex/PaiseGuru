@@ -1,25 +1,27 @@
 // Groups, members, invite and join, funds, group settings.
 import { randomUUID } from 'node:crypto'
 import { Hono } from 'hono'
-import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import { addMonths, monthOf, sheetName } from '../../domain/group.ts'
 import {
   addPlaceholderSchema,
   createFundSchema,
   createGroupSchema,
+  inviteEmailSchema,
   joinSchema,
   memberIdSchema,
   memberSettingsSchema,
   mergeSchema,
   updateGroupSchema,
 } from '../../shared/schemas.ts'
-import { expense, expensePayer, expenseShare, fund, group, member, payment, sheet, sheetParticipant, statementToken, type Tx } from '../db.ts'
+import { activity, expense, expensePayer, expenseShare, fund, group, member, payment, sheet, sheetParticipant, statementToken, user, type Tx } from '../db.ts'
 import {
   AppError,
   addToOpenSheets,
   appUrl,
   badRequest,
   bumpOpenSheets,
+  claimInvite,
   clock,
   db,
   ensureSheets,
@@ -33,7 +35,12 @@ import {
   requireMember,
   tokenFor,
   type Env,
+  type GroupRow,
+  type MemberRow,
+  type SheetRow,
 } from '../core.ts'
+import type { SessionUser } from '../auth.ts'
+import { message, sendMail, type Mail } from '../mail.ts'
 import { groupBalances, upiIdsOf } from './payment.ts'
 
 const inviteLink = (nonce: string | null) => (nonce ? `${appUrl()}/join/${tokenFor('invite', nonce)}` : null)
@@ -45,6 +52,67 @@ async function loadMember(tx: Tx, groupId: string, memberId: string) {
     .where(and(eq(member.groupId, groupId), eq(member.id, memberId)))
   if (!m) throw notFound()
   return m
+}
+
+// shortcut: counted from the activity log, which has no index on the actor; add one if invites get heavy.
+const INVITES_PER_DAY = 20
+
+/**
+ * Give a name that has not joined yet an invite email. A verified account with that email takes the
+ * place now; anyone else takes it when they verify the email (claimInvites). Caller holds the group
+ * lock. Returns the mail to send once the transaction commits.
+ */
+async function setInvite(tx: Tx, o: { g: GroupRow; sheets: SheetRow[]; target: MemberRow; email: string; inviter: SessionUser }): Promise<Mail> {
+  const { g, target, email, inviter } = o
+  if (target.userId || target.status !== 'active') throw badRequest('Only a name that has not joined yet can be invited.')
+  const [sent] = await tx
+    .select({ n: sql<number>`count(*)`.mapWith(Number) })
+    .from(activity)
+    .where(and(eq(activity.actorUserId, inviter.id), eq(activity.kind, 'member_invite'), gt(activity.createdAt, sql`now() - interval '1 day'`)))
+  if (sent!.n >= INVITES_PER_DAY) throw new AppError(429, 'too_many_invites', `You can send ${INVITES_PER_DAY} email invites a day. Share the invite link instead.`)
+  const [taken] = await tx
+    .select({ name: member.displayName })
+    .from(member)
+    .where(and(eq(member.groupId, g.id), eq(member.inviteEmail, email), isNull(member.userId), ne(member.id, target.id)))
+  if (taken) throw badRequest(`${taken.name} already has this email.`)
+  const [account] = await tx.select({ id: user.id, verified: user.emailVerified }).from(user).where(eq(user.email, email))
+  if (account) {
+    const [inGroup] = await tx
+      .select({ id: member.id })
+      .from(member)
+      .where(and(eq(member.groupId, g.id), eq(member.userId, account.id), inArray(member.status, ['active', 'pending'])))
+    if (inGroup) throw badRequest('This person is already in the group.')
+  }
+
+  await tx.update(member).set({ inviteEmail: email }).where(eq(member.id, target.id))
+  await logActivity(tx, { groupId: g.id, actorUserId: inviter.id, kind: 'member_invite', payload: { name: target.displayName } })
+  const joined = !!account?.verified && (await claimInvite(tx, o.sheets, target, account.id))
+  // Not joined yet: the mail carries the group's invite link, so signing in with another email still works.
+  let nonce = g.inviteNonce
+  if (!joined && !nonce) {
+    nonce = randomUUID()
+    await tx.update(group).set({ inviteNonce: nonce, inviteTokenHash: hashToken(tokenFor('invite', nonce)) }).where(eq(group.id, g.id))
+  }
+  return message({
+    to: email,
+    subject: `${inviter.name} added you to ${g.name} on PaiseGuru`,
+    lines: [
+      `${inviter.name} added you to "${g.name}" on PaiseGuru, to split shared expenses and settle up in the fewest UPI payments.`,
+      joined ? 'You already have an account, so the group is ready for you.' : `Sign up or sign in with ${email} and you join the group as ${target.displayName}.`,
+    ],
+    button: joined ? 'Open the group' : 'Join the group',
+    url: joined ? `${appUrl()}/groups/${g.id}` : inviteLink(nonce)!,
+    footer: "If you don't know them, you can ignore this email.",
+  })
+}
+
+async function sendInvite(mail: Mail) {
+  try {
+    await sendMail(mail)
+  } catch (err) {
+    console.log(JSON.stringify({ level: 'error', msg: 'invite mail failed', error: String(err) }))
+    throw new AppError(503, 'mail_failed', 'Saved, but the email did not go out. Open the person and send it again.')
+  }
 }
 
 async function findByInvite(token: string) {
@@ -180,6 +248,7 @@ export const groupRoutes = new Hono<Env>()
           role: m.role,
           status: m.status,
           placeholder: m.userId === null && m.status === 'active',
+          inviteEmail: m.userId === null && m.status === 'active' ? m.inviteEmail : null,
           isMe: m.id === me.id,
           defaultWeight: m.defaultWeight,
           netPaise: net.get(m.id) ?? 0,
@@ -244,22 +313,37 @@ export const groupRoutes = new Hono<Env>()
     return c.json({ link: inviteLink(nonce)! })
   })
 
+  // Any active member can add people (and invite them by email).
   .post('/groups/:id/members', json(addPlaceholderSchema), async (c) => {
     const id = c.req.param('id')
-    const { name } = c.req.valid('json')
-    const memberId = await db.transaction(async (tx) => {
-      await requireMember(tx, id, c.var.user.id, { admin: true })
+    const { name, email } = c.req.valid('json')
+    const { memberId, mail } = await db.transaction(async (tx) => {
+      await requireMember(tx, id, c.var.user.id)
       await ensureSheets(tx, await loadGroup(tx, id))
-      const { sheets } = await lockGroup(tx, id)
+      const { g, sheets } = await lockGroup(tx, id)
       const [count] = await tx.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(member).where(eq(member.groupId, id))
       if (count!.n >= 100) throw badRequest('A group can have at most 100 members.')
       const [m] = await tx.insert(member).values({ groupId: id, displayName: name }).returning()
       // A person added by a member takes part normally; someone joining by link starts with Skip.
       await addToOpenSheets(tx, sheets, m!.id, 'none')
       await logActivity(tx, { groupId: id, actorUserId: c.var.user.id, kind: 'placeholder_add', payload: { name } })
-      return m!.id
+      return { memberId: m!.id, mail: email ? await setInvite(tx, { g, sheets, target: m!, email, inviter: c.var.user }) : null }
     })
+    if (mail) await sendInvite(mail)
     return c.json({ id: memberId }, 201)
+  })
+
+  // Invite (or invite again) a name that has not joined yet by email.
+  .post('/groups/:id/members/:mid/invite', json(inviteEmailSchema), async (c) => {
+    const { id, mid } = c.req.param()
+    const { email } = c.req.valid('json')
+    const mail = await db.transaction(async (tx) => {
+      await requireMember(tx, id, c.var.user.id)
+      const { g, sheets } = await lockGroup(tx, id)
+      return setInvite(tx, { g, sheets, target: await loadMember(tx, id, mid), email, inviter: c.var.user })
+    })
+    await sendInvite(mail)
+    return c.json({ ok: true })
   })
 
   .patch('/groups/:id/members/:mid', json(memberSettingsSchema), async (c) => {
@@ -349,7 +433,7 @@ export const groupRoutes = new Hono<Env>()
       if (!target.userId || target.id === me.id || (target.status !== 'active' && target.status !== 'pending')) {
         throw badRequest('Only a claimed member can be undone.')
       }
-      await tx.update(member).set({ userId: null, status: 'active' }).where(eq(member.id, mid))
+      await tx.update(member).set({ userId: null, status: 'active', inviteEmail: null }).where(eq(member.id, mid))
       await bumpOpenSheets(tx, sheets)
       await logActivity(tx, { groupId: id, actorUserId: c.var.user.id, kind: 'member_unclaim', payload: { name: target.displayName } })
     })

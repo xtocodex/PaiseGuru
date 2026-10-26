@@ -121,6 +121,8 @@ export const member = pgTable(
     seq: integer('seq').notNull().generatedAlwaysAsIdentity(),
     userId: uuid('user_id').references(() => user.id, { onDelete: 'set null' }), // null = placeholder
     displayName: text('display_name').notNull(),
+    // Lowercased. A placeholder with an email is claimed by the account that verifies it (claimInvites).
+    inviteEmail: text('invite_email'),
     role: text('role', { enum: ['admin', 'member'] }).notNull().default('member'),
     status: text('status', { enum: ['pending', 'active', 'former', 'deleted'] }).notNull().default('active'),
     defaultWeight: integer('default_weight').notNull().default(100), // shares prefill: 100 = 1 share
@@ -132,6 +134,8 @@ export const member = pgTable(
     unique('member_group_id').on(t.groupId, t.id),
     uniqueIndex('member_one_admin').on(t.groupId).where(sql`${t.role} = 'admin'`),
     index('member_user_idx').on(t.userId),
+    uniqueIndex('member_group_invite_email').on(t.groupId, t.inviteEmail).where(sql`${t.userId} is null`),
+    index('member_invite_email_idx').on(t.inviteEmail).where(sql`${t.userId} is null`),
     check('member_default_weight', sql`${t.defaultWeight} between 1 and 10000`),
   ],
 )

@@ -20,7 +20,7 @@ function SettingsPage() {
 
 function memberNote(m: Member) {
   const parts = [
-    m.status === 'pending' ? 'Waiting for approval' : m.status === 'deleted' ? 'Account deleted' : m.status === 'former' ? 'Left' : m.placeholder ? 'Not joined yet' : m.role === 'admin' ? 'Admin' : 'Joined',
+    m.status === 'pending' ? 'Waiting for approval' : m.status === 'deleted' ? 'Account deleted' : m.status === 'former' ? 'Left' : m.inviteEmail ? `Invited · ${m.inviteEmail}` : m.placeholder ? 'Not joined yet' : m.role === 'admin' ? 'Admin' : 'Joined',
     m.defaultWeight !== 100 && `${m.defaultWeight / 100} shares`,
   ]
   return parts.filter(Boolean).join(' · ')
@@ -74,7 +74,7 @@ function Settings({ g }: { g: GroupView }) {
               }
             />
           ))}
-          {isAdmin && (
+          {active && (
             <button type="button" onClick={() => setPanel('member')} className="press flex min-h-14 w-full items-center gap-3 font-semibold text-brand-text">
               <Plus className="size-5" aria-hidden />
               Add a member
@@ -193,8 +193,9 @@ function InviteSheet({ g, open, onClose }: { g: GroupView; open: boolean; onClos
 function AddMemberSheet({ groupId, onClose }: { groupId: string; onClose: () => void }) {
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const add = useMutation({
-    mutationFn: () => call(api.groups[':id'].members.$post({ param: { id: groupId }, json: { name } })),
+    mutationFn: () => call(api.groups[':id'].members.$post({ param: { id: groupId }, json: { name, email: email.trim() || undefined } })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group', groupId] })
       onClose()
@@ -203,15 +204,45 @@ function AddMemberSheet({ groupId, onClose }: { groupId: string; onClose: () => 
   return (
     <Sheet open onClose={onClose} title="Add a member">
       <form className="flex flex-col gap-4" onSubmit={(e) => (e.preventDefault(), name.trim() && add.mutate())}>
-        <Field label="Name" hint="They don't need the app now. They can join later with the invite link and pick this name.">
+        <Field label="Name" hint="They don't need the app now. You can add expenses for them straight away.">
           <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} required autoComplete="off" />
+        </Field>
+        <Field label="Email (optional)" hint="We email them an invite. When they sign in with this email, they join as this name.">
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} autoComplete="off" autoCapitalize="none" spellCheck={false} />
         </Field>
         <ErrorBox error={add.error} />
         <Button type="submit" disabled={add.isPending}>
-          Add member
+          {email.trim() ? 'Add and send invite' : 'Add member'}
         </Button>
       </form>
     </Sheet>
+  )
+}
+
+function InviteByEmail({ g, m }: { g: GroupView; m: Member }) {
+  const queryClient = useQueryClient()
+  const [email, setEmail] = useState(m.inviteEmail ?? '')
+  const send = useMutation({
+    mutationFn: () => call(api.groups[':id'].members[':mid'].invite.$post({ param: { id: g.id, mid: m.id }, json: { email } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['group', g.id] }),
+  })
+  return (
+    <form className="flex flex-col gap-2" onSubmit={(e) => (e.preventDefault(), email.trim() && send.mutate())}>
+      <div className="flex items-end gap-2">
+        <Field label="Invite by email" hint={`When they sign in with this email, they join as ${m.name}.`}>
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} required autoComplete="off" autoCapitalize="none" spellCheck={false} />
+        </Field>
+        <Button type="submit" variant="secondary" disabled={send.isPending}>
+          {m.inviteEmail ? 'Send again' : 'Send'}
+        </Button>
+      </div>
+      {send.isSuccess && (
+        <p role="status" className="text-sm text-gets">
+          Invite sent to {email.trim().toLowerCase()}.
+        </p>
+      )}
+      <ErrorBox error={send.error} />
+    </form>
   )
 }
 
@@ -293,6 +324,7 @@ function MemberSheet({ g, m, isAdmin, onClose }: { g: GroupView; m: Member; isAd
   const canManage = isAdmin && !m.isMe
   return (
     <Sheet open onClose={onClose} title={m.name}>
+      {m.placeholder && <InviteByEmail g={g} m={m} />}
       <form
         className="flex items-end gap-2"
         onSubmit={(e) => {

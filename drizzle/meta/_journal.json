@@ -15,6 +15,13 @@
       "when": 1793017251484,
       "tag": "0001_mark_existing_verified",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793017924386,
+      "tag": "0002_member_invite_email",
+      "breakpoints": true
     }
   ]
 }

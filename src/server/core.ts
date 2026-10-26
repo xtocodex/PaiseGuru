@@ -1,6 +1,6 @@
 // Shared server pieces: errors, clock, authz, group locking and month versions, opening months, tokens.
 import { createHash, createHmac } from 'node:crypto'
-import { and, asc, desc, eq, inArray, lt, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { addMonths, istDate, monthEnd, monthOf, monthsFrom, type ISODate } from '../domain/group.ts'
 import { activity, db, group, member, sheet, sheetParticipant, type Db, type Tx } from './db.ts'
 import type { SessionUser } from './auth.ts'
@@ -12,7 +12,7 @@ type Q = Db | Tx
 
 export class AppError extends Error {
   code: string
-  status: 400 | 401 | 403 | 404 | 409 | 422 | 503
+  status: 400 | 401 | 403 | 404 | 409 | 422 | 429 | 503
   constructor(status: AppError['status'], code: string, message: string) {
     super(message)
     this.status = status
@@ -170,6 +170,40 @@ export function logActivity(
   row: { groupId: string; sheetId?: string | null; actorUserId: string; kind: string; payload?: Record<string, unknown> },
 ) {
   return tx.insert(activity).values({ ...row, payload: row.payload ?? {} })
+}
+
+// ── email invites: a placeholder with an invite email belongs to whoever verifies that email ──
+
+/** `userId` takes the invited placeholder's place. Caller holds the group lock. False if they are in the group already. */
+export async function claimInvite(tx: Tx, sheets: readonly SheetRow[], placeholder: { id: string; groupId: string }, userId: string) {
+  const [already] = await tx
+    .select({ id: member.id })
+    .from(member)
+    .where(and(eq(member.groupId, placeholder.groupId), eq(member.userId, userId)))
+  if (already) return false
+  const [claimed] = await tx
+    .update(member)
+    .set({ userId })
+    .where(and(eq(member.id, placeholder.id), isNull(member.userId), eq(member.status, 'active')))
+    .returning()
+  if (!claimed) return false
+  await bumpOpenSheets(tx, sheets)
+  await logActivity(tx, { groupId: claimed.groupId, actorUserId: userId, kind: 'member_claim', payload: { name: claimed.displayName } })
+  return true
+}
+
+/** After an email is verified (link, or a Google sign-up): join every group that invited it. */
+export async function claimInvites(user: { id: string; email: string }) {
+  const invited = await db
+    .select({ id: member.id, groupId: member.groupId })
+    .from(member)
+    .where(and(eq(member.inviteEmail, user.email.toLowerCase()), isNull(member.userId), eq(member.status, 'active')))
+  for (const m of invited) {
+    await db.transaction(async (tx) => {
+      const { sheets } = await lockGroup(tx, m.groupId)
+      await claimInvite(tx, sheets, m, user.id)
+    })
+  }
 }
 
 // ── tokens (S3, S10): 128-bit, only SHA-256 hashes stored ──
