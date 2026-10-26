@@ -27,6 +27,7 @@ export function activityText(n: ActivityRow, me?: string) {
     case 'member_remove': return `${who} removed ${p.name}`
     case 'admin_handover': return `${p.name} is now the admin`
     case 'placeholder_add': return `${who} added ${p.name}`
+    case 'member_invite': return `${who} invited ${p.name} by email`
     case 'group_create': return `${who} created ${p.name}`
     case 'group_edit': return `${who} changed the group settings`
     case 'fund_create': return `${who} added the fund ${p.name}`
@@ -38,7 +39,7 @@ export const ACTIVITY_GROUP: Record<string, 'expenses' | 'payments' | 'members'>
   expense_create: 'expenses', expense_edit: 'expenses', expense_delete: 'expenses', fund_create: 'expenses',
   close: 'payments', reopen: 'payments', payment_sent: 'payments', payment_confirmed: 'payments', payment_rejected: 'payments', payment_deleted: 'payments',
   member_join: 'members', member_claim: 'members', member_approve: 'members', member_unclaim: 'members', member_merge: 'members',
-  member_leave: 'members', member_remove: 'members', admin_handover: 'members', placeholder_add: 'members', group_create: 'members', group_edit: 'members',
+  member_leave: 'members', member_remove: 'members', admin_handover: 'members', placeholder_add: 'members', member_invite: 'members', group_create: 'members', group_edit: 'members',
 }
 
 /** "2h ago", "Yesterday", "3 Sep". */

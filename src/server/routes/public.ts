@@ -42,7 +42,7 @@ const PRIVACY = html`<h1>PaiseGuru privacy</h1>
   <h2>Google sign-in</h2>
   <p>If you choose Google sign-in, we receive only your name, email address and profile picture from Google, to create and sign in to your account.</p>
   <h2>Emails</h2>
-  <p>We email you only to confirm your address and to reset your password. Emails are sent through Resend, which receives your email address for that purpose only.</p>
+  <p>We email you to confirm your address, to reset your password, and when a group member invites you by email. Until you join, members of that group can see the email they invited. Emails are sent through Resend, which receives your email address for that purpose only.</p>
   <h2>Deleting your account</h2>
   <p>Open Me, then Delete my account. Your name, sign-in and UPI ID are deleted. Amounts you added to shared groups stay under "Deleted user", so other members' balances do not change.</p>
   <h2>Contact</h2>

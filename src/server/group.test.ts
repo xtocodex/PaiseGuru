@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { and, eq } from 'drizzle-orm'
-import { R, anon, cookieOf, mailLink, resetDb, setToday, signUp, uuid, type Client } from '../../tests/helpers.ts'
+import { R, anon, clientFor, cookieOf, mailLink, resetDb, setToday, signUp, uuid, type Client } from '../../tests/helpers.ts'
 import { app } from './app.ts'
 import { db } from './core.ts'
-import { member } from './db.ts'
+import { activity, member } from './db.ts'
 import { outbox } from './mail.ts'
 
 beforeEach(resetDb)
@@ -51,6 +51,7 @@ describe('authz: a non-member gets 404 everywhere', () => {
       ['PATCH', `/api/groups/${groupId}`, { name: 'X' }],
       ['POST', `/api/groups/${groupId}/invite`],
       ['POST', `/api/groups/${groupId}/members`, { name: 'X' }],
+      ['POST', `/api/groups/${groupId}/members/${id('Suresh')}/invite`, { email: 'x@test.local' }],
       ['PATCH', `/api/groups/${groupId}/members/${id('Suresh')}`, { defaultWeight: 200 }],
       ['DELETE', `/api/groups/${groupId}/members/${id('Suresh')}`],
       ['POST', `/api/groups/${groupId}/admin`, { memberId: id('Suresh') }],
@@ -172,6 +173,78 @@ describe('joining', () => {
     const after = await view(suresh)
     expect(after.me.memberId).toBe(id('Suresh'))
     expect(after.members.find((m: any) => m.name === 'Suresh').netPaise).toBe(R(150))
+  })
+})
+
+// protects=adding people by email and the verified-email claim; fails_when=an unverified account takes an
+// invited place, a member is invited twice, or one person can mail without limit;
+// no_claim=Google sign-up claim (needs real OAuth, same claimInvites path), mail delivery (Resend)
+describe('email invites', () => {
+  const placeholder = async (view: () => Promise<any>, name: string) => (await view()).members.find((m: any) => m.name === name)
+
+  it('any member adds a person by email; they sign up with it and take that place', async () => {
+    const { admin, groupId, id, view } = await setup()
+    const link = (await admin.req('POST', `/api/groups/${groupId}/invite`)).body.link
+    const suresh = await signUp('Suresh')
+    await join(suresh, link, id('Suresh'))
+
+    const added = await suresh.req('POST', `/api/groups/${groupId}/members`, { name: 'Asha', email: ' Asha@Test.local ' })
+    expect(added.status).toBe(201)
+    expect((await placeholder(view, 'Asha')).inviteEmail).toBe('asha@test.local')
+    const mail = outbox.findLast((m) => m.to === 'asha@test.local')!
+    expect(mail.subject).toBe('Suresh added you to Flat 402 on PaiseGuru')
+    expect(mailLink('asha@test.local')).toBe(link) // the group's invite link, so another email still works
+
+    const asha = await signUp('Asha Rao', 'asha@test.local')
+    const mine = await view(asha)
+    expect(mine.me.memberId).toBe(added.body.id)
+    expect(mine.members.find((m: any) => m.isMe)).toMatchObject({ name: 'Asha', placeholder: false, inviteEmail: null })
+  })
+
+  it('an existing account joins at once; an unconfirmed account joins only after confirming', async () => {
+    const { admin, groupId, id, view } = await setup()
+    const mahesh = await signUp('Mahesh', 'mahesh@test.local')
+    await admin.req('POST', `/api/groups/${groupId}/members/${id('Mahesh')}/invite`, { email: 'mahesh@test.local' })
+    expect((await view(mahesh)).me.memberId).toBe(id('Mahesh'))
+    expect(outbox.findLast((m) => m.to === 'mahesh@test.local')!.text).toContain(`/groups/${groupId}`)
+
+    await anon('POST', '/api/auth/sign-up/email', { name: 'Suresh', email: 'suresh@test.local', password: 'password-123' })
+    const verifyLink = mailLink('suresh@test.local')
+    await admin.req('POST', `/api/groups/${groupId}/members/${id('Suresh')}/invite`, { email: 'suresh@test.local' })
+    expect((await placeholder(view, 'Suresh')).placeholder).toBe(true)
+    const suresh = clientFor('Suresh', cookieOf(await app.request(verifyLink)))
+    expect((await view(suresh)).me.memberId).toBe(id('Suresh'))
+  })
+
+  it('refuses an email already in the group or on another name, and inviting someone who joined', async () => {
+    const { admin, groupId, id } = await setup()
+    await admin.req('POST', `/api/groups/${groupId}/members/${id('Suresh')}/invite`, { email: 'same@test.local' })
+    const dup = await admin.req('POST', `/api/groups/${groupId}/members/${id('Mahesh')}/invite`, { email: 'same@test.local' })
+    expect(dup.body.message).toBe('Suresh already has this email.')
+    const ramesh = (await db.select().from(member).where(eq(member.id, id('Ramesh'))))[0]!
+    const self = await db.query.user.findFirst({ where: (u, { eq }) => eq(u.id, ramesh.userId!) })
+    expect((await admin.req('POST', `/api/groups/${groupId}/members/${id('Mahesh')}/invite`, { email: self!.email })).body.message).toBe('This person is already in the group.')
+    expect((await admin.req('POST', `/api/groups/${groupId}/members/${id('Ramesh')}/invite`, { email: 'x@test.local' })).body.message).toBe(
+      'Only a name that has not joined yet can be invited.',
+    )
+    expect((await admin.req('POST', `/api/groups/${groupId}/members`, { name: 'Bad', email: 'not-an-email' })).status).toBe(400)
+  })
+
+  it('one person sends at most 20 email invites a day', async () => {
+    const { admin, groupId, id } = await setup()
+    const actor = (await db.select().from(member).where(eq(member.id, id('Ramesh'))))[0]!.userId!
+    await db.insert(activity).values(Array.from({ length: 20 }, () => ({ groupId, actorUserId: actor, kind: 'member_invite' })))
+    const res = await admin.req('POST', `/api/groups/${groupId}/members/${id('Suresh')}/invite`, { email: 'late@test.local' })
+    expect(res.status).toBe(429)
+    expect(outbox.some((m) => m.to === 'late@test.local')).toBe(false)
+  })
+
+  it('undoing a wrong claim clears the invite email', async () => {
+    const { admin, groupId, id, view } = await setup()
+    await signUp('Mahesh', 'mahesh@test.local')
+    await admin.req('POST', `/api/groups/${groupId}/members/${id('Mahesh')}/invite`, { email: 'mahesh@test.local' })
+    await admin.req('POST', `/api/groups/${groupId}/members/${id('Mahesh')}/unclaim`)
+    expect(await placeholder(view, 'Mahesh')).toMatchObject({ placeholder: true, inviteEmail: null })
   })
 })
 

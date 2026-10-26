@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db, schema } from './db.ts'
-import { allowedOrigins, appUrl } from './core.ts'
+import { allowedOrigins, appUrl, claimInvites } from './core.ts'
 import { message, sendMail } from './mail.ts'
 
 const google =
@@ -32,6 +32,18 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     sendVerificationEmail: ({ user, url }) =>
       sendMail(message({ to: user.email, subject: 'Confirm your email for PaiseGuru', lines: [`Hi ${user.name},`, 'Confirm this is your email to start using PaiseGuru. The link works for 1 hour.'], button: 'Confirm email', url })),
+    // Groups that invited this email take the person in now.
+    afterEmailVerification: (user) => claimInvites(user),
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        // A Google sign-up arrives already verified. Runs after the user row is committed.
+        after: async (user) => {
+          if (user.emailVerified) await claimInvites(user)
+        },
+      },
+    },
   },
   // Every email is verified now (Google's, or by the link above), so a Google sign-in joins the
   // existing account with the same email. better-auth links only into verified accounts.

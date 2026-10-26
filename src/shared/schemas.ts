@@ -28,7 +28,9 @@ export const updateGroupSchema = z.object({
   joinApproval: z.boolean().optional(),
 })
 
-export const addPlaceholderSchema = z.object({ name: name(60) })
+const email = z.string().trim().toLowerCase().pipe(z.email('Not a valid email').max(254))
+export const addPlaceholderSchema = z.object({ name: name(60), email: email.optional() })
+export const inviteEmailSchema = z.object({ email })
 export const memberIdSchema = z.object({ memberId: z.uuid() })
 export const mergeSchema = z.object({ placeholderId: z.uuid() })
 export const joinSchema = z.object({ placeholderId: z.uuid().optional() })
