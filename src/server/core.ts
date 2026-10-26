@@ -192,18 +192,22 @@ export async function claimInvite(tx: Tx, sheets: readonly SheetRow[], placehold
   return true
 }
 
-/** After an email is verified (link, or a Google sign-up): join every group that invited it. */
+/** After an email is verified (link, or a Google sign-up): join every group that invited it. Returns their names. */
 export async function claimInvites(user: { id: string; email: string }) {
   const invited = await db
-    .select({ id: member.id, groupId: member.groupId })
+    .select({ id: member.id, groupId: member.groupId, name: group.name })
     .from(member)
+    .innerJoin(group, eq(group.id, member.groupId))
     .where(and(eq(member.inviteEmail, user.email.toLowerCase()), isNull(member.userId), eq(member.status, 'active')))
+  const joined: string[] = []
   for (const m of invited) {
-    await db.transaction(async (tx) => {
+    const ok = await db.transaction(async (tx) => {
       const { sheets } = await lockGroup(tx, m.groupId)
-      await claimInvite(tx, sheets, m, user.id)
+      return claimInvite(tx, sheets, m, user.id)
     })
+    if (ok) joined.push(m.name)
   }
+  return joined
 }
 
 // ── tokens (S3, S10): 128-bit, only SHA-256 hashes stored ──
