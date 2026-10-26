@@ -9,16 +9,17 @@ Split-first money PWA for India: friends, flatmates, trips, couples and families
 - The old Next.js app is **reference only** (tag `v1-legacy`). Never port its code.
 
 ## Stack (decided)
-TypeScript, pnpm · React 19 + Vite + Tailwind v4 + shadcn/ui + TanStack Router (file-based) + TanStack Query · Hono on Node (typed client `hc<AppType>`) · better-auth (email + password with open sign-up, plus Google) · Drizzle ORM + Postgres (local Postgres 18 on this machine) · Vitest + Playwright · structured JSON logs only (no Sentry, decision ef00621d).
+TypeScript, pnpm · React 19 + Vite + Tailwind v4 + shadcn/ui + TanStack Router (file-based) + TanStack Query · Hono on Node (typed client `hc<AppType>`) · better-auth (email + password with open sign-up and email verification, plus Google) · Resend for mail · Drizzle ORM + Postgres (local Postgres 18 on this machine) · Vitest + Playwright · structured JSON logs only (no Sentry, decision ef00621d).
 
 ## Current work: v2 (issue #2)
-Default branch `main` (protected: PR + green `test` check; a merge deploys production via the CI `deploy` job). v2 launched 2026-10-23 on a clean database (phase-1 data in Neon branch `backup-pre-v2-2026-10-23`). Live at https://paiseguru.xtocodex.in (old https://paiseguru.gopalmohapatra.in redirects there). Out of scope for now: 1:1 friends, friend view, recurring, comments, search, CSV, multi-currency, itemized splits, offline entry, Hindi, guest links, phone OTP, forgot password, carry to next month.
+Default branch `main` (protected: PR + green `test` check; a merge deploys production via the CI `deploy` job). v2 launched 2026-10-23 on a clean database (phase-1 data in Neon branch `backup-pre-v2-2026-10-23`). Live at https://paiseguru.xtocodex.in (old https://paiseguru.gopalmohapatra.in redirects there). Out of scope for now: 1:1 friends, friend view, recurring, comments, search, CSV, multi-currency, itemized splits, offline entry, Hindi, guest links, phone OTP, carry to next month.
 
 ## Code layout (decided, "smaller arrangement")
 ```
 src/domain/money.ts, group.ts (+ tests)    pure: no DB, no clock (take `today` as a parameter), no randomness
 src/server/app.ts      Hono app, AppError → HTTP mapping, static SPA + /s/:token
-src/server/auth.ts     better-auth (email + password open sign-up, Google, no implicit account linking)
+src/server/auth.ts     better-auth (email + password open sign-up with verification and reset, Google linked by verified email)
+src/server/mail.ts     Resend sender + one-button mail template; dev/test keep mail in `outbox`
 src/server/db.ts       Drizzle schema + client
 src/server/routes/group.ts (groups, members, join, funds), expense.ts (expenses, months, close), payment.ts (balances, payments), me.ts, public.ts
 src/shared/schemas.ts  zod, used by server validation and client forms

@@ -1,4 +1,4 @@
-// Set a new password for an existing account (no forgot-password flow yet). Usage: pnpm user:password <email> <new-password>
+// Set a new password for an existing account (admin fallback; users have "Forgot password?"). Usage: pnpm user:password <email> <new-password>
 import { eq, and } from 'drizzle-orm'
 import { auth } from './auth.ts'
 import { account, db, pool, user } from './db.ts'

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { sql } from 'drizzle-orm'
 import { app } from '../src/server/app.ts'
 import { clock, db } from '../src/server/core.ts'
+import { outbox } from '../src/server/mail.ts'
 
 const ORIGIN = 'http://localhost:3000'
 
@@ -39,19 +40,30 @@ export async function anon(method: string, path: string, body?: unknown, cookie?
   return { status: res.status, body: parsed, text }
 }
 
-/** Sign up with email + password and return a client carrying the session cookie. */
-export async function signUp(name: string): Promise<Client> {
-  const res = await app.request(`${ORIGIN}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { origin: ORIGIN, 'content-type': 'application/json' },
-    body: JSON.stringify({ name, email: `${name.toLowerCase()}-${randomUUID().slice(0, 8)}@test.local`, password: 'password-123' }),
-  })
-  if (res.status !== 200) throw new Error(`sign-up failed: ${res.status} ${await res.text()}`)
-  const cookie = res.headers
+/** The link in the latest mail to `to` (from the test outbox). */
+export function mailLink(to: string) {
+  const mail = outbox.findLast((m) => m.to === to)
+  if (!mail) throw new Error(`no mail to ${to}`)
+  return mail.text.match(/https?:\/\/\S+/)![0]
+}
+
+/** `name=value` pairs from a response's Set-Cookie headers. */
+export const cookieOf = (res: Response) =>
+  res.headers
     .getSetCookie()
     .map((c) => c.split(';')[0])
     .join('; ')
-  return { name, req: (method, path, body) => anon(method, path, body, cookie) }
+
+export const clientFor = (name: string, cookie: string): Client => ({ name, req: (method, path, body) => anon(method, path, body, cookie) })
+
+/** Sign up with email + password, open the verification link, and return a client carrying the session cookie. */
+export async function signUp(name: string, email = `${name.toLowerCase()}-${randomUUID().slice(0, 8)}@test.local`): Promise<Client> {
+  const res = await anon('POST', '/api/auth/sign-up/email', { name, email, password: 'password-123' })
+  if (res.status !== 200) throw new Error(`sign-up failed: ${res.status} ${res.text}`)
+  const verified = await app.request(mailLink(email))
+  const cookie = cookieOf(verified)
+  if (!cookie) throw new Error(`verification failed: ${verified.status} ${await verified.text()}`)
+  return clientFor(name, cookie)
 }
 
 export const R = (rupees: number) => rupees * 100

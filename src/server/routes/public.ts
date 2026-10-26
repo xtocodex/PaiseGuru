@@ -32,7 +32,7 @@ const STATE_TEXT = { open: 'Not closed yet', closed: 'Closed' }
 const SPLIT_TEXT: Record<string, string> = { sheet: 'Divided at month end', equal: 'Split equally', exact: 'Split by amounts', shares: 'Split by shares', percent: 'Split by percent', adjust: 'Split with changes' }
 
 const PRIVACY = html`<h1>PaiseGuru privacy</h1>
-  <p class="muted">Last updated 23 October 2026</p>
+  <p class="muted">Last updated 26 October 2026</p>
   <h2>What we store</h2>
   <p>Your name, email address and, if you sign in with Google, your Google profile picture. Your UPI ID if you add one. The groups you are in, and the expenses, payments, funds and notes that you or other members of those groups add.</p>
   <h2>Who can see it</h2>
@@ -41,6 +41,8 @@ const PRIVACY = html`<h1>PaiseGuru privacy</h1>
   <p>We do not sell your data, show ads, or read your bank account or SMS. PaiseGuru never receives your UPI PIN or any payment details: payments happen in your UPI app, and a member marks them as sent by hand.</p>
   <h2>Google sign-in</h2>
   <p>If you choose Google sign-in, we receive only your name, email address and profile picture from Google, to create and sign in to your account.</p>
+  <h2>Emails</h2>
+  <p>We email you only to confirm your address and to reset your password. Emails are sent through Resend, which receives your email address for that purpose only.</p>
   <h2>Deleting your account</h2>
   <p>Open Me, then Delete my account. Your name, sign-in and UPI ID are deleted. Amounts you added to shared groups stay under "Deleted user", so other members' balances do not change.</p>
   <h2>Contact</h2>
