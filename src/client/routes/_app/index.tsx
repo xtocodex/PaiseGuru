@@ -4,10 +4,10 @@ import { CalendarDays, Users } from 'lucide-react'
 import { activityText, timeAgo } from '../../activity-text.ts'
 import { ConfirmSlip, PaymentSlip } from '../../payment-slip.tsx'
 import { InstallBanner } from '../../install.tsx'
-import { homeQuery } from '../../queries.ts'
+import { homeQuery, preload } from '../../queries.ts'
 import { Avatar, ButtonLink, Card, Empty, ErrorBox, IconTile, Loading, Money, NetText, Page, Rows, Row, SectionTitle, cx } from '../../ui.tsx'
 
-export const Route = createFileRoute('/_app/')({ component: Home })
+export const Route = createFileRoute('/_app/')({ loader: ({ context: { queryClient } }) => preload(queryClient, homeQuery()), component: Home })
 
 const greeting = () => {
   const h = Number(new Intl.DateTimeFormat('en-IN', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' }).format(new Date()))

@@ -1,6 +1,6 @@
 // Shared UI (design v2: docs/designs/v2). Mobile app feel: 44px+ touch targets, pressed feedback,
 // safe areas, tabular amounts. Colours come only from the tokens in index.css.
-import { useEffect, useRef, useSyncExternalStore, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
+import { useCallback, useEffect, useRef, useSyncExternalStore, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
 import { Link, useRouter } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, X, type LucideIcon } from 'lucide-react'
 import { formatRupees } from '../domain/money.ts'
@@ -23,7 +23,7 @@ export function Page(props: {
   const goBack = () => (window.history.length > 1 ? router.history.back() : router.navigate({ to: props.back ?? '/' }))
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="pt-safe sticky top-0 z-20 bg-paper/90 backdrop-blur-md">
+      <header className="pt-safe sticky top-0 z-20 bg-paper/90 backdrop-blur-md [view-transition-name:page-header]">
         <div className="flex min-h-16 items-center gap-1 px-2">
           {(props.back !== undefined || props.close) && (
             <IconButton label={props.close ? 'Close' : 'Back'} icon={props.close ? X : ChevronLeft} onClick={goBack} />
@@ -285,14 +285,16 @@ export function Row(props: { left?: ReactNode; title: ReactNode; subtitle?: Reac
     </>
   )
   const cls = 'flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 text-left'
+  // Tappable rows light up under the finger, like a native list.
+  const tap = 'press -mx-2 rounded-xl px-2 active:bg-line/60'
   return (
     <div className="flex items-center gap-3">
       {props.to ? (
-        <Link to={props.to as any} params={props.params} search={props.search} className={cx(cls, 'press')}>
+        <Link to={props.to as any} params={props.params} search={props.search} className={cx(cls, tap)}>
           {main}
         </Link>
       ) : props.onClick ? (
-        <button type="button" onClick={props.onClick} className={cx(cls, 'press')}>
+        <button type="button" onClick={props.onClick} className={cx(cls, tap)}>
           {main}
         </button>
       ) : (
@@ -354,13 +356,26 @@ let openSheets = 0
 /** Bottom sheet (modal). Closes on the scrim, Escape or the close button; focus moves inside. Sheets can stack. */
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   const panel = useRef<HTMLDivElement>(null)
+  const scrim = useRef<HTMLDivElement>(null)
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
+  // Slide down, then let the parent unmount the sheet.
+  const dismiss = useCallback(() => {
+    const p = panel.current
+    if (!p || matchMedia('(prefers-reduced-motion: reduce)').matches) return closeRef.current()
+    p.style.transition = 'transform 200ms cubic-bezier(0.4, 0, 1, 1)'
+    p.style.transform = 'translateY(100%)'
+    if (scrim.current) Object.assign(scrim.current.style, { transition: 'opacity 200ms', opacity: '0' })
+    setTimeout(() => closeRef.current(), 190)
+  }, [])
+
   useEffect(() => {
     if (!open) return
     const prev = document.activeElement as HTMLElement | null
     panel.current?.querySelector<HTMLElement>('input,select,textarea,button:not([aria-label="Close"])')?.focus()
     const onKey = (e: KeyboardEvent) => {
       const dialogs = document.querySelectorAll('[role="dialog"]')
-      if (e.key === 'Escape' && dialogs[dialogs.length - 1] === panel.current) onClose()
+      if (e.key === 'Escape' && dialogs[dialogs.length - 1] === panel.current) dismiss()
     }
     document.addEventListener('keydown', onKey)
     openSheets++
@@ -370,11 +385,38 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
       if (--openSheets === 0) document.body.style.overflow = ''
       prev?.focus()
     }
-  }, [open, onClose])
+  }, [open, dismiss])
+
+  // Drag the handle or title down to close: past a quarter of the sheet, or a quick flick.
+  const drag = useRef<{ y: number; t: number; dy: number } | null>(null)
+  const onPointerDown = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return
+    drag.current = { y: e.clientY, t: performance.now(), dy: 0 }
+    e.currentTarget.setPointerCapture(e.pointerId)
+    panel.current!.style.transition = 'none'
+  }
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current
+    if (!d) return
+    d.dy = Math.max(0, e.clientY - d.y)
+    panel.current!.style.transform = `translateY(${d.dy}px)`
+    if (scrim.current) scrim.current.style.opacity = String(1 - d.dy / panel.current!.offsetHeight)
+  }
+  const onPointerUp = () => {
+    const d = drag.current
+    drag.current = null
+    if (!d) return
+    const p = panel.current!
+    if (d.dy > p.offsetHeight / 4 || d.dy / (performance.now() - d.t) > 0.6) return dismiss()
+    p.style.transition = 'transform 220ms cubic-bezier(0.16, 1, 0.3, 1)'
+    p.style.transform = ''
+    if (scrim.current) scrim.current.style.opacity = ''
+  }
+
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50">
-      <div className="scrim-enter absolute inset-0 bg-scrim" onClick={onClose} />
+      <div ref={scrim} className="scrim-enter absolute inset-0 bg-scrim" onClick={dismiss} />
       <div
         ref={panel}
         role="dialog"
@@ -382,10 +424,12 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
         aria-label={title}
         className="sheet-enter absolute inset-x-0 bottom-0 mx-auto flex max-h-[92dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-t-3xl bg-card px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
       >
-        <div className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-field" aria-hidden />
-        <div className="flex items-center justify-between">
-          <h2 className="text-title font-semibold">{title}</h2>
-          <IconButton icon={X} label="Close" onClick={onClose} className="-mr-2" />
+        <div className="-mx-4 -mt-2.5 flex touch-none flex-col gap-4 px-4 pt-2.5 select-none" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
+          <div className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-field" aria-hidden />
+          <div className="flex items-center justify-between">
+            <h2 className="text-title font-semibold">{title}</h2>
+            <IconButton icon={X} label="Close" onClick={dismiss} className="-mr-2" />
+          </div>
         </div>
         {children}
       </div>

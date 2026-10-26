@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Users } from 'lucide-react'
-import { groupsQuery } from '../../queries.ts'
+import { groupsQuery, preload } from '../../queries.ts'
 import { ButtonLink, Card, Empty, IconTile, Loading, Page, Row, Rows } from '../../ui.tsx'
 
-export const Route = createFileRoute('/_app/add')({ component: AddChooser })
+export const Route = createFileRoute('/_app/add')({ loader: ({ context: { queryClient } }) => preload(queryClient, groupsQuery()), component: AddChooser })
 
 /** The "+" tab: straight to "add an expense" when there is one group, else pick which one. */
 function AddChooser() {

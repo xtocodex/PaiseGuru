@@ -175,7 +175,7 @@ test('two people: join by link, mark as sent, the receiver confirms', async ({ p
   await suresh.getByRole('link', { name: /Settle up/ }).click()
   await suresh.getByRole('button', { name: 'Mark as sent' }).click()
   await suresh.getByRole('dialog').getByRole('button', { name: 'Record payment' }).click()
-  await expect(suresh.getByText('Everyone is settled')).toBeVisible()
+  await expect(suresh.getByText('Flat 402 is settled')).toBeVisible()
 
   await page.goto('/')
   await expect(page.getByText('Did you get these?')).toBeVisible()

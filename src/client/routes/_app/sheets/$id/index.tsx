@@ -5,10 +5,10 @@ import { CheckCheck, HandCoins, MessageCircle, Plus, RotateCcw, Share2 } from 'l
 import { formatRupees } from '../../../../../domain/money.ts'
 import { api, call, type SheetView } from '../../../../api.ts'
 import { ExpenseList } from '../../../../expense-list.tsx'
-import { sheetQuery } from '../../../../queries.ts'
+import { preload, sheetQuery } from '../../../../queries.ts'
 import { Avatar, Button, Card, ErrorBox, IconButton, Loading, Money, Page, Row, Rows, Segmented, Sheet, StateTag, Tag, askConfirm, cx } from '../../../../ui.tsx'
 
-export const Route = createFileRoute('/_app/sheets/$id/')({ component: SheetPage })
+export const Route = createFileRoute('/_app/sheets/$id/')({ loader: ({ context: { queryClient }, params }) => preload(queryClient, sheetQuery(params.id)), component: SheetPage })
 
 function SheetPage() {
   const { id } = Route.useParams()

@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import { CheckCheck, ChevronRight, HandCoins, Plus, Settings, Wallet } from 'lucide-react'
 import type { GroupView } from '../../../../api.ts'
 import { ExpenseList } from '../../../../expense-list.tsx'
-import { expensesQuery, groupQuery } from '../../../../queries.ts'
+import { expensesQuery, groupQuery, preload } from '../../../../queries.ts'
 import { Avatar, Card, ErrorBox, IconButton, Loading, Money, NetText, Page, Row, Rows, SectionTitle, Tag, cx } from '../../../../ui.tsx'
 
-export const Route = createFileRoute('/_app/groups/$id/')({ component: GroupPage })
+export const Route = createFileRoute('/_app/groups/$id/')({ loader: ({ context: { queryClient }, params }) => preload(queryClient, groupQuery(params.id), expensesQuery(params.id)), component: GroupPage })
 
 function GroupPage() {
   const { id } = Route.useParams()

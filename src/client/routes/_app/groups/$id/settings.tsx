@@ -3,10 +3,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LogOut, Plus, Send, UserPlus, Wallet } from 'lucide-react'
 import { api, call, type GroupView } from '../../../../api.ts'
-import { groupQuery } from '../../../../queries.ts'
+import { groupQuery, preload } from '../../../../queries.ts'
 import { Avatar, Button, Card, ErrorBox, Field, Input, Loading, Page, Row, Rows, SectionTitle, Segmented, Select, Sheet, askConfirm } from '../../../../ui.tsx'
 
-export const Route = createFileRoute('/_app/groups/$id/settings')({ component: SettingsPage })
+export const Route = createFileRoute('/_app/groups/$id/settings')({ loader: ({ context: { queryClient }, params }) => preload(queryClient, groupQuery(params.id)), component: SettingsPage })
 
 type Member = GroupView['members'][number]
 
