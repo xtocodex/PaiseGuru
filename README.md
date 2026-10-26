@@ -47,7 +47,7 @@ Secrets live in the GitHub `Production` environment: `VERCEL_TOKEN`, `VERCEL_ORG
 
 - Hosting: Vercel project `paiseguru` (team xtocodexs-projects). The React app is served from Vercel's CDN; the Hono server runs as one Node function in Singapore (`sin1`). `scripts/build-vercel.ts` writes the ready-made deployment.
 - Database: Neon database `paiseguru_prod` (pooled URL in the Vercel `DATABASE_URL` setting).
-- Settings on Vercel: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (https://paiseguru.gopalmohapatra.in), `TRUSTED_ORIGINS` (https://paiseguru.vercel.app), `NODE_ENV=production`.
-- Sign-in: anyone can sign up with email + password. Google appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (redirect URI `https://paiseguru.gopalmohapatra.in/api/auth/callback/google`). Emails are not verified, so Google never joins an existing password account.
+- Settings on Vercel: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (https://paiseguru.xtocodex.in), `TRUSTED_ORIGINS` (https://paiseguru.vercel.app), `NODE_ENV=production`.
+- Sign-in: anyone can sign up with email + password. Google appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (redirect URI `https://paiseguru.xtocodex.in/api/auth/callback/google`). Emails are not verified, so Google never joins an existing password account.
 - The v2 launch (2026-10-23) started from an empty database; the phase-1 data is kept in Neon branch `backup-pre-v2-2026-10-23`.
 - Vercel Hobby blocks deploys whose git commit author is not a team member. CI deploys from a folder without git data, so merges deploy fine; a manual `pnpm deploy:vercel` from a local checkout needs commits authored as `xtocodex@gmail.com`.

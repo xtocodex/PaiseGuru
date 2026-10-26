@@ -78,4 +78,4 @@ jobs:
       - name: Check the live site
         run: |
           sleep 5
-          curl -fsS https://paiseguru.gopalmohapatra.in/health
+          curl -fsS https://paiseguru.xtocodex.in/health
