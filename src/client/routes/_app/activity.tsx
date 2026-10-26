@@ -55,7 +55,7 @@ function ActivityPage() {
                   key={n.id}
                   to={n.sheetId ? '/sheets/$id' : '/groups/$id'}
                   params={{ id: n.sheetId ?? n.groupId }}
-                  left={<Avatar name={n.actor ?? '?'} id={n.actor ?? n.groupId} />}
+                  left={<Avatar name={n.actor ?? '?'} me={n.mine} />}
                   title={activityText(n, n.mine ? user.name : undefined)}
                   subtitle={[n.groupName, n.sheetName?.split(' ')[0], timeAgo(n.createdAt)].filter(Boolean).join(' · ')}
                 />

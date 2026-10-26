@@ -1,6 +1,6 @@
 // Shared UI (design v2: docs/designs/v2). Mobile app feel: 44px+ touch targets, pressed feedback,
 // safe areas, tabular amounts. Colours come only from the tokens in index.css.
-import { useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
+import { useEffect, useRef, useSyncExternalStore, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
 import { Link, useRouter } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, X, type LucideIcon } from 'lucide-react'
 import { formatRupees } from '../domain/money.ts'
@@ -73,16 +73,17 @@ export function Money({ paise, className, sign }: { paise: number; className?: s
 
 // ── buttons ──
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'upi' | 'marigold'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'upi' | 'marigold'
 const variants: Record<Variant, string> = {
   primary: 'bg-brand text-on-brand disabled:opacity-50',
   secondary: 'border border-line bg-card text-brand-text disabled:opacity-50',
   ghost: 'text-brand-text disabled:opacity-50',
   danger: 'border border-line bg-card text-pays',
+  destructive: 'bg-pays text-paper disabled:opacity-50',
   upi: 'bg-gets text-on-gets',
   marigold: 'bg-marigold text-on-marigold',
 }
-const sizes = { md: 'h-[52px] rounded-[14px] px-5 text-base gap-2', sm: 'h-10 rounded-xl px-3.5 text-sm gap-1.5' }
+const sizes = { md: 'h-[52px] rounded-[14px] px-5 text-base gap-2', sm: 'h-11 rounded-xl px-3.5 text-sm gap-1.5' }
 
 export function Button({
   variant = 'primary',
@@ -239,15 +240,21 @@ export function NetText({ paise, who = 'You', className }: { paise: number; who?
   )
 }
 
-const AVATAR_COLORS = ['#23306e', '#0e7a5c', '#8a3f9e', '#b56a00', '#1f6f9c', '#a3334e']
-export function Avatar({ name, id, size = 36, muted }: { name: string; id: string; size?: number; muted?: boolean }) {
+// No reds or greens: those mean owes / is owed. White text is 5.5:1 or more on each.
+const AVATAR_COLORS = ['#3446c2', '#1f6f9c', '#6b3fb0', '#8a3f9e', '#8a5300', '#4b5568', '#0e6f86', '#7a5a3a']
+/**
+ * A person's initial. The viewer is always the brand colour; everyone else is coloured by first name,
+ * so one person looks the same on every screen and in every group.
+ * shortcut: keyed by first name, so two people called Asha share a colour; key by user id if that confuses.
+ */
+export function Avatar({ name, me, size = 36, muted }: { name: string; me?: boolean; size?: number; muted?: boolean }) {
   let h = 0
-  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+  for (const ch of name.trim().split(/\s+/)[0]!.toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0
   return (
     <span
       aria-hidden
-      className={cx('grid shrink-0 place-items-center rounded-full font-semibold', muted ? 'bg-line text-muted' : 'text-white')}
-      style={{ width: size, height: size, fontSize: size * 0.4, background: muted ? undefined : AVATAR_COLORS[h % AVATAR_COLORS.length] }}
+      className={cx('grid shrink-0 place-items-center rounded-full font-semibold', muted ? 'bg-line text-muted' : me ? 'bg-brand text-on-brand' : 'text-white')}
+      style={{ width: size, height: size, fontSize: size * 0.4, background: muted || me ? undefined : AVATAR_COLORS[h % AVATAR_COLORS.length] }}
     >
       {(name.trim()[0] ?? '?').toUpperCase()}
     </span>
@@ -343,19 +350,25 @@ export function MadeBy({ className }: { className?: string }) {
   )
 }
 
-/** Bottom sheet (modal). Closes on the scrim, Escape or the close button; focus moves inside. */
+let openSheets = 0
+
+/** Bottom sheet (modal). Closes on the scrim, Escape or the close button; focus moves inside. Sheets can stack. */
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   const panel = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!open) return
     const prev = document.activeElement as HTMLElement | null
     panel.current?.querySelector<HTMLElement>('input,select,textarea,button:not([aria-label="Close"])')?.focus()
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const onKey = (e: KeyboardEvent) => {
+      const dialogs = document.querySelectorAll('[role="dialog"]')
+      if (e.key === 'Escape' && dialogs[dialogs.length - 1] === panel.current) onClose()
+    }
     document.addEventListener('keydown', onKey)
+    openSheets++
     document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
+      if (--openSheets === 0) document.body.style.overflow = ''
       prev?.focus()
     }
   }, [open, onClose])
@@ -378,5 +391,78 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
         {children}
       </div>
     </div>
+  )
+}
+
+// ── toast and confirm: called from anywhere, drawn once by <Overlays /> in the root route ──
+
+type ToastItem = { id: number; text: string; action?: { label: string; run: () => void } }
+type Ask = { title: string; text?: string; confirm: string; danger?: boolean; resolve: (ok: boolean) => void }
+let overlay: { toast: ToastItem | null; ask: Ask | null } = { toast: null, ask: null }
+const listeners = new Set<() => void>()
+const setOverlay = (next: Partial<typeof overlay>) => {
+  overlay = { ...overlay, ...next }
+  listeners.forEach((l) => l())
+}
+const subscribe = (l: () => void) => (listeners.add(l), () => listeners.delete(l))
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+/** A short note above the tab bar ("₹500 marked as sent · Undo"). Replaces any toast showing. */
+export function toast(text: string, action?: ToastItem['action']) {
+  clearTimeout(toastTimer)
+  setOverlay({ toast: { id: Date.now(), text, action } })
+  toastTimer = setTimeout(() => setOverlay({ toast: null }), action ? 6000 : 4000)
+}
+
+/** A light tap on phones that support it (Android), after money changes hands. */
+export const haptic = () => navigator.vibrate?.(10)
+
+/** In-app confirmation sheet instead of the browser's confirm(). True when the person confirms. */
+export function askConfirm(o: Omit<Ask, 'resolve'>): Promise<boolean> {
+  overlay.ask?.resolve(false)
+  return new Promise((resolve) => setOverlay({ ask: { ...o, resolve } }))
+}
+
+export function Overlays() {
+  const { toast: t, ask: a } = useSyncExternalStore(subscribe, () => overlay)
+  const answer = (ok: boolean) => {
+    a?.resolve(ok)
+    setOverlay({ ask: null })
+  }
+  return (
+    <>
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-[60] mx-auto flex max-w-md justify-center px-4">
+        {t && (
+          <div key={t.id} className="toast-enter pointer-events-auto flex min-h-12 w-full items-center gap-2 rounded-2xl bg-text py-1 pr-1 pl-4 text-[15px] text-paper shadow-[0_8px_24px_-8px_rgb(16_19_28/0.45)]">
+            <span className="flex-1 py-2">{t.text}</span>
+            {t.action && (
+              <button
+                type="button"
+                className="press h-11 rounded-xl px-3 font-semibold underline underline-offset-4"
+                onClick={() => {
+                  t.action!.run()
+                  setOverlay({ toast: null })
+                }}
+              >
+                {t.action.label}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      {a && (
+        <Sheet open onClose={() => answer(false)} title={a.title}>
+          {a.text && <p className="-mt-2 text-[15px] leading-snug text-muted">{a.text}</p>}
+          <div className="flex flex-col gap-2">
+            <Button variant={a.danger ? 'destructive' : 'primary'} onClick={() => answer(true)}>
+              {a.confirm}
+            </Button>
+            <Button variant="ghost" onClick={() => answer(false)}>
+              Cancel
+            </Button>
+          </div>
+        </Sheet>
+      )}
+    </>
   )
 }

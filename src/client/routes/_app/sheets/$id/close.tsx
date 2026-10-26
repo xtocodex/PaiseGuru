@@ -126,7 +126,7 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
               return (
                 <Row
                   key={p.memberId}
-                  left={<Avatar name={p.name} id={p.memberId} muted={skipped} />}
+                  left={<Avatar name={p.name} muted={skipped} />}
                   title={p.name}
                   subtitle={
                     p.exception === 'fixed' ? (
@@ -185,7 +185,7 @@ function Close({ s, fetching }: { s: SheetView; fetching: boolean }) {
                 return (
                   <Row
                     key={m.memberId}
-                    left={<Avatar name={name(m.memberId)} id={m.memberId} />}
+                    left={<Avatar name={name(m.memberId)} />}
                     title={name(m.memberId)}
                     subtitle={`Paid ${formatRupees(m.paidPaise)} · share ${formatRupees(m.obligationPaise)}`}
                     right={

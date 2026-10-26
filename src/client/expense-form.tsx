@@ -184,7 +184,7 @@ export function ExpenseForm(props: {
           onChange={(e) => setNote(e.target.value)}
           maxLength={500}
           placeholder={kind === 'fund_in' ? 'What is it? (for example, pension)' : 'What was it for?'}
-          className="w-full rounded-xl bg-transparent px-3 py-2 text-center text-[15px] text-muted outline-none placeholder:text-faint focus:bg-card"
+          className="w-full rounded-xl bg-transparent px-3 py-2 text-center text-base text-muted outline-none placeholder:text-faint focus:bg-card"
         />
       </div>
 
@@ -343,7 +343,7 @@ export function ExpenseForm(props: {
                     >
                       {on && <Check className="size-4" aria-hidden />}
                     </button>
-                    <Avatar name={m.name} id={m.id} size={32} muted={!on} />
+                    <Avatar name={m.name} me={m.id === meId} size={32} muted={!on} />
                     <span className="min-w-0 flex-1 truncate text-[15px]">{name(m.id)}</span>
                     {on && mode === 'exact' && <SmallInput label={`${m.name} owes`} value={exact[m.id] ?? ''} onChange={(t) => setExact({ ...exact, [m.id]: t })} prefix="₹" />}
                     {on && mode === 'shares' && <SmallInput label={`${m.name} shares`} value={shares[m.id] ?? '1'} onChange={(t) => setShares({ ...shares, [m.id]: t })} />}
@@ -354,7 +354,7 @@ export function ExpenseForm(props: {
                           aria-label={`${m.name} pays`}
                           value={adjust[m.id]?.exception ?? 'none'}
                           onChange={(e) => setAdjust({ ...adjust, [m.id]: { exception: e.target.value as Adjust['exception'], text: adjust[m.id]?.text ?? '' } })}
-                          className="h-10 rounded-lg border border-field bg-card px-1.5 text-sm"
+                          className="h-11 rounded-lg border border-field bg-card px-1.5 text-base"
                         >
                           <option value="none">Equal</option>
                           <option value="fixed">Fixed</option>
@@ -398,7 +398,7 @@ function SmallInput({ label, value, onChange, prefix, suffix }: { label: string;
     <label className="flex h-10 w-24 shrink-0 items-center gap-0.5 rounded-lg border border-field bg-card px-2 focus-within:border-brand-text">
       <span className="sr-only">{label}</span>
       {prefix && <span className="text-sm text-muted">{prefix}</span>}
-      <input inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} className="num w-full min-w-0 bg-transparent text-right text-[15px] outline-none" />
+      <input inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} className="num w-full min-w-0 bg-transparent text-right text-base outline-none" />
       {suffix && <span className="text-sm text-muted">{suffix}</span>}
     </label>
   )
@@ -407,7 +407,7 @@ function SmallInput({ label, value, onChange, prefix, suffix }: { label: string;
 function AmountRow({ label, id, value, onChange }: { label: string; id: string; value: string; onChange: (t: string) => void }) {
   return (
     <div className="flex items-center gap-3">
-      <Avatar name={label} id={id} size={32} />
+      <Avatar name={label} me={label === 'You'} size={32} />
       <span className="min-w-0 flex-1 truncate">{label}</span>
       <SmallInput label={`${label} paid`} value={value} onChange={onChange} prefix="₹" />
     </div>

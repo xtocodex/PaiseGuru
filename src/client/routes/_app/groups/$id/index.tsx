@@ -32,6 +32,7 @@ function GroupDetail({ g }: { g: GroupView }) {
   const s = g.sheets.find((x) => x.id === sheetId) ?? g.sheets[0]
   const me = g.members.find((m) => m.isMe)
   const names = Object.fromEntries(g.members.map((m) => [m.id, m.name]))
+  const mine = g.plan.filter((t) => t.from === g.me.memberId || t.to === g.me.memberId).length
   const fundNames = Object.fromEntries(g.funds.map((f) => [f.id, f.name]))
   const expenses = useQuery({ ...expensesQuery(g.id), enabled: !monthly })
   const pendingCount = g.members.filter((m) => m.status === 'pending').length
@@ -64,7 +65,8 @@ function GroupDetail({ g }: { g: GroupView }) {
             <Link to="/groups/$id/settle" params={{ id: g.id }} className="press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/15 text-sm font-semibold">
               <HandCoins className="size-4" aria-hidden />
               Settle up
-              {g.plan.length > 0 && <Tag tone="marigold">{g.plan.length}</Tag>}
+              {/* Only your own payments: a count of everyone's reads as a to-do that isn't yours. */}
+              {mine > 0 && <Tag tone="marigold">{mine}</Tag>}
             </Link>
           </div>
         )}
@@ -143,7 +145,7 @@ function GroupDetail({ g }: { g: GroupView }) {
             .map((m) => (
               <Row
                 key={m.id}
-                left={<Avatar name={m.name} id={m.id} muted={m.placeholder || m.status !== 'active'} />}
+                left={<Avatar name={m.name} me={m.isMe} muted={m.placeholder || m.status !== 'active'} />}
                 title={m.isMe ? `${m.name} (you)` : m.name}
                 subtitle={<NetText paise={m.netPaise} who={m.isMe ? 'You' : m.name.split(' ')[0]} />}
               />

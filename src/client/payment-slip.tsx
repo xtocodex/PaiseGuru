@@ -8,7 +8,7 @@ import { ArrowRight, Check, Copy, MessageCircle, QrCode, Send, X, Zap } from 'lu
 import { remindText } from '../domain/group.ts'
 import { formatRupees, parseRupees, upiAmount } from '../domain/money.ts'
 import { api, call } from './api.ts'
-import { Avatar, Button, ErrorBox, Field, Input, Segmented, Sheet, cx } from './ui.tsx'
+import { Avatar, Button, ErrorBox, Field, Input, Segmented, Sheet, askConfirm, cx, haptic, toast } from './ui.tsx'
 
 export type Suggestion = { from: string; to: string; amountPaise: number }
 
@@ -50,9 +50,9 @@ export function PaymentSlip(props: {
     <section className="overflow-hidden rounded-2xl border border-line bg-card">
       <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-3">
         <span className="flex items-center gap-1.5" aria-hidden>
-          <Avatar name={names[t.from] ?? '?'} id={t.from} size={34} />
+          <Avatar name={names[t.from] ?? '?'} me={iPay} size={34} />
           <ArrowRight className="size-4 text-faint" />
-          <Avatar name={names[t.to] ?? '?'} id={t.to} size={34} />
+          <Avatar name={names[t.to] ?? '?'} me={iGet} size={34} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="line-clamp-2 block text-[15px] leading-snug font-semibold">
@@ -93,7 +93,7 @@ export function PaymentSlip(props: {
                 </Button>
               </>
             )}
-            {iPay && !props.upiId && <span className="w-full text-[13px] text-muted">Ask {names[t.to]} to add a UPI ID in Me.</span>}
+            {iPay && !props.upiId && <span className="w-full text-[13px] text-muted">{names[t.to]} has no UPI ID in PaiseGuru yet. Pay the way you usually do, then mark it as sent.</span>}
             {iGet && (
               <a href={remind} target="_blank" rel="noreferrer" className="press inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-line px-3.5 text-sm font-semibold text-brand-text">
                 <MessageCircle className="size-4" aria-hidden />
@@ -101,7 +101,8 @@ export function PaymentSlip(props: {
               </a>
             )}
             {props.canRecord && (
-              <Button size="sm" variant={iPay ? 'secondary' : 'primary'} icon={Send} className="flex-1" onClick={() => setRecording(true)}>
+              // Your own move is the main button, unless a Pay button already is; recording for others is secondary.
+              <Button size="sm" variant={(iPay && query) || (!iPay && !iGet) ? 'secondary' : 'primary'} icon={Send} className="flex-1" onClick={() => setRecording(true)}>
                 {iPay ? 'Mark as sent' : iGet ? 'I got it' : 'Record payment'}
               </Button>
             )}
@@ -109,7 +110,7 @@ export function PaymentSlip(props: {
         </>
       )}
       {qr && query && <QrSheet link={`upi://pay?${query}`} upiId={props.upiId!} amountPaise={t.amountPaise} onClose={() => setQr(false)} />}
-      {recording && <RecordSheet t={t} label={`${from} ${iPay ? 'pay' : 'pays'} ${to}`} groupId={props.groupId} onClose={() => setRecording(false)} />}
+      {recording && <RecordSheet t={t} label={`${from} ${iPay ? 'pay' : 'pays'} ${to}`} note={(paise) => (iPay ? `${formatRupees(paise)} to ${names[t.to]} marked as sent` : iGet ? `${formatRupees(paise)} from ${names[t.from]} recorded` : `${names[t.from]} → ${names[t.to]}: ${formatRupees(paise)} recorded`)} groupId={props.groupId} onClose={() => setRecording(false)} />}
     </section>
   )
 }
@@ -136,7 +137,7 @@ function QrSheet({ link, upiId, amountPaise, onClose }: { link: string; upiId: s
   )
 }
 
-function RecordSheet({ t, label, groupId, onClose }: { t: Suggestion; label: string; groupId: string; onClose: () => void }) {
+function RecordSheet({ t, label, note, groupId, onClose }: { t: Suggestion; label: string; note: (paise: number) => string; groupId: string; onClose: () => void }) {
   const queryClient = useQueryClient()
   const [id] = useState(() => crypto.randomUUID()) // one id per sheet: a double tap records once
   const [amount, setAmount] = useState(formatRupees(t.amountPaise).replace('₹', '').replaceAll(',', ''))
@@ -146,9 +147,14 @@ function RecordSheet({ t, label, groupId, onClose }: { t: Suggestion; label: str
   const record = useMutation({
     mutationFn: (amountPaise: number) =>
       call(api.groups[':id'].payments.$post({ param: { id: groupId }, json: { id, fromMemberId: t.from, toMemberId: t.to, amountPaise, via, utr: utr.trim() || undefined } })),
-    onSuccess: () => {
+    onSuccess: (_, amountPaise) => {
       queryClient.invalidateQueries()
       onClose()
+      haptic()
+      toast(note(amountPaise), {
+        label: 'Undo',
+        run: () => call(api.payments[':id'].$delete({ param: { id } })).then(() => queryClient.invalidateQueries()),
+      })
     },
   })
   return (
@@ -194,9 +200,13 @@ function RecordSheet({ t, label, groupId, onClose }: { t: Suggestion; label: str
 /** A payment someone says they sent to the viewer: Got it, or Not received (which puts the balance back). */
 export function ConfirmSlip(props: { p: { id: string; fromName: string; amountPaise: number; via: string; utr: string | null }; subtitle?: ReactNode }) {
   const queryClient = useQueryClient()
-  const done = () => queryClient.invalidateQueries()
-  const confirm_ = useMutation({ mutationFn: () => call(api.payments[':id'].confirm.$post({ param: { id: props.p.id } })), onSuccess: done })
-  const reject = useMutation({ mutationFn: () => call(api.payments[':id'].$delete({ param: { id: props.p.id } })), onSuccess: done })
+  const done = (note: string) => () => {
+    queryClient.invalidateQueries()
+    haptic()
+    toast(note)
+  }
+  const confirm_ = useMutation({ mutationFn: () => call(api.payments[':id'].confirm.$post({ param: { id: props.p.id } })), onSuccess: done(`${formatRupees(props.p.amountPaise)} from ${props.p.fromName} confirmed`) })
+  const reject = useMutation({ mutationFn: () => call(api.payments[':id'].$delete({ param: { id: props.p.id } })), onSuccess: done('Marked as not received. The balance is back.') })
   const { p } = props
   return (
     <section className="rounded-2xl border border-line bg-card p-4">
@@ -206,8 +216,8 @@ export function ConfirmSlip(props: { p: { id: string; fromName: string; amountPa
       <p className="text-[13px] text-muted">
         {[props.subtitle, { upi: 'UPI', cash: 'Cash', other: 'Other' }[p.via], p.utr && `Ref ${p.utr}`].filter(Boolean).join(' · ')}
       </p>
-      <div className="mt-3 flex gap-2">
-        <Button size="sm" variant="secondary" icon={X} disabled={reject.isPending} onClick={() => confirm(`Not received? The ${formatRupees(p.amountPaise)} goes back to what ${p.fromName} owes.`) && reject.mutate()}>
+      <div className="mt-3 flex gap-3">
+        <Button size="sm" variant="secondary" icon={X} disabled={reject.isPending} onClick={async () => (await askConfirm({ title: 'Not received?', text: `The ${formatRupees(p.amountPaise)} goes back to what ${p.fromName} owes.`, confirm: 'Not received', danger: true })) && reject.mutate()}>
           Not received
         </Button>
         <Button size="sm" className="flex-1" icon={Check} disabled={confirm_.isPending} onClick={() => confirm_.mutate()}>

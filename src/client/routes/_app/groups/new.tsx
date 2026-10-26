@@ -85,9 +85,9 @@ function NewGroup() {
           <p className="text-[13px] font-semibold text-muted">Members</p>
           <Card flush>
             <Rows>
-              <Row left={<Avatar name={user.name} id={user.id} />} title={`${user.name} (you)`} subtitle="Admin" />
+              <Row left={<Avatar name={user.name} me />} title={`${user.name} (you)`} subtitle="Admin" />
               {members.map((m) => (
-                <Row key={m} left={<Avatar name={m} id={m} muted />} title={m} subtitle="Can join later with a link" right={<IconButton icon={X} label={`Remove ${m}`} onClick={() => setMembers(members.filter((x) => x !== m))} />} />
+                <Row key={m} left={<Avatar name={m} muted />} title={m} subtitle="Can join later with a link" right={<IconButton icon={X} label={`Remove ${m}`} onClick={() => setMembers(members.filter((x) => x !== m))} />} />
               ))}
               <div className="flex items-center gap-2 py-2">
                 <Input

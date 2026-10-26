@@ -5,7 +5,7 @@ import { activityText, timeAgo } from '../../activity-text.ts'
 import { ConfirmSlip, PaymentSlip } from '../../payment-slip.tsx'
 import { InstallBanner } from '../../install.tsx'
 import { homeQuery } from '../../queries.ts'
-import { Avatar, ButtonLink, Card, Empty, ErrorBox, IconTile, Loading, Money, NetText, Page, Rows, Row, SectionTitle } from '../../ui.tsx'
+import { Avatar, ButtonLink, Card, Empty, ErrorBox, IconTile, Loading, Money, NetText, Page, Rows, Row, SectionTitle, cx } from '../../ui.tsx'
 
 export const Route = createFileRoute('/_app/')({ component: Home })
 
@@ -29,11 +29,11 @@ function Home() {
         <section className="grid grid-cols-2 gap-3">
           <Card>
             <p className="text-[13px] text-muted">You owe</p>
-            <Money paise={data.owePaise} className="text-[26px] font-bold tracking-tight text-pays" />
+            <Money paise={data.owePaise} className={cx('text-[26px] font-bold tracking-tight', data.owePaise ? 'text-pays' : 'text-faint')} />
           </Card>
           <Card>
             <p className="text-[13px] text-muted">You are owed</p>
-            <Money paise={data.owedPaise} className="text-[26px] font-bold tracking-tight text-gets" />
+            <Money paise={data.owedPaise} className={cx('text-[26px] font-bold tracking-tight', data.owedPaise ? 'text-gets' : 'text-faint')} />
           </Card>
         </section>
       )}
@@ -113,7 +113,7 @@ function Home() {
                   key={n.id}
                   to={n.sheetId ? '/sheets/$id' : '/groups/$id'}
                   params={{ id: n.sheetId ?? n.groupId }}
-                  left={<Avatar name={n.actor ?? '?'} id={n.actor ?? n.groupId} />}
+                  left={<Avatar name={n.actor ?? '?'} />}
                   title={activityText(n)}
                   subtitle={`${n.groupName} · ${timeAgo(n.createdAt)}`}
                 />
