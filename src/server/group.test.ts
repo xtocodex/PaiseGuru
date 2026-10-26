@@ -100,6 +100,7 @@ describe('sign-up and sign-in', () => {
 
     const verified = await app.request(mailLink('asha@test.local'))
     expect(cookieOf(verified)).toContain('session_token')
+    expect(outbox.filter((m) => m.to === 'asha@test.local' && m.subject === 'Welcome to PaiseGuru, Asha')).toHaveLength(1)
     expect((await anon('POST', '/api/auth/sign-in/email', { email: 'asha@test.local', password: 'wrong-pass' })).status).toBe(401)
     expect((await anon('POST', '/api/auth/sign-in/email', { email: 'asha@test.local', password: 'secret-123' })).status).toBe(200)
   })
@@ -120,10 +121,17 @@ describe('sign-up and sign-in', () => {
     expect(token).toBeTruthy()
 
     expect((await anon('POST', '/api/auth/reset-password', { token, newPassword: 'new-pass-123' })).status).toBe(200)
+    expect(outbox.findLast((m) => m.to === 'asha@test.local')!.subject).toBe('Your PaiseGuru password was changed')
     expect((await anon('POST', '/api/auth/reset-password', { token, newPassword: 'again-123' })).status).toBe(400)
     expect((await asha.req('GET', '/api/me')).status).toBe(401)
     expect((await anon('POST', '/api/auth/sign-in/email', { email: 'asha@test.local', password: 'password-123' })).status).toBe(401)
     expect((await anon('POST', '/api/auth/sign-in/email', { email: 'asha@test.local', password: 'new-pass-123' })).status).toBe(200)
+  })
+
+  it('changing the password in Me mails the owner', async () => {
+    const asha = await signUp('Asha', 'asha@test.local')
+    expect((await asha.req('POST', '/api/auth/change-password', { currentPassword: 'password-123', newPassword: 'changed-123' })).status).toBe(200)
+    expect(outbox.findLast((m) => m.to === 'asha@test.local')!.subject).toBe('Your PaiseGuru password was changed')
   })
 
   it('asking to reset an unknown email answers the same and sends nothing', async () => {
@@ -196,6 +204,7 @@ describe('email invites', () => {
     expect(mailLink('asha@test.local')).toBe(link) // the group's invite link, so another email still works
 
     const asha = await signUp('Asha Rao', 'asha@test.local')
+    expect(outbox.findLast((m) => m.to === 'asha@test.local')!.text).toContain("You're already in Flat 402.")
     const mine = await view(asha)
     expect(mine.me.memberId).toBe(added.body.id)
     expect(mine.members.find((m: any) => m.isMe)).toMatchObject({ name: 'Asha', placeholder: false, inviteEmail: null })

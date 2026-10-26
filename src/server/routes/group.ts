@@ -96,8 +96,9 @@ async function setInvite(tx: Tx, o: { g: GroupRow; sheets: SheetRow[]; target: M
   return message({
     to: email,
     subject: `${inviter.name} added you to ${g.name} on PaiseGuru`,
+    heading: `${inviter.name} added you to ${g.name}`,
     lines: [
-      `${inviter.name} added you to "${g.name}" on PaiseGuru, to split shared expenses and settle up in the fewest UPI payments.`,
+      'PaiseGuru splits shared expenses and settles them in the fewest UPI payments.',
       joined ? 'You already have an account, so the group is ready for you.' : `Sign up or sign in with ${email} and you join the group as ${target.displayName}.`,
     ],
     button: joined ? 'Open the group' : 'Join the group',
