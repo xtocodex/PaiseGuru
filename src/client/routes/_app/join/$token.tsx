@@ -48,7 +48,7 @@ function Join() {
           <Card flush>
             <Rows>
               {p.placeholders.map((m) => (
-                <Row key={m.id} onClick={() => join.mutate(m.id)} left={<Avatar name={m.name} id={m.id} />} title={`I'm ${m.name}`} chevron />
+                <Row key={m.id} onClick={() => join.mutate(m.id)} left={<Avatar name={m.name} />} title={`I'm ${m.name}`} chevron />
               ))}
             </Rows>
           </Card>

@@ -37,7 +37,7 @@ function Me() {
     <Page title="Me">
       <Card>
         <div className="flex items-center gap-3.5">
-          <Avatar name={u.name} id={u.id} size={56} />
+          <Avatar name={u.name} me size={56} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-semibold">{u.name}</p>
             <p className="truncate text-[13px] text-muted">{u.email}</p>

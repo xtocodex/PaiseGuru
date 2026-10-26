@@ -4,7 +4,7 @@ import { Check, Trash2 } from 'lucide-react'
 import { api, call } from '../../../../../api.ts'
 import { ExpenseForm, type ExpenseValues } from '../../../../../expense-form.tsx'
 import { expensesQuery, groupQuery, sheetQuery } from '../../../../../queries.ts'
-import { Button, ErrorBox, Loading, Page } from '../../../../../ui.tsx'
+import { Button, ErrorBox, IconButton, Loading, Page, askConfirm, toast } from '../../../../../ui.tsx'
 
 export const Route = createFileRoute('/_app/groups/$id/expenses/$expenseId')({
   validateSearch: (s: Record<string, unknown>) => ({ sheet: typeof s.sheet === 'string' ? s.sheet : undefined }),
@@ -29,7 +29,11 @@ function EditExpense() {
   // A 409 means someone changed it meanwhile: reload so the next try uses fresh numbers.
   const onError = () => queryClient.invalidateQueries()
   const save = useMutation({ mutationFn: (v: ExpenseValues) => call(api.expenses[':id'].$patch({ param: { id: expenseId }, json: { ...v, version: e!.version } })), onSuccess: done, onError })
-  const remove = useMutation({ mutationFn: () => call(api.expenses[':id'].$delete({ param: { id: expenseId }, json: { version: e!.version } })), onSuccess: done, onError })
+  const remove = useMutation({
+    mutationFn: () => call(api.expenses[':id'].$delete({ param: { id: expenseId }, json: { version: e!.version } })),
+    onSuccess: () => (done(), toast('Expense deleted')),
+    onError,
+  })
 
   if (g.isPending || (sheetId ? month.isPending : list.isPending)) return <Loading />
   if (!g.data || g.data.pending || !e) return <Page title="Expense" close back={back}><ErrorBox error={g.error ?? new Error('This expense was deleted.')} /></Page>
@@ -43,16 +47,23 @@ function EditExpense() {
       subtitle={g.data.name}
       close
       back={back}
+      // Delete lives up here, away from Save, and asks first.
+      action={
+        editable && (
+          <IconButton
+            icon={Trash2}
+            label="Delete expense"
+            className="text-pays"
+            disabled={remove.isPending}
+            onClick={async () => (await askConfirm({ title: 'Delete this expense?', text: 'Everyone\'s balance changes back.', confirm: 'Delete expense', danger: true })) && remove.mutate()}
+          />
+        )
+      }
       footer={
         editable && (
-          <div className="flex gap-2">
-            <Button variant="danger" icon={Trash2} aria-label="Delete expense" onClick={() => confirm('Delete this expense?') && remove.mutate()} disabled={remove.isPending}>
-              Delete
-            </Button>
-            <Button type="submit" form="expense-form" className="flex-1" icon={Check} disabled={save.isPending}>
-              Save changes
-            </Button>
-          </div>
+          <Button type="submit" form="expense-form" className="w-full" icon={Check} disabled={save.isPending}>
+            Save changes
+          </Button>
         )
       }
     >

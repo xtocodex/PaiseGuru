@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LogOut, Plus, Send, UserPlus, Wallet } from 'lucide-react'
 import { api, call, type GroupView } from '../../../../api.ts'
 import { groupQuery } from '../../../../queries.ts'
-import { Avatar, Button, Card, ErrorBox, Field, Input, Loading, Page, Row, Rows, SectionTitle, Segmented, Select, Sheet } from '../../../../ui.tsx'
+import { Avatar, Button, Card, ErrorBox, Field, Input, Loading, Page, Row, Rows, SectionTitle, Segmented, Select, Sheet, askConfirm } from '../../../../ui.tsx'
 
 export const Route = createFileRoute('/_app/groups/$id/settings')({ component: SettingsPage })
 
@@ -60,7 +60,7 @@ function Settings({ g }: { g: GroupView }) {
             <Row
               key={m.id}
               onClick={active && m.status === 'active' ? () => setPicked(m) : undefined}
-              left={<Avatar name={m.name} id={m.id} muted={m.placeholder || m.status !== 'active'} />}
+              left={<Avatar name={m.name} me={m.isMe} muted={m.placeholder || m.status !== 'active'} />}
               title={m.isMe ? `${m.name} (you)` : m.name}
               subtitle={memberNote(m)}
               right={
@@ -112,7 +112,10 @@ function Settings({ g }: { g: GroupView }) {
               <Segmented
                 label="How do you settle?"
                 value={g.settleMode}
-                onChange={(v) => confirm(v === 'monthly' ? 'Divide bills once a month from now on?' : 'Split each expense as you add it from now on?') && update.mutate({ settleMode: v })}
+                onChange={async (v) =>
+                  (await askConfirm(v === 'monthly' ? { title: 'Divide bills once a month?', text: 'From now on, bills pile up and are divided when the month closes.', confirm: 'Switch to monthly' } : { title: 'Split as you go?', text: 'From now on, each expense is split when you add it.', confirm: 'Switch to as you go' })) &&
+                  update.mutate({ settleMode: v })
+                }
                 options={[
                   { value: 'as_you_go', label: 'As you go' },
                   { value: 'monthly', label: 'Monthly' },
@@ -139,7 +142,7 @@ function Settings({ g }: { g: GroupView }) {
       )}
 
       {active && (
-        <Button variant="ghost" icon={LogOut} className="text-pays" onClick={() => confirm(`Leave ${g.name}?`) && leave.mutate()}>
+        <Button variant="ghost" icon={LogOut} className="text-pays" onClick={async () => (await askConfirm({ title: `Leave ${g.name}?`, text: 'You can still look at months you took part in.', confirm: 'Leave group', danger: true })) && leave.mutate()}>
           Leave this group
         </Button>
       )}
@@ -176,7 +179,7 @@ function InviteSheet({ g, open, onClose }: { g: GroupView; open: boolean; onClos
               WhatsApp
             </a>
           </div>
-          <Button variant="ghost" onClick={() => confirm('The old link will stop working. Make a new one?') && make.mutate()}>
+          <Button variant="ghost" onClick={async () => (await askConfirm({ title: 'Make a new link?', text: 'The old link will stop working.', confirm: 'Make new link' })) && make.mutate()}>
             Make a new link
           </Button>
         </>
@@ -343,12 +346,12 @@ function MemberSheet({ g, m, isAdmin, onClose }: { g: GroupView; m: Member; isAd
       {canManage && (
         <div className="flex flex-col gap-2">
           {real && (
-            <Button variant="secondary" onClick={() => confirm(`Make ${m.name} the admin? You will stop being the admin.`) && act.mutate(api.groups[':id'].admin.$post({ param: { id: g.id }, json: { memberId: m.id } }))}>
+            <Button variant="secondary" onClick={async () => (await askConfirm({ title: `Make ${m.name} the admin?`, text: 'You will stop being the admin.', confirm: 'Make admin' })) && act.mutate(api.groups[':id'].admin.$post({ param: { id: g.id }, json: { memberId: m.id } }))}>
               Make admin
             </Button>
           )}
           {real && (
-            <Button variant="secondary" onClick={() => confirm(`${m.name} will become a name without an account again.`) && act.mutate(api.groups[':id'].members[':mid'].unclaim.$post({ param: { id: g.id, mid: m.id } }))}>
+            <Button variant="secondary" onClick={async () => (await askConfirm({ title: 'Undo join?', text: `${m.name} will become a name without an account again.`, confirm: 'Undo join', danger: true })) && act.mutate(api.groups[':id'].members[':mid'].unclaim.$post({ param: { id: g.id, mid: m.id } }))}>
               Undo join (wrong name)
             </Button>
           )}
@@ -356,11 +359,12 @@ function MemberSheet({ g, m, isAdmin, onClose }: { g: GroupView; m: Member; isAd
             <Field label="This person is really…" hint="Their expenses join that name's expenses.">
               <Select
                 value=""
-                onChange={(e) =>
-                  e.target.value &&
-                  confirm(`Link ${m.name} to ${placeholders.find((p) => p.id === e.target.value)?.name}?`) &&
-                  act.mutate(api.groups[':id'].members[':mid'].merge.$post({ param: { id: g.id, mid: m.id }, json: { placeholderId: e.target.value } }))
-                }
+                onChange={async (e) => {
+                  const pick = e.target.value
+                  if (!pick) return
+                  const ok = await askConfirm({ title: `Link ${m.name} to ${placeholders.find((p) => p.id === pick)?.name}?`, text: "Their expenses join that name's expenses.", confirm: 'Link' })
+                  if (ok) act.mutate(api.groups[':id'].members[':mid'].merge.$post({ param: { id: g.id, mid: m.id }, json: { placeholderId: pick } }))
+                }}
               >
                 <option value="">Pick a name</option>
                 {placeholders.map((p) => (
@@ -371,7 +375,7 @@ function MemberSheet({ g, m, isAdmin, onClose }: { g: GroupView; m: Member; isAd
               </Select>
             </Field>
           )}
-          <Button variant="danger" onClick={() => confirm(`Remove ${m.name} from ${g.name}?`) && act.mutate(api.groups[':id'].members[':mid'].$delete({ param: { id: g.id, mid: m.id } }))}>
+          <Button variant="danger" onClick={async () => (await askConfirm({ title: `Remove ${m.name}?`, text: `${m.name} leaves ${g.name}.`, confirm: 'Remove', danger: true })) && act.mutate(api.groups[':id'].members[':mid'].$delete({ param: { id: g.id, mid: m.id } }))}>
             Remove from group
           </Button>
         </div>

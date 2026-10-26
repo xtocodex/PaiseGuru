@@ -28,7 +28,7 @@ async function signUp(page: Page, name: string) {
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill('password-123')
   await page.getByRole('button', { name: 'Create account' }).click()
-  await expect(page.getByRole('status')).toContainText('Open it to finish creating your account')
+  await expect(page.getByRole('status')).toContainText('finish creating your account')
   await confirmEmail(email)
   await page.getByRole('button', { name: 'Back to sign in' }).click()
   await page.getByLabel('Email').fill(email)

@@ -6,7 +6,7 @@ import { formatRupees } from '../../../../../domain/money.ts'
 import { api, call, type SheetView } from '../../../../api.ts'
 import { ExpenseList } from '../../../../expense-list.tsx'
 import { sheetQuery } from '../../../../queries.ts'
-import { Avatar, Button, Card, ErrorBox, IconButton, Loading, Money, Page, Row, Rows, Segmented, Sheet, StateTag, Tag, cx } from '../../../../ui.tsx'
+import { Avatar, Button, Card, ErrorBox, IconButton, Loading, Money, Page, Row, Rows, Segmented, Sheet, StateTag, Tag, askConfirm, cx } from '../../../../ui.tsx'
 
 export const Route = createFileRoute('/_app/sheets/$id/')({ component: SheetPage })
 
@@ -152,7 +152,7 @@ function Month({ s }: { s: SheetView }) {
                   return (
                     <Row
                       key={m.memberId}
-                      left={<Avatar name={name(m.memberId)} id={m.memberId} />}
+                      left={<Avatar name={name(m.memberId)} me={m.memberId === s.me.memberId} />}
                       title={
                         <span className="flex items-center gap-1.5">
                           {name(m.memberId)}
@@ -178,7 +178,7 @@ function Month({ s }: { s: SheetView }) {
 
       {!open && s.me.role === 'admin' && active && (
         <>
-          <Button variant="ghost" icon={RotateCcw} onClick={() => confirm('Reopen this month? Its shares come off the balances until you close it again. Payments stay as they are.') && reopen.mutate()}>
+          <Button variant="ghost" icon={RotateCcw} onClick={async () => (await askConfirm({ title: 'Reopen this month?', text: 'Its shares come off the balances until you close it again. Payments stay as they are.', confirm: 'Reopen month' })) && reopen.mutate()}>
             Reopen this month
           </Button>
           <ErrorBox error={reopen.error} />
@@ -215,7 +215,7 @@ function ShareSheet({ s, open, onClose }: { s: SheetView; open: boolean; onClose
               <Button onClick={() => navigator.share({ title: `${s.group.name} – ${s.sheet.name}`, url: statement.link })}>Share</Button>
             ) : null}
           </div>
-          <Button variant="ghost" className="text-pays" onClick={() => confirm('Turn off this link? People who have it will not be able to open it.') && revoke.mutate(statement.id)}>
+          <Button variant="ghost" className="text-pays" onClick={async () => (await askConfirm({ title: 'Turn off this link?', text: 'People who have it will not be able to open it.', confirm: 'Turn off link', danger: true })) && revoke.mutate(statement.id)}>
             Turn off link
           </Button>
         </>

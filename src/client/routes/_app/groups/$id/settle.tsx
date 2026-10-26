@@ -6,7 +6,7 @@ import { formatRupees } from '../../../../../domain/money.ts'
 import { api, call, type GroupView } from '../../../../api.ts'
 import { PaymentSlip } from '../../../../payment-slip.tsx'
 import { groupQuery, paymentsQuery } from '../../../../queries.ts'
-import { Avatar, Button, Card, ErrorBox, Loading, Money, Page, Row, Rows, SectionTitle, Tag } from '../../../../ui.tsx'
+import { Avatar, Button, Card, ErrorBox, Loading, Money, Page, Row, Rows, SectionTitle, Tag, askConfirm, haptic, toast } from '../../../../ui.tsx'
 
 export const Route = createFileRoute('/_app/groups/$id/settle')({ component: SettlePage })
 
@@ -33,9 +33,13 @@ function Settle({ g, payments }: { g: GroupView; payments: { id: string; from: s
   const placeholder = (id: string) => g.members.find((m) => m.id === id)?.placeholder ?? false
   const active = g.me.status === 'active'
   const meId = g.me.memberId
-  const done = () => queryClient.invalidateQueries()
-  const confirm_ = useMutation({ mutationFn: (id: string) => call(api.payments[':id'].confirm.$post({ param: { id } })), onSuccess: done })
-  const remove = useMutation({ mutationFn: (id: string) => call(api.payments[':id'].$delete({ param: { id } })), onSuccess: done })
+  const done = (note: string) => () => {
+    queryClient.invalidateQueries()
+    haptic()
+    toast(note)
+  }
+  const confirm_ = useMutation({ mutationFn: (id: string) => call(api.payments[':id'].confirm.$post({ param: { id } })), onSuccess: done('Payment confirmed') })
+  const remove = useMutation({ mutationFn: (id: string) => call(api.payments[':id'].$delete({ param: { id } })), onSuccess: done('Payment removed. The balance is back.') })
   const name = (id: string) => (id === meId ? 'You' : names[id])
 
   return (
@@ -79,7 +83,7 @@ function Settle({ g, payments }: { g: GroupView; payments: { id: string; from: s
                 return (
                   <Row
                     key={p.id}
-                    left={<Avatar name={names[p.from] ?? '?'} id={p.from} />}
+                    left={<Avatar name={names[p.from] ?? '?'} me={p.from === meId} />}
                     title={`${name(p.from)} paid ${p.to === meId ? 'you' : names[p.to]}`}
                     subtitle={
                       <span className="flex flex-col gap-1.5">
@@ -89,18 +93,18 @@ function Settle({ g, payments }: { g: GroupView; payments: { id: string; from: s
                           <Tag tone={p.status === 'confirmed' ? 'gets' : 'marigold'}>{p.status === 'confirmed' ? 'Confirmed' : 'Sent'}</Tag>
                         </span>
                         {active && p.status === 'sent' && p.to === meId && (
-                          <span className="flex gap-2">
-                            <Button size="sm" variant="secondary" className="h-9" onClick={() => confirm('Not received? The balance goes back.') && remove.mutate(p.id)}>
+                          <span className="flex gap-3">
+                            <Button size="sm" variant="secondary" onClick={async () => (await askConfirm({ title: 'Not received?', text: `The ${formatRupees(p.amountPaise)} goes back to what ${names[p.from]} owes.`, confirm: 'Not received', danger: true })) && remove.mutate(p.id)}>
                               Not received
                             </Button>
-                            <Button size="sm" className="h-9" onClick={() => confirm_.mutate(p.id)}>
+                            <Button size="sm" className="flex-1" onClick={() => confirm_.mutate(p.id)}>
                               Got it
                             </Button>
                           </span>
                         )}
                         {active && p.status === 'sent' && party && p.to !== meId && (
                           <span>
-                            <Button size="sm" variant="secondary" className="h-9 text-pays" onClick={() => confirm('Remove this payment? The balance goes back.') && remove.mutate(p.id)}>
+                            <Button size="sm" variant="secondary" className="text-pays" onClick={async () => (await askConfirm({ title: 'Remove this payment?', text: 'The balance goes back to before it.', confirm: 'Remove payment', danger: true })) && remove.mutate(p.id)}>
                               Undo
                             </Button>
                           </span>
