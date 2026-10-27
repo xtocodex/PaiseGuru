@@ -1,7 +1,7 @@
 // PaiseGuru service worker: makes the installed app open instantly and show its shell offline.
 // Money data is never cached: /api, /s/ and /health always go to the network.
-const CACHE = 'paiseguru-v1'
-const SHELL = ['/', '/manifest.webmanifest', '/icon.svg', '/icon-192.png']
+const CACHE = 'paiseguru-v2' // v2: new logo
+const SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/logo-mark.png', '/wordmark.png', '/wordmark-dark.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)))

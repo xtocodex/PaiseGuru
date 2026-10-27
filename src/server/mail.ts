@@ -30,6 +30,8 @@ export const SUPPORT = 'support@xtocodex.in'
 
 // Brand colours from the PaiseGuru logo; email clients ignore CSS variables, so they are repeated here.
 const C = { paper: '#f3f5fa', card: '#ffffff', ink: '#0b1f5c', text: '#121a33', body: '#353d55', muted: '#687089', brand: '#2447d6', line: '#e1e6ef' }
+// Always the live copy: mail clients can't reach a dev server. Public file: public/email-logo.png.
+const LOGO = 'https://paiseguru.xtocodex.in/email-logo.png'
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'IBM Plex Sans', Arial, sans-serif"
 
 /**
@@ -77,7 +79,7 @@ export function message(o: {
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(o.preheader ?? o.lines[0] ?? '')}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.paper}"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
-<tr><td style="padding:0 4px 18px;font-size:24px;font-weight:800;letter-spacing:-0.02em"><span style="color:${C.ink}">Paise</span><span style="color:${C.brand}">Guru</span></td></tr>
+<tr><td style="padding:0 4px 18px"><img src="${LOGO}" width="229" height="56" alt="PaiseGuru" style="display:block;border:0;font-size:24px;font-weight:800;color:${C.ink}"></td></tr>
 <tr><td style="background:${C.card};border:1px solid ${C.line};border-radius:18px;padding:28px 24px">
 ${o.heading ? `<h1 style="margin:0 0 14px;font-size:22px;line-height:1.3;font-weight:700;color:${C.text}">${esc(o.heading)}</h1>` : ''}
 ${o.lines.map(p).join('\n')}
